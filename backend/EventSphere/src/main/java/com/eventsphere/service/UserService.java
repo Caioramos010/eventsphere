@@ -15,7 +15,12 @@ public class UserService {
     private UserRepository userRepository;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
+
+    public UserService(PasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
+    }
+
 
     public User registerUser(String username, String name, String email, String password, String photo) {
         User user = new User();
@@ -39,34 +44,37 @@ public class UserService {
         user.setRegisterDate(LocalDateTime.now());
         return userRepository.save(user);
     }
+    public User getUser(Long userID){
+        return userRepository.findById(userID).orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado!"));
+    }
+    public User getUserDisplay(Long userID) {
+        User user = userRepository.findById(userID).orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado!"));
+        user.setPassword("*******");
+        return user;
+    }
 
     public User updateName(Long userID, String newName) {
-        User user = userRepository.findById(userID).orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado!"));
-        user.setName(newName);
-        return userRepository.save(user);
+        getUser(userID).setName(newName);
+        return userRepository.save(getUser(userID));
     }
 
     public User updateEmail(Long userID, String newEmail) {
-        User user = userRepository.findById(userID).orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado!"));
-        user.setEmail(newEmail);
-        return userRepository.save(user);
+        getUser(userID).setEmail(newEmail);
+        return userRepository.save(getUser(userID));
     }
 
     public User updatePassword(Long userID, String newPassword) {
-        User user = userRepository.findById(userID).orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado!"));
-        user.setPassword(passwordEncoder.encode(newPassword));
-        return userRepository.save(user);
+        getUser(userID).setPassword(passwordEncoder.encode(newPassword));
+        return userRepository.save(getUser(userID));
     }
 
     public User updatePhoto(Long userID, String newPhoto) {
-        User user = userRepository.findById(userID).orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado!"));
-        user.setPhoto(newPhoto);
-        return userRepository.save(user);
+        getUser(userID).setPhoto(newPhoto);
+        return userRepository.save(getUser(userID));
     }
     public User updateUsername(Long userID, String newUsername) {
-        User user = userRepository.findById(userID).orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado!"));
-        user.setUsername(newUsername);
-        return userRepository.save(user);
+        getUser(userID).setUsername(newUsername);
+        return userRepository.save(getUser(userID));
     }
     public void deleteUser(Long userID) {
         userRepository.deleteById(userID);
@@ -94,21 +102,17 @@ public class UserService {
     }
 
     public boolean validateNewName(Long userID, String newName) {
-        User user = userRepository.findById(userID).orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado!"));
-        return user.getName().equals(newName);
+        return getUser(userID).getName().equals(newName);
     }
     public boolean validateNewUsername(Long userID, String newUsername) {
-        User user = userRepository.findById(userID).orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado!"));
-        return user.getName().equals(newUsername) && userRepository.findByUsername(newUsername) == null;
+        return getUser(userID).getName().equals(newUsername) && userRepository.findByUsername(newUsername) == null;
     }
 
     public boolean validateNewEmail(Long userID, String newEmail) {
-        User user = userRepository.findById(userID).orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado!"));
-        return user.getEmail().equals(newEmail) && userRepository.findByUsername(newEmail) == null;
+        return getUser(userID).getEmail().equals(newEmail) && userRepository.findByUsername(newEmail) == null;
     }
     public boolean validateNewPhoto(Long userID, String newPhoto) {
-        User user = userRepository.findById(userID).orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado!"));
-        return user.getPhoto().equals(newPhoto);
+        return getUser(userID).getPhoto().equals(newPhoto);
     }
 }
 
