@@ -1,8 +1,10 @@
 package com.eventsphere.entity;
 
 import jakarta.persistence.*;
+import java.util.Set;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 
 @Entity
 public class User {
@@ -14,12 +16,13 @@ public class User {
     @Column(nullable = false, unique = true)
     private String username;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = false)
     private String name;
 
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private Role role = Role.USER;
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "role", unique = false)
+    private Set<String> roles = new HashSet<>();
 
     @Column(nullable = false, unique = true)
     private String email;
@@ -27,7 +30,7 @@ public class User {
     @Column(nullable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime registerDate;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = false)
     private String password;
 
     private String photo;
@@ -72,12 +75,12 @@ public class User {
         this.password = password;
     }
 
-    public Role getRole() {
-        return role;
+    public Set<String> getRoles() {
+        return roles;
     }
 
-    public void setRole(Role role) {
-        this.role = role;
+    public void setRoles(Set<String> roles) {
+        this.roles = roles;
     }
 
     public LocalDateTime getRegisterDate() {

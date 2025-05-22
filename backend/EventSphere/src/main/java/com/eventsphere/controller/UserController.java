@@ -4,6 +4,7 @@ import com.eventsphere.entity.User;
 import com.eventsphere.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,6 +18,7 @@ public class UserController {
     public ResponseEntity<?> getUser(@RequestParam Long userID){
         return ResponseEntity.ok().body(userService.getUserDisplay(userID));
     }
+
 
     @PutMapping("/update-name")
     public ResponseEntity<?> updateUserName(@RequestParam Long userID, @RequestParam String newName){

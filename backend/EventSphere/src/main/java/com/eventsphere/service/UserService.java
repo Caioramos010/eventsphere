@@ -1,5 +1,6 @@
 package com.eventsphere.service;
 
+import com.eventsphere.entity.Role;
 import com.eventsphere.entity.User;
 import com.eventsphere.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,6 +8,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
 
 @Service
 public class UserService {
@@ -28,10 +31,9 @@ public class UserService {
         user.setName(name);
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(password));
+        user.setRoles(Set.of(Role.ROLE_USER.name()));
         user.setRegisterDate(LocalDateTime.now());
-        if (!photo.isEmpty()) {
-            user.setPhoto(photo);
-        }
+        user.setPhoto(photo);
         return userRepository.save(user);
     }
 
@@ -41,6 +43,7 @@ public class UserService {
         user.setName(name);
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(password));
+        user.setRoles(Set.of(Role.ROLE_USER.name()));
         user.setRegisterDate(LocalDateTime.now());
         return userRepository.save(user);
     }
@@ -51,6 +54,13 @@ public class UserService {
         User user = userRepository.findById(userID).orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado!"));
         user.setPassword("*******");
         return user;
+    }
+    public List<User> getAllUsers() {
+        List<User> users = userRepository.findAll();
+        for (User user : users) {
+            user.setPassword("*******");
+        }
+        return users;
     }
 
     public User updateName(Long userID, String newName) {
