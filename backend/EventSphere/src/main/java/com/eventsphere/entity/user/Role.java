@@ -1,4 +1,4 @@
-package com.eventsphere.entity;
+package com.eventsphere.entity.user;
 
 public enum Role {
     ROLE_ADMIN,

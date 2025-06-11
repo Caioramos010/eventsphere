@@ -1,0 +1,150 @@
+/* UserProfile.css - Modern Design Pattern */
+@import url('../styles/common.css');
+
+/* Specific styles for User Profile page */
+.profile-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.profile-tab {
+  flex: 1;
+  padding: 16px 24px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  color: var(--color-gray-light);
+  font-family: 'Lexend Deca', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.profile-tab:hover {
+  background: var(--glass-bg-strong);
+  color: var(--color-text-white);
+}
+
+.profile-tab.active {
+  background: var(--gradient-primary);
+  color: var(--color-text-white);
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-primary);
+}
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Photo Upload Section */
+.photo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.photo-wrapper {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: var(--glass-bg-strong);
+  border: 2px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  position: relative;
+  z-index: 1;
+}
+
+.photo-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--color-gray-light);
+  position: relative;
+  z-index: 1;
+}
+
+.photo-upload-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-text-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s ease;
+  z-index: 20;
+  pointer-events: auto;
+  border: 3px solid var(--color-gray-dark);
+}
+
+.photo-upload-btn:hover {
+  transform: scale(1.15);
+  background: var(--color-primary-dark);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+
+.photo-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.photo-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+}
+
+.photo-info {
+  color: var(--color-gray-light);
+  font-size: 12px;
+  text-align: center;
+  max-width: 300px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .profile-tabs {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .profile-tab {
+    padding: 14px 20px;
+    font-size: 13px;
+  }
+    .photo-wrapper {
+    width: 120px;
+    height: 120px;
+  }
+  
+  .photo-upload-btn {
+    width: 40px;
+    height: 40px;
+    border-width: 2px;
+  }
+}

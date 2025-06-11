@@ -1,9 +1,9 @@
-package com.eventsphere.entity;
+package com.eventsphere.entity.event;
 
+import com.eventsphere.entity.user.User;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 @Entity
@@ -24,8 +24,21 @@ public class EventParticipant {
     @Column(nullable = false)
     private ParticipantStatus currentStatus;
 
-    @OneToMany(mappedBy = "participant", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "participant", cascade = CascadeType.ALL, orphanRemoval = false)
     private List<ParticipantHistory> participantHistory = new ArrayList<>();
+
+    @Column(nullable = false)
+    private boolean isCollaborator = false;
+
+    private String qrCode;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public User getUser() {
         return user;
@@ -57,6 +70,22 @@ public class EventParticipant {
 
     public void setParticipantHistory(List<ParticipantHistory> participantHistory) {
         this.participantHistory = participantHistory;
+    }
+
+    public boolean isCollaborator() {
+        return isCollaborator;
+    }
+
+    public void setIsCollaborator(boolean isCollaborator) {
+        this.isCollaborator = isCollaborator;
+    }
+
+    public String getQrCode() {
+        return qrCode;
+    }
+
+    public void setQrCode(String qrCode) {
+        this.qrCode = qrCode;
     }
 }
 

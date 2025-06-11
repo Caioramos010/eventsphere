@@ -1,4 +1,7 @@
 package com.eventsphere.repository;
 
-public interface ParticpantHistoryRepository {
+import com.eventsphere.entity.event.ParticipantHistory;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface ParticpantHistoryRepository extends JpaRepository<ParticipantHistory, Long> {
 }

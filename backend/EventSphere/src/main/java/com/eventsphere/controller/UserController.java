@@ -1,10 +1,13 @@
 package com.eventsphere.controller;
 
-import com.eventsphere.entity.User;
+import com.eventsphere.dto.ApiResponse;
+import com.eventsphere.entity.user.User;
+import com.eventsphere.repository.UserRepository;
 import com.eventsphere.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -13,70 +16,70 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+    @Autowired
+    private UserRepository userRepository;
 
-    @GetMapping("/get")
-    public ResponseEntity<?> getUser(@RequestParam Long userID){
-        return ResponseEntity.ok().body(userService.getUserDisplay(userID));
+    private User getAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username;
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof org.springframework.security.core.userdetails.UserDetails userDetails) {
+            username = userDetails.getUsername();
+        } else {
+            username = authentication.getName();
+        }
+        return userRepository.findByUsername(username);
     }
 
+    @GetMapping("/get")
+    public ResponseEntity<ApiResponse<?>> getUser() {
+        User user = getAuthenticatedUser();
+        return ResponseEntity.ok(ApiResponse.success(userService.getUserDisplay(user.getId())));
+    }
 
     @PutMapping("/update-name")
-    public ResponseEntity<?> updateUserName(@RequestParam Long userID, @RequestParam String newName){
-        if(userService.validateNewName(userID, newName)){
-            return ResponseEntity.badRequest().body("Nome igual ao anterior, ou inválido");
-        }else{
-            userService.updateName(userID, newName);
-            return ResponseEntity.ok().body("Nome atualizado com sucesso");
-        }
+    public ResponseEntity<ApiResponse<?>> updateUserName(@RequestParam String newName) {
+        User user = getAuthenticatedUser();
+        userService.validateNewName(user.getId(), newName);
+        userService.updateName(user.getId(), newName);
+        return ResponseEntity.ok(ApiResponse.success("Nome atualizado com sucesso", null));
     }
 
     @PutMapping("/update-email")
-    public ResponseEntity<?> updateUserEmail(@RequestParam Long userID, @RequestParam String newEmail){
-        if(userService.validateNewEmail(userID, newEmail)){
-            return ResponseEntity.badRequest().body("Email igual ao anterior, ou já registrado");
-        }else{
-            userService.updateEmail(userID, newEmail);
-            return ResponseEntity.ok().body("Email atualizado com sucesso");
-        }
+    public ResponseEntity<ApiResponse<?>> updateUserEmail(@RequestParam String newEmail){
+        User user = getAuthenticatedUser();
+        userService.updateEmail(user.getId(), newEmail);
+        return ResponseEntity.ok(ApiResponse.success("Email atualizado com sucesso", null));
     }
+
     @PutMapping("/update-username")
-    public ResponseEntity<?> updateUserUsername(@RequestParam Long userID, @RequestParam String newUsername){
-        if(userService.validateNewUsername(userID, newUsername)){
-            return ResponseEntity.badRequest().body("Login igual ao anterior, ou inválido");
-        }else{
-            userService.updateUsername(userID, newUsername);
-            return ResponseEntity.ok().body("Login atualizado com sucesso");
-        }
+    public ResponseEntity<ApiResponse<?>> updateUserUsername(@RequestParam String newUsername){
+        User user = getAuthenticatedUser();
+        userService.updateUsername(user.getId(), newUsername);
+        return ResponseEntity.ok(ApiResponse.success("Login atualizado com sucesso", null));
     }
 
     @PutMapping("/update-passowrd")
-    public ResponseEntity<?> updateUserPassword(@RequestParam Long userID, @RequestParam String password, @RequestParam String newPassword){
-        if(userService.validateNewPassword(password, newPassword)){
-            return ResponseEntity.badRequest().body("Senha igual a anterior, ou Senha não contem 8 caracteres, letra maiuscula, minuscula ou caracter especial");
-        }else{
-            userService.updatePassword(userID, newPassword);
-            return ResponseEntity.ok().body("Senha atualizada com sucesso");
-        }
+    public ResponseEntity<ApiResponse<?>> updateUserPassword(@RequestParam String currentPassword, @RequestParam String newPassword){
+        User user = getAuthenticatedUser();
+        userService.updatePassword(user.getId(), currentPassword, newPassword);
+        return ResponseEntity.ok(ApiResponse.success("Senha atualizada com sucesso", null));
     }
+
     @PutMapping("/update-photo")
-    public ResponseEntity<?> updateUserPhoto(@RequestParam Long userID, @RequestParam String newPhoto ){
-        if(userService.validateNewPhoto(userID, newPhoto)){
-            return ResponseEntity.badRequest().body("Foto igual a anterior, ou inválida");
-        }else{
-            userService.updatePhoto(userID, newPhoto);
-            return ResponseEntity.ok().body("Foto atualizada com sucesso");
-        }
+    public ResponseEntity<ApiResponse<?>> updateUserPhoto(@RequestParam String newPhoto ){
+        User user = getAuthenticatedUser();
+        userService.updatePhoto(user.getId(), newPhoto);
+        return ResponseEntity.ok(ApiResponse.success("Foto atualizada com sucesso", null));
     }
+
     @DeleteMapping("/delete")
-    public ResponseEntity<?> deleteUser(@RequestParam Long userID, @RequestParam String username, @RequestParam String password ){
-        User user = userService.findByUsername(username);
-        if (user == null || userService.validatePassword(password, user.getPassword()) || userService.findByUsername(username) == null){
-            return ResponseEntity.badRequest().body("Senha ou login inválidos");
-        }else {
-            userService.deleteUser(userID);
-            return ResponseEntity.ok().body("Usuário deletado com sucesso");
+    public ResponseEntity<ApiResponse<?>> deleteUser(@RequestParam String password ){
+        User user = getAuthenticatedUser();
+        if (user == null || !userService.validatePassword(password, user.getPassword())){
+            return ResponseEntity.badRequest().body(ApiResponse.error("Senha inválida"));
         }
-
+        userService.deleteUser(user.getId());
+        return ResponseEntity.ok(ApiResponse.success("Usuário deletado com sucesso", null));
     }
-
 }

@@ -1,5 +1,6 @@
-package com.eventsphere.entity;
+package com.eventsphere.entity.event;
 
+import com.eventsphere.entity.user.User;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -54,13 +55,48 @@ public class Event {
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<EventParticipant> participants;
 
+    @Column(unique = true)
+    private String inviteToken;
+
+    private String inviteCode;
+
+    public Event(String name, LocalDate dateFixedStart, LocalDate dateFixedEnd, LocalTime timeFixedStart, LocalTime timeFixedEnd, String localization, String description, int maxParticipants, int classification, Acess acess, String photo, State state, User owner) {
+        this.name = name;
+        this.dateFixedStart = dateFixedStart;
+        this.dateFixedEnd = dateFixedEnd;
+        this.timeFixedStart = timeFixedStart;
+        this.timeFixedEnd = timeFixedEnd;
+        this.localization = localization;
+        this.description = description;
+        this.maxParticipants = maxParticipants;
+        this.classification = classification;
+        this.acess = acess;
+        this.photo = photo;
+        this.state = state;
+        this.owner = owner;
+    }
+
+    public Event(String name, LocalDate dateFixedStart, LocalDate dateFixedEnd, LocalTime timeFixedStart, LocalTime timeFixedEnd, String localization, String description, int maxParticipants, int classification, Acess acess, State state, User owner) {
+        this.name = name;
+        this.dateFixedStart = dateFixedStart;
+        this.dateFixedEnd = dateFixedEnd;
+        this.timeFixedStart = timeFixedStart;
+        this.timeFixedEnd = timeFixedEnd;
+        this.localization = localization;
+        this.description = description;
+        this.maxParticipants = maxParticipants;
+        this.classification = classification;
+        this.acess = acess;
+        this.state = state;
+        this.owner = owner;
+    }
+
+    public Event() {
+
+    }
 
     public Long getId() {
         return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getName() {
@@ -219,5 +255,21 @@ public class Event {
         return LocalDateTime.of(dateFixedStart, timeFixedStart);
     }
         return LocalDateTime.of(dateStart, timeStart);
+    }
+
+    public String getInviteToken() {
+        return inviteToken;
+    }
+
+    public void setInviteToken(String inviteToken) {
+        this.inviteToken = inviteToken;
+    }
+
+    public String getInviteCode() {
+        return inviteCode;
+    }
+
+    public void setInviteCode(String inviteCode) {
+        this.inviteCode = inviteCode;
     }
 }

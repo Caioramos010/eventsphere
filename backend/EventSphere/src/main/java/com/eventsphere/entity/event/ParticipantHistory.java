@@ -1,4 +1,4 @@
-package com.eventsphere.entity;
+package com.eventsphere.entity.event;
 
 import jakarta.persistence.*;
 

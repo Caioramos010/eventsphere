@@ -1,4 +1,4 @@
-package com.eventsphere.entity;
+package com.eventsphere.entity.user;
 
 import jakarta.persistence.*;
 import java.util.Set;
@@ -34,6 +34,26 @@ public class User {
     private String password;
 
     private String photo;
+
+    public User(String username, String name, Set<String> roles, String email, LocalDateTime registerDate, String photo) {
+        this.username = username;
+        this.name = name;
+        this.roles = roles;
+        this.email = email;
+        this.registerDate = registerDate;
+        this.photo = photo;
+    }
+    public User(String username, String name, Set<String> roles, String email, LocalDateTime registerDate) {
+        this.username = username;
+        this.name = name;
+        this.roles = roles;
+        this.email = email;
+        this.registerDate = registerDate;
+    }
+
+    public User() {
+
+    }
 
     public Long getId() {
         return id;

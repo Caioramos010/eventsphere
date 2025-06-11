@@ -21,7 +21,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        com.eventsphere.entity.User user = userRepository.findByUsername(username);
+        com.eventsphere.entity.user.User user = userRepository.findByUsername(username);
         if (user == null) {
             throw new UsernameNotFoundException("Usuário não encontrado: " + username);
         }

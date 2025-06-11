@@ -1,4 +1,4 @@
-package com.eventsphere.entity;
+package com.eventsphere.entity.event;
 
 public enum Acess {
     PUBLIC,
