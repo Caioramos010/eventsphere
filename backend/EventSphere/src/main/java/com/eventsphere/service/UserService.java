@@ -2,6 +2,8 @@ package com.eventsphere.service;
 
 import com.eventsphere.dto.UserDTO;
 import com.eventsphere.entity.event.Event;
+import com.eventsphere.entity.event.EventParticipant;
+import com.eventsphere.entity.event.ParticipantStatus;
 import com.eventsphere.entity.user.Role;
 import com.eventsphere.entity.user.User;
 import com.eventsphere.repository.UserRepository;
@@ -13,6 +15,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -35,6 +39,9 @@ public class UserService {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private ImageService imageService;
 
     public UserService(PasswordEncoder passwordEncoder) {
         this.passwordEncoder = passwordEncoder;
@@ -83,35 +90,44 @@ public class UserService {
         }
         user.setPassword(encodedPassword);
         return userRepository.save(user);
-    }
-
-    public User registerUserByInvite(UserDTO userDTO, String inviteToken, String inviteCode) {
+    }    public User registerUserByInvite(UserDTO userDTO, String inviteToken, String inviteCode) {
         if (userDTO == null) {
             throw new IllegalArgumentException("Dados do usuário não informados");
         }
         if (inviteToken == null || inviteToken.isBlank() || inviteCode == null || inviteCode.isBlank()) {
             throw new IllegalArgumentException("Token e código do convite são obrigatórios");
         }
-        Event event = eventRepository.findByInviteToken(inviteToken);
-        if (event == null || !event.getInviteCode().equals(inviteCode)) {
-            throw new IllegalArgumentException("Convite inválido");
+        
+        Optional<Event> eventOptional = eventRepository.findByInviteToken(inviteToken);
+        if (eventOptional.isEmpty()) {
+            throw new IllegalArgumentException("Convite inválido - token não encontrado");
         }
-        // Reaproveita validações do cadastro normal
+        
+        Event event = eventOptional.get();
+        if (!event.getInviteCode().equals(inviteCode)) {
+            throw new IllegalArgumentException("Convite inválido - código incorreto");
+        }
+        
         User user = registerUser(userDTO);
-        // Adiciona o usuário como participante do evento
+        
         if (event.getParticipants() == null) {
-            event.setParticipants(new java.util.ArrayList<>());
+            event.setParticipants(new ArrayList<>());
         }
-        boolean alreadyParticipating = event.getParticipants().stream().anyMatch(p -> p.getUser().getUsername().equals(user.getUsername()));
+        
+        boolean alreadyParticipating = event.getParticipants().stream()
+                .anyMatch(p -> p.getUser().getUsername().equals(user.getUsername()));
         if (alreadyParticipating) {
             throw new IllegalArgumentException("Usuário já é participante deste evento");
         }
-        com.eventsphere.entity.event.EventParticipant participant = new com.eventsphere.entity.event.EventParticipant();
+        
+        EventParticipant participant = new EventParticipant();
         participant.setEvent(event);
         participant.setUser(user);
-        participant.setCurrentStatus(com.eventsphere.entity.event.ParticipantStatus.INVITED);
+        participant.setCurrentStatus(ParticipantStatus.INVITED);
+        
         event.getParticipants().add(participant);
         eventRepository.save(event);
+        
         return user;
     }
 
@@ -168,6 +184,14 @@ public class UserService {
         userRepository.deleteById(userID);
     }
 
+    public void deleteUserWithPasswordCheck(Long userId, String password) {
+        User user = getUser(userId);
+        if (user == null || !validatePassword(password, user.getPassword())){
+            throw new IllegalArgumentException("Senha inválida");
+        }
+        deleteUser(userId);
+    }
+
     public boolean validatePassword(String rawPassword, String encodedPassword) {
         return passwordEncoder.matches(rawPassword, encodedPassword);
     }
@@ -214,13 +238,13 @@ public class UserService {
         if (username == null || username.isBlank() || inviteToken == null || inviteToken.isBlank() || inviteCode == null || inviteCode.isBlank()) {
             return false;
         }
-        Event event = eventRepository.findByInviteToken(inviteToken);
-        if (event == null || !event.getInviteCode().equals(inviteCode)) {
+        Optional<Event> event = eventRepository.findByInviteToken(inviteToken);
+        if (event.isEmpty() || !event.get().getInviteCode().equals(inviteCode)) {
             return false;
         }
         // Verifica se o usuário está na lista de participantes do evento
-        if (event.getParticipants() == null) return false;
-        return event.getParticipants().stream().anyMatch(p -> p.getUser().getUsername().equals(username));
+        if (event.get().getParticipants() == null) return false;
+        return event.get().getParticipants().stream().anyMatch(p -> p.getUser().getUsername().equals(username));
     }
 
     public Map<String, String> loginInvite(String username, String password, String inviteToken, String inviteCode) {
@@ -237,10 +261,40 @@ public class UserService {
         }
         // Não precisa mais validar código do evento, login normal
         return login(username, password);
+    }    public Optional<User> getAuthenticatedUser(Long userID) {
+        return userRepository.findById(userID);
     }
 
-    public Optional<User> getAuthenticatedUser(Long userID) {
-        return userRepository.findById(userID);
+    /**
+     * Atualiza a foto do usuário
+     * 
+     * @param userId ID do usuário
+     * @param photoBase64 Foto em Base64
+     * @return Usuário atualizado
+     */
+    public User updateUserPhoto(Long userId, String photoBase64) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
+        
+        user.setPhoto(photoBase64);
+        return userRepository.save(user);
+    }
+
+    /**
+     * Upload de foto de usuário
+     */
+    public Map<String, Object> uploadUserPhoto(Long userId, org.springframework.web.multipart.MultipartFile file) {
+        // Converter arquivo para Base64
+        String base64Photo = imageService.convertToBase64(file);
+        
+        // Atualizar usuário com a foto Base64
+        User updatedUser = updateUserPhoto(userId, base64Photo);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("photoBase64", base64Photo);
+        response.put("success", true);
+        
+        return response;
     }
 }
 

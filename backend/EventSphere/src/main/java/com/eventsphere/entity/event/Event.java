@@ -31,12 +31,10 @@ public class Event {
     @Column(nullable = false)
     private String localization;
     @Column(nullable = false)
-    private String description;
-    private int maxParticipants;
-    private int classification;
-    @Column(nullable = false)
+    private String description;    private int maxParticipants;    private int classification;    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private Acess acess;
+    @Column(columnDefinition = "LONGTEXT")
     private String photo;
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)

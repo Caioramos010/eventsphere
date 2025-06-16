@@ -54,7 +54,7 @@ const Header = () => {
           <div className="main-header-user">
             <div className="profile-icon-container" ref={dropdownRef}>              <img 
                 ref={iconRef}
-                src={currentUser.imageUrl || userIcon} 
+                src={currentUser.photo || userIcon} 
                 alt="User Profile" 
                 className={`main-header-user-icon ${dropdownOpen ? 'active' : ''}`}
                 onClick={toggleDropdown}

@@ -11,7 +11,9 @@ import EventDetails from './pages/EventDetails';
 import EventInvite from './pages/EventInvite';
 import QRScanner from './pages/QRScanner';
 import Settings from './pages/Settings';
+import AllEvents from './pages/AllEvents';
 import ProtectedRoute from './components/ProtectedRoute';
+import InviteRedirect from './components/InviteRedirect';
 
 function AppRouter() {
   return (
@@ -21,12 +23,16 @@ function AppRouter() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         
-        {/* Rotas protegidas */}
-        <Route path='/main' element={
+        {/* Rotas protegidas */}        <Route path='/main' element={
           <ProtectedRoute>
             <Main />
           </ProtectedRoute>
-        } />        <Route path='/create-event' element={
+        } />
+        <Route path='/eventos' element={
+          <ProtectedRoute>
+            <AllEvents />
+          </ProtectedRoute>
+        } /><Route path='/create-event' element={
           <ProtectedRoute>
             <CreateEvent />
           </ProtectedRoute>
@@ -34,7 +40,13 @@ function AppRouter() {
           <ProtectedRoute>
             <JoinEvent />
           </ProtectedRoute>
+        } />        <Route path='/join-event/:token' element={
+          <ProtectedRoute>
+            <JoinEvent />
+          </ProtectedRoute>
         } />
+        {/* Rota para redirecionamento de convites */}
+        <Route path='/invite/:token' element={<InviteRedirect />} />
         <Route path='/profile' element={
           <ProtectedRoute>
             <UserProfile />

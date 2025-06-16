@@ -6,14 +6,12 @@ import { Link } from '../components/Link';
 import EventService from '../services/EventService';
 import AuthService from '../services/AuthService';
 import { useNavigate } from 'react-router-dom';
-import eventImg from '../images/event.png'
-import userImg from '../images/user.png'
-import ownerImg from '../images/crown.png'
-import colaboratorImg from '../images/colaborator.png'
 import Calendar from '../components/Calendar';
-import publicEventsImg from '../images/public.png'
-import myEventsImg from '../images/private.png'
 import EventCard from '../components/EventCard';
+// React Icons imports
+import { FaCalendarAlt, FaCrown, FaUserFriends } from 'react-icons/fa';
+import { BsPersonFill } from 'react-icons/bs';
+import { MdPublic, MdLock } from 'react-icons/md';
 
 function Main() {  
   const [myEvents, setMyEvents] = useState([]);
@@ -116,17 +114,16 @@ function Main() {
             <div className="main-top-section">
               <Calendar events={[...myEvents, ...publicEvents]} />             
               <div className="actions-section">
-                <h3 className="actions-title">Ações Rápidas</h3>
-                <Link to="/event/enter">
+                <h3 className="actions-title">Ações Rápidas</h3>                <Link to="/event/enter">
                   <button className="modern-btn modern-btn-secondary action-btn">
-                    <img src={eventImg} alt="Evento" className="action-icon" />
+                    <FaCalendarAlt className="action-icon" />
                     <span>PARTICIPAR DE UM EVENTO</span>
                   </button>
                 </Link>
                 
                 <Link to="/create-event">
                   <button className="modern-btn action-btn">
-                    <img src={eventImg} alt="Criar evento" className="action-icon" />
+                    <FaCalendarAlt className="action-icon" />
                     <span>CRIAR EVENTO</span>
                   </button>
                 </Link>
@@ -136,10 +133,9 @@ function Main() {
 
           {/* Meus Eventos */}
           <section className="events-section">
-            <div className="glass-card">
-              <div className="section-header">
+            <div className="glass-card">              <div className="section-header">
                 <div className="section-title">
-                  <img src={myEventsImg} alt="Meus eventos" className="section-icon" />
+                  <MdLock className="section-icon" />
                   <span>MEUS EVENTOS</span>
                 </div>
                 <div className="search-row">
@@ -161,7 +157,7 @@ function Main() {
                       key={ev.id} 
                       event={ev} 
                       type="primary" 
-                      linkTo={`/edit_event/${ev.id}`} 
+                      linkTo={`/event/${ev.id}`} 
                     />
                   ))
                 )}
@@ -171,10 +167,9 @@ function Main() {
 
           {/* Eventos Públicos */}
           <section className="events-section">
-            <div className="glass-card">
-              <div className="section-header">
+            <div className="glass-card">              <div className="section-header">
                 <div className="section-title">
-                  <img src={publicEventsImg} alt="Eventos públicos" className="section-icon" />
+                  <MdPublic className="section-icon" />
                   <span>EVENTOS PÚBLICOS</span>
                 </div>
                 <div className="search-row">

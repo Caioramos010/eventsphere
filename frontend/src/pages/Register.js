@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { IoEyeOutline, IoEyeOffOutline, IoCamera, IoTrash } from 'react-icons/io5';
 import '../styles/auth.css';
 import logo from '../images/logo-login.png';
@@ -17,13 +17,20 @@ const Register = () => {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   
   // Verificar se usuário já está logado
   useEffect(() => {
     if (AuthService.isAuthenticated()) {
-      navigate('/main');
+      // Se há token de convite, redirecionar para a página de participação
+      const inviteToken = searchParams.get('token');
+      if (inviteToken) {
+        navigate(`/join-event/${inviteToken}`);
+      } else {
+        navigate('/main');
+      }
     }
-  }, [navigate]);
+  }, [navigate, searchParams]);
 
   // Handler para upload de foto
   const handleFotoChange = (e) => {
@@ -77,10 +84,32 @@ const Register = () => {
       };
       
       const result = await AuthService.register(userData);
-      
-      if (result.success) {
+        if (result.success) {
         setSuccess(result.message || 'Registro realizado com sucesso!');
-        setTimeout(() => navigate('/login'), 1200);
+        // Verificar se há token de convite para fazer login automático e redirecionar
+        const inviteToken = searchParams.get('token');
+        if (inviteToken) {
+          // Fazer login automático após o registro
+          setTimeout(async () => {
+            try {
+              const loginResult = await AuthService.login({
+                username: login,
+                password: senha
+              });
+              
+              if (loginResult.success) {
+                navigate(`/join-event/${inviteToken}`);
+              } else {
+                navigate(`/login?token=${inviteToken}`);
+              }
+            } catch (err) {
+              console.error('Auto-login error:', err);
+              navigate(`/login?token=${inviteToken}`);
+            }
+          }, 1000);
+        } else {
+          setTimeout(() => navigate('/login'), 1200);
+        }
       } else {
         setError(result.message || 'Erro ao registrar usuário');
       }
@@ -201,9 +230,15 @@ const Register = () => {
             ) : 'REGISTRO'}
           </button>
         </form>
-        
-        <div className="auth-switch">
-          Já possui login? <span className="auth-link" onClick={() => navigate('/login')}>Logue agora</span>
+          <div className="auth-switch">
+          Já possui login? <span className="auth-link" onClick={() => {
+            const inviteToken = searchParams.get('token');
+            if (inviteToken) {
+              navigate(`/login?token=${inviteToken}`);
+            } else {
+              navigate('/login');
+            }
+          }}>Logue agora</span>
         </div>
       </div>
       

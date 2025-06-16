@@ -28,11 +28,10 @@ public class User {
     private String email;
 
     @Column(nullable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-    private LocalDateTime registerDate;
-
-    @Column(nullable = false, unique = false)
+    private LocalDateTime registerDate;    @Column(nullable = false, unique = false)
     private String password;
 
+    @Column(columnDefinition = "LONGTEXT")
     private String photo;
 
     public User(String username, String name, Set<String> roles, String email, LocalDateTime registerDate, String photo) {

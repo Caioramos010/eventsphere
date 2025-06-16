@@ -181,20 +181,43 @@ const EventService = {
     }
   },
 
-  // Validar convite
-  async validateInvite(token, code) {
+  // Gerar link de convite
+  async generateInviteLink(eventId) {
     try {
-      const url = buildUrl(API_CONFIG.ENDPOINTS.INVITE_VALIDATE, { token, code });
+      const url = buildUrl(API_CONFIG.ENDPOINTS.INVITE_GENERATE, { eventID: eventId });
       const response = await get(url);
       const data = await response.json();
       
       if (data.success || response.ok) {
-        return { success: true, message: data.message || 'Convite válido' };
+        return { 
+          success: true, 
+          inviteToken: data.data.inviteToken,
+          inviteUrl: data.data.inviteUrl,
+          message: data.message || 'Link de convite gerado com sucesso' 
+        };
       } else {
-        return { success: false, message: data.message || 'Convite inválido' };
+        return { success: false, message: data.message || 'Erro ao gerar link de convite' };
       }
     } catch (error) {
-      console.error('Error validating invite:', error);
+      console.error('Error generating invite link:', error);
+      return { success: false, message: error.message || 'Erro de conexão' };
+    }
+  },
+
+  // Validar token de convite
+  async validateInviteToken(token) {
+    try {
+      const url = buildUrl(API_CONFIG.ENDPOINTS.INVITE_VALIDATE, { token });
+      const response = await get(url);
+      const data = await response.json();
+      
+      if (data.success || response.ok) {
+        return { success: true, data: data.data, message: data.message || 'Token válido' };
+      } else {
+        return { success: false, message: data.message || 'Token inválido' };
+      }
+    } catch (error) {
+      console.error('Error validating token:', error);
       return { success: false, message: error.message || 'Erro de conexão' };
     }
   },
@@ -224,15 +247,16 @@ const EventService = {
     try {
       const formData = new FormData();
       formData.append('image', imageFile);
+      formData.append('eventID', eventId);
       
-      const url = buildUrl(API_CONFIG.ENDPOINTS.EVENT_IMAGE, { eventID: eventId });
+      const url = buildUrl(API_CONFIG.ENDPOINTS.EVENT_IMAGE);
       const response = await uploadFile(url, formData);
       const data = await response.json();
       
       if (data.success || response.ok) {
         return { 
           success: true, 
-          imageUrl: data.imageUrl || data.image || data.url,
+          imageUrl: data.data?.imageUrl || data.imageUrl || data.image || data.url,
           message: 'Imagem carregada com sucesso'
         };
       } else {
@@ -240,6 +264,31 @@ const EventService = {
       }
     } catch (error) {
       console.error('Error uploading event image:', error);
+      return { success: false, message: error.message || 'Erro de conexão' };
+    }
+  },
+
+  // Upload event photo
+  async uploadEventPhoto(eventId, photoFile) {
+    try {
+      if (!photoFile) {
+        throw new Error('Arquivo de foto não fornecido');
+      }
+
+      const formData = new FormData();
+      formData.append('image', photoFile); // Use 'image' to match backend expectation
+      formData.append('eventID', eventId);  // Use 'eventID' to match backend expectation
+
+      const response = await uploadFile(API_CONFIG.ENDPOINTS.EVENT_IMAGE, formData);
+      const data = await response.json();
+      
+      if (data.success || response.ok) {
+        return { success: true, fileName: data.fileName, imageUrl: data.data?.imageUrl, message: data.message || 'Foto do evento enviada com sucesso' };
+      } else {
+        return { success: false, message: data.message || 'Erro ao enviar foto do evento' };
+      }
+    } catch (error) {
+      console.error('Error uploading event photo:', error);
       return { success: false, message: error.message || 'Erro de conexão' };
     }
   },
@@ -260,8 +309,14 @@ const EventService = {
   // Iniciar um evento
   async startEvent(eventId) {
     try {
-      const url = buildUrl(API_CONFIG.ENDPOINTS.EVENT_START, { eventID: eventId });
-      const response = await post(url);
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.EVENT_START}?eventID=${eventId}`;
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
       const data = await response.json();
       
       if (data.success || response.ok) {
@@ -281,8 +336,14 @@ const EventService = {
   // Finalizar um evento
   async finishEvent(eventId) {
     try {
-      const url = buildUrl(API_CONFIG.ENDPOINTS.EVENT_FINISH, { eventID: eventId });
-      const response = await post(url);
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.EVENT_FINISH}?eventID=${eventId}`;
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
       const data = await response.json();
       
       if (data.success || response.ok) {
@@ -302,8 +363,14 @@ const EventService = {
   // Cancelar um evento
   async cancelEvent(eventId) {
     try {
-      const url = buildUrl(API_CONFIG.ENDPOINTS.EVENT_CANCEL, { eventID: eventId });
-      const response = await post(url);
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.EVENT_CANCEL}?eventID=${eventId}`;
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
       const data = await response.json();
       
       if (data.success || response.ok) {
@@ -318,7 +385,47 @@ const EventService = {
       console.error('Error cancelling event:', error);
       return { success: false, message: error.message || 'Erro de conexão' };
     }
-  }
+  },
+
+  // Remover colaborador de um evento
+  async removeCollaborator(eventId, userId) {
+    try {
+      const url = buildUrl(`${API_CONFIG.ENDPOINTS.EVENTS}/${eventId}/collaborator/${userId}`);
+      const response = await del(url);
+      const data = await response.json();
+      
+      if (data.success || response.ok) {
+        return { success: true, message: 'Colaborador removido com sucesso' };
+      } else {
+        return { success: false, message: data.message || 'Erro ao remover colaborador' };
+      }
+    } catch (error) {
+      console.error('Error removing collaborator:', error);
+      return { success: false, message: error.message || 'Erro de conexão' };
+    }
+  },
+
+  // Obter eventos onde o usuário é participante
+  async getParticipatingEvents() {
+    try {
+      const url = `${API_CONFIG.BASE_URL}/api/event/participating`;
+      const response = await get(url);
+      const data = await response.json();
+      
+      if (data.success || response.ok) {
+        return { 
+          success: true, 
+          events: data.data || data.events || [], 
+          message: data.message || 'Eventos carregados com sucesso' 
+        };
+      } else {
+        return { success: false, message: data.message || 'Erro ao carregar eventos', events: [] };
+      }
+    } catch (error) {
+      console.error('Error loading participating events:', error);
+      return { success: false, message: error.message || 'Erro de conexão', events: [] };
+    }
+  },
 };
 
 export default EventService;

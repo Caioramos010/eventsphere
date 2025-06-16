@@ -153,7 +153,9 @@ export async function uploadFile(endpoint, formData) {
   };
 
   const url = buildUrl(endpoint);
-  return fetchWithAuth(url, {
+  
+  // Remove o Content-Type padrão para permitir que o browser defina o boundary correto
+  return fetch(url, {
     method: 'POST',
     headers,
     body: formData

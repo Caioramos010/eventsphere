@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { IoEyeOutline, IoEyeOffOutline } from 'react-icons/io5';
 import '../styles/auth.css';
 import logo from '../images/logo-login.png';
@@ -12,14 +12,20 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   // Verificar se usuário já está logado
   useEffect(() => {
     if (AuthService.isAuthenticated()) {
-      navigate('/main');
+      // Se há token de convite, redirecionar para a página de participação
+      const inviteToken = searchParams.get('token');
+      if (inviteToken) {
+        navigate(`/join-event/${inviteToken}`);
+      } else {
+        navigate('/main');
+      }
     }
-  }, [navigate]);
-
+  }, [navigate, searchParams]);
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -34,7 +40,13 @@ const Login = () => {
       const result = await AuthService.login(credentials);
       
       if (result.success) {
-        navigate('/main');
+        // Verificar se há token de convite para redirecionar
+        const inviteToken = searchParams.get('token');
+        if (inviteToken) {
+          navigate(`/join-event/${inviteToken}`);
+        } else {
+          navigate('/main');
+        }
       } else {
         setError(result.message || 'Login ou senha inválidos');
       }
@@ -100,9 +112,15 @@ const Login = () => {
             ) : 'LOGIN'}
           </button>
         </form>
-        
-        <div className="auth-switch">
-          Não possui login? <span className="auth-link" onClick={() => navigate('/register')}>Faça o registro agora</span>
+          <div className="auth-switch">
+          Não possui login? <span className="auth-link" onClick={() => {
+            const inviteToken = searchParams.get('token');
+            if (inviteToken) {
+              navigate(`/register?token=${inviteToken}`);
+            } else {
+              navigate('/register');
+            }
+          }}>Faça o registro agora</span>
         </div>
       </div>
       

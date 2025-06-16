@@ -3,136 +3,207 @@ package com.eventsphere.controller;
 import com.eventsphere.dto.ApiResponse;
 import com.eventsphere.dto.EventDTO;
 import com.eventsphere.entity.event.Event;
-import com.eventsphere.repository.EventRepository;
-import com.eventsphere.repository.UserRepository;
-import com.eventsphere.service.EventService;
 import com.eventsphere.entity.user.User;
-import com.eventsphere.service.ParticipantService;
+import com.eventsphere.service.EventService;
+import com.eventsphere.utils.SecurityUtils;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+/**
+ * Controlador para gerenciamento de eventos
+ */
 @RequestMapping("/api/event")
 @RestController
-public class EventController{
-
-    @Autowired
-    UserRepository userRepository;
-
-    @Autowired
-    EventRepository eventRepository;
+public class EventController {
 
     @Autowired
     private EventService eventService;
-
+    
     @Autowired
-    private ParticipantService participantService;
-
-
-    private User getAuthenticatedUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-        return userRepository.findByUsername(username);
-    }
-
+    private SecurityUtils securityUtils;
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<?>> registerEvent(@RequestBody EventDTO eventDTO) {
-        User user = getAuthenticatedUser();
+        User user = securityUtils.getAuthenticatedUser();
         eventDTO.setOwnerId(user.getId());
         Event event = eventService.registerEvent(eventDTO);
-        return ResponseEntity.ok(ApiResponse.success("Evento registrado com sucesso", event));
+        EventDTO resultDTO = eventService.convertToDTO(event);
+        return ResponseEntity.ok(ApiResponse.success("Evento registrado com sucesso", resultDTO));
     }
 
+    /**
+     * Edita um evento existente
+     * 
+     * @param eventDTO Dados atualizados do evento
+     * @param eventID ID do evento a ser editado
+     * @return Resposta de sucesso
+     */
     @PutMapping("/edit")
     public ResponseEntity<ApiResponse<?>> editEvent(@RequestBody EventDTO eventDTO, @RequestParam Long eventID) {
-        User user = getAuthenticatedUser();
+        User user = securityUtils.getAuthenticatedUser();
         eventService.updateEvent(eventID, eventDTO, user.getId());
         return ResponseEntity.ok(ApiResponse.success("Evento editado com sucesso", null));
-    }
-
+    }    /**
+     * Obtém detalhes de um evento específico com informações do status do usuário
+     * 
+     * @param eventID ID do evento
+     * @return Dados do evento com informações do usuário
+     */
     @GetMapping("/get")
     public ResponseEntity<ApiResponse<?>> getEventControll(@RequestParam Long eventID){
-        Event event = eventService.getEvent(eventID);
-        return ResponseEntity.ok(ApiResponse.success(event));
+        User user = securityUtils.getAuthenticatedUser();
+        EventDTO eventDTO = eventService.getEventWithUserInfo(eventID, user.getId());
+        return ResponseEntity.ok(ApiResponse.success(eventDTO));
     }
 
+    /**
+     * Remove um evento
+     * 
+     * @param eventID ID do evento a ser removido
+     * @return Resposta de sucesso
+     */
     @DeleteMapping("/delete")
     public ResponseEntity<ApiResponse<?>> deleteEventControll(@RequestParam Long eventID) {
-        User user = getAuthenticatedUser();
+        User user = securityUtils.getAuthenticatedUser();
         eventService.authorizeEditEvent(eventID, user.getId());
         eventService.deleteEvent(eventID);
         return ResponseEntity.ok(ApiResponse.success("Evento deletado com sucesso", null));
     }
 
+    /**
+     * Inicia um evento
+     * 
+     * @param eventID ID do evento a ser iniciado
+     * @return Resposta de sucesso
+     */
     @PutMapping("/start")
     public ResponseEntity<ApiResponse<?>> startEventControll(@RequestParam Long eventID) {
-        User user = getAuthenticatedUser();
+        User user = securityUtils.getAuthenticatedUser();
         eventService.startEvent(eventID, user.getId());
         return ResponseEntity.ok(ApiResponse.success("Evento iniciado com sucesso", null));
     }
 
+    /**
+     * Finaliza um evento
+     * 
+     * @param eventID ID do evento a ser finalizado
+     * @return Resposta de sucesso
+     */
     @PutMapping("/finish")
     public ResponseEntity<ApiResponse<?>> finishEventControll(@RequestParam Long eventID) {
-        User user = getAuthenticatedUser();
+        User user = securityUtils.getAuthenticatedUser();
         eventService.finishEvent(eventID, user.getId());
         return ResponseEntity.ok(ApiResponse.success("Evento finalizado com sucesso", null));
     }
 
+    /**
+     * Cancela um evento
+     * 
+     * @param eventID ID do evento a ser cancelado
+     * @return Resposta de sucesso
+     */
     @PutMapping("/cancel")
     public ResponseEntity<ApiResponse<?>> cancelEventControll(@RequestParam Long eventID) {
-        User user = getAuthenticatedUser();
+        User user = securityUtils.getAuthenticatedUser();
         eventService.cancelEvent(eventID, user.getId());
         return ResponseEntity.ok(ApiResponse.success("Evento cancelado com sucesso", null));
-    }
-
+    }    /**
+     * Obtém todos os eventos relacionados ao usuário atual
+     * 
+     * @return Lista de eventos do usuário
+     */
     @GetMapping("/get-myevents")
     public ResponseEntity<ApiResponse<?>> getMyEvents() {
-        User user = getAuthenticatedUser();
-        var events = eventService.getMyEvents(user.getId());
-        if (events.isEmpty()) {
-            return ResponseEntity.badRequest().body(ApiResponse.error("Não há eventos registrados, ou você não está inserido"));
-        }
+        User user = securityUtils.getAuthenticatedUser();
+        List<EventDTO> events = eventService.getMyEventsWithUserInfo(user.getId());
         return ResponseEntity.ok(ApiResponse.success(events));
     }
-
+      /**
+     * Obtém todos os eventos públicos
+     * 
+     * @return Lista de eventos públicos
+     */
     @GetMapping("/get-public")
     public ResponseEntity<ApiResponse<?>> getPublicEvents() {
-        var events = eventService.getPublicEvents();
-        if (events.isEmpty()) {
-            return ResponseEntity.badRequest().body(ApiResponse.error("Não há eventos públicos registrados"));
-        }
+        User user = securityUtils.getAuthenticatedUser();
+        List<EventDTO> events = eventService.getPublicEventsWithUserInfo(user.getId());
         return ResponseEntity.ok(ApiResponse.success(events));
     }
 
-    @GetMapping("/invite/validate")
-    public ResponseEntity<ApiResponse<?>> validateInvite(@RequestParam String token, @RequestParam String code) {
-        boolean valid = eventService.validateInvite(token, code);
-        if (valid) {
-            return ResponseEntity.ok(ApiResponse.success("Convite válido", null));
-        } else {
-            return ResponseEntity.badRequest().body(ApiResponse.error("Convite inválido"));
-        }
-    }
-
+    /**
+     * Adiciona um colaborador a um evento
+     * 
+     * @param eventID ID do evento
+     * @param userID ID do usuário a ser adicionado como colaborador
+     * @return Resposta de sucesso
+     */
     @PostMapping("/add-collaborator")
     public ResponseEntity<ApiResponse<?>> addCollaborator(@RequestParam Long eventID, @RequestParam Long userID) {
-        User user = getAuthenticatedUser();
+        User user = securityUtils.getAuthenticatedUser();
         eventService.addCollaborator(eventID, userID, user.getId());
         return ResponseEntity.ok(ApiResponse.success("Colaborador adicionado com sucesso", null));
     }
 
-    @PostMapping("/create-with-invite")
-    public ResponseEntity<ApiResponse<?>> createEventWithInvite() {
-        User user = getAuthenticatedUser();
-        Event event = eventService.createEventWithInvite(user.getId());
+    /**
+     * Cria um convite para um evento existente
+     * 
+     * @param eventID ID do evento para o qual criar o convite
+     * @return Resposta com os dados do convite
+     */    @PostMapping("/create-with-invite")
+    public ResponseEntity<ApiResponse<?>> createEventWithInvite(@RequestParam Long eventID) {
+        User user = securityUtils.getAuthenticatedUser();
+        String inviteToken = eventService.generateInviteLink(eventID, user.getId());
+        Event event = eventService.getEvent(eventID);
+        
         var data = Map.of(
-            "inviteToken", event.getInviteToken(),
+            "inviteToken", inviteToken,
             "inviteCode", event.getInviteCode()
         );
-        return ResponseEntity.ok(ApiResponse.success("Evento criado com convite", data));
-    }   
+        return ResponseEntity.ok(ApiResponse.success("Convite criado com sucesso", data));
+    }
+    
+    /**
+     * Gera link de convite para um evento
+     * 
+     * @param eventID ID do evento
+     * @return Token de convite
+     */
+    @GetMapping("/invite/generate")
+    public ResponseEntity<ApiResponse<?>> generateInviteLink(@RequestParam Long eventID) {
+        User user = securityUtils.getAuthenticatedUser();
+        String inviteToken = eventService.generateInviteLink(eventID, user.getId());
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("inviteToken", inviteToken);
+        response.put("inviteUrl", "http://localhost:3000/invite/" + inviteToken);
+        
+        return ResponseEntity.ok(ApiResponse.success("Link de convite gerado com sucesso", response));
+    }
+    
+    /**
+     * Valida um token de convite
+     * 
+     * @param token Token de convite
+     * @return Dados do evento
+     */
+    @GetMapping("/invite/validate")
+    public ResponseEntity<ApiResponse<?>> validateInviteToken(@RequestParam String token) {
+        EventDTO eventDTO = eventService.validateInviteToken(token);
+        return ResponseEntity.ok(ApiResponse.success("Token válido", eventDTO));
+    }
+
+    /**
+     * Obter eventos onde o usuário é participante
+     */
+    @GetMapping("/participating")
+    public ResponseEntity<ApiResponse<?>> getParticipatingEvents() {
+        User user = securityUtils.getAuthenticatedUser();
+        List<EventDTO> participatingEvents = eventService.getParticipatingEventsForUser(user.getId());
+        return ResponseEntity.ok(ApiResponse.success("Eventos carregados com sucesso", participatingEvents));
+    }
 }

@@ -62,21 +62,26 @@ const UserService = {  // Atualizar email do usuário
       console.error('Error updating password:', error);
       return { success: false, message: error.message || 'Erro de conexão' };
     }
-  },
-
-  // Upload de foto do usuário
+  },  // Upload de foto do usuário
   async uploadUserPhoto(imageFile) {
     try {
       const formData = new FormData();
       formData.append('photo', imageFile);
-        const response = await uploadFile(`${API_CONFIG.ENDPOINTS.USER_PROFILE}/photo`, formData);
+      const response = await uploadFile(API_CONFIG.ENDPOINTS.USER_PHOTO, formData);
       const data = await response.json();
       
       if (data.success || response.ok) {
-        // Atualizar foto no localStorage usando AuthService
-        AuthService.updateCurrentUser({ photo: data.photoUrl || data.url });
+        // A imagem agora é retornada em Base64
+        const photoBase64 = data.data?.photoBase64 || data.photoBase64;
         
-        return { success: true, photoUrl: data.photoUrl || data.url };
+        // Atualizar foto no localStorage usando AuthService
+        AuthService.updateCurrentUser({ photo: photoBase64 });
+        
+        return { 
+          success: true, 
+          photoUrl: photoBase64, // Para compatibilidade com código existente
+          photoBase64: photoBase64 
+        };
       } else {
         return { success: false, message: data.message || 'Erro ao fazer upload da foto' };
       }

@@ -32,15 +32,17 @@ export default function CreateEvent() {
       navigate('/login');
     }
   }, [navigate]);
-
   function handleChange(e) {
     const { name, value, type, files } = e.target;
     if (type === 'file' && files[0]) {
       const file = files[0];
+      // Store the actual file for later upload
+      setForm(f => ({ ...f, photoFile: file }));
+      
+      // Create preview for UI only
       const reader = new FileReader();
       reader.onload = (e) => {
         const base64 = e.target.result;
-        setForm(f => ({ ...f, photo: base64 }));
         setPhotoPreview(base64);
       };
       reader.readAsDataURL(file);
@@ -48,7 +50,6 @@ export default function CreateEvent() {
       setForm(f => ({ ...f, [name]: value }));
     }
   }
-
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
@@ -58,11 +59,13 @@ export default function CreateEvent() {
     try {
       if (!form.name || !form.dateFixedStart || !form.timeFixedStart || !form.timeFixedEnd || !form.localization) {
         setError('Preencha todos os campos obrigatórios');
+        setLoading(false);
         return;
       }
 
       if (form.timeFixedEnd <= form.timeFixedStart) {
         setError('O horário de fim deve ser posterior ao horário de início');
+        setLoading(false);
         return;
       }
 
@@ -72,9 +75,11 @@ export default function CreateEvent() {
       
       if (selectedDate < today) {
         setError('A data do evento não pode ser no passado');
+        setLoading(false);
         return;
       }
 
+      // Create event data without the photo
       const eventData = {
         name: form.name,
         dateFixedStart: form.dateFixedStart,
@@ -86,10 +91,22 @@ export default function CreateEvent() {
         maxParticipants: parseInt(form.maxParticipants) || 50,
         classification: parseInt(form.classification) || 0,
         acess: form.acess,
-        photo: form.photo || null
+        photo: null // Don't include the photo in the initial request
       };
 
+      // First create the event
       const result = await EventService.createEvent(eventData);
+
+      if (result.success && form.photoFile) {
+        // If event creation was successful and we have a photo file, upload it separately
+        try {
+          await EventService.uploadEventPhoto(result.event.id, form.photoFile);
+          console.log('Photo uploaded successfully');
+        } catch (photoError) {
+          console.error('Error uploading photo:', photoError);
+          // Continue anyway since the event was created
+        }
+      }
 
       if (result.success) {
         setSuccess(result.message || 'Evento criado com sucesso!');
@@ -104,7 +121,8 @@ export default function CreateEvent() {
       setError('Erro ao conectar com o servidor');
     } finally {
       setLoading(false);
-    }  }
+    }
+  }
     return (
     <>      <Header />
       <div className="page-container">

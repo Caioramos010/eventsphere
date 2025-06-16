@@ -22,7 +22,7 @@
   --color-gray-border: #bdbdbd;      /* Cinza border */
 
   /* Background Gradients */
-  --gradient-main: linear-gradient(135deg, #504a50 0%, #9b959b 50%, #504a50 100%);
+  --gradient-main: linear-gradient(135deg, #504a50 0%, #808080 50%, #504a50 100%);
   --gradient-primary: linear-gradient(135deg, #E82E9B, #4a9eff);
   --gradient-secondary: linear-gradient(135deg, #4a9eff, #E82E9B);
   
