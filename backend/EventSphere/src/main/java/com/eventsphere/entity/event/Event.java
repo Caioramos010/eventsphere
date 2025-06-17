@@ -51,11 +51,10 @@ public class Event {
 
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<EventParticipant> participants;
-
-    @Column(unique = true)
+    private List<EventParticipant> participants;    @Column(unique = true)
     private String inviteToken;
 
+    @Column(unique = true, length = 8)
     private String inviteCode;
 
     public Event(String name, LocalDate dateFixedStart, LocalDate dateFixedEnd, LocalTime timeFixedStart, LocalTime timeFixedEnd, String localization, String description, int maxParticipants, int classification, Acess acess, String photo, State state, User owner) {

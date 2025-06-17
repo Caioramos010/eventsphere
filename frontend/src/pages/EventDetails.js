@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { PageTitle, StandardButton, StandardCard, BackButton } from '../components';
 import { 
   IoPeopleOutline, 
   IoPlayOutline, 
@@ -475,25 +476,25 @@ const EventDetails = () => {
   }
 
   const canEdit = event.userStatus === 'owner' || event.userStatus === 'collaborator';
-
   return (
     <>
       <Header />
       <div className="page-container">
         <div className="page-main">
-          <div className="page-header">
-            <button className="back-btn" onClick={() => navigate('/main')}>
-              <IoArrowBack />
-            </button>
-            <div className="page-title">
-              <IoCalendarOutline className="page-icon" />
-              <div>
-                <h1>Detalhes do Evento</h1>
-                <div className="subtitle">Gerencie seu evento</div>
-              </div>
-            </div>
+          <div className="page-header">            <BackButton onClick={() => navigate('/main')} />
+            
+            <PageTitle
+              icon={IoCalendarOutline}
+              title="Detalhes do Evento"
+              subtitle="Gerencie seu evento"
+              description="Visualize informações e gerencie participantes"
+            />
           </div>          {/* Event Info Card */}          
-          <div className={`glass-card-large ${isEventActive ? 'event-active' : ''}`}>            {/* Status Badge no topo direito */}
+          <StandardCard 
+            variant="glass" 
+            padding="large"
+            className={`event-details-main ${isEventActive ? 'event-active' : ''}`}
+          >{/* Status Badge no topo direito */}
             <div className="event-status-container">
               {isEventActive ? (
                 <div className="event-active-badge">
@@ -569,30 +570,48 @@ const EventDetails = () => {
                   </div>
                 )}
               </div>
-              
-              <div className="event-actions">
+                <div className="event-actions">
                 {/* Botão para convidar pessoas (visível para todos) */}
-                <button className="modern-btn event-action-btn" onClick={handleInviteClick}>
-                  <IoPeopleOutline />
-                  <span>Convidar Pessoas</span>
-                </button>
+                <StandardButton
+                  variant="primary"
+                  size="medium"
+                  icon={IoPeopleOutline}
+                  onClick={handleInviteClick}
+                  className="event-action-btn"
+                >
+                  Convidar Pessoas
+                </StandardButton>
                   {/* Botões para donos e colaboradores */}
                 {canEdit && (
-                  <>
-                    {event.state === 'CREATED' ? (
+                  <>                    {event.state === 'CREATED' ? (
                       <>                        
-                        <button className="modern-btn event-action-btn start-btn" onClick={handleStartEvent}>
-                          <IoPlayOutline />
-                          <span>Iniciar Evento</span>
-                        </button>
-                        <button className="modern-btn event-action-btn edit-btn" onClick={handleEditEvent}>
-                          <IoCreateOutline />
-                          <span>Editar Evento</span>
-                        </button>
-                        <button className="modern-btn event-action-btn cancel-btn" onClick={handleCancelEvent}>
-                          <IoCloseOutline />
-                          <span>Cancelar Evento</span>
-                        </button>
+                        <StandardButton
+                          variant="success"
+                          size="medium"
+                          icon={IoPlayOutline}
+                          onClick={handleStartEvent}
+                          className="event-action-btn start-btn"
+                        >
+                          Iniciar Evento
+                        </StandardButton>
+                        <StandardButton
+                          variant="primary"
+                          size="medium"
+                          icon={IoCreateOutline}
+                          onClick={handleEditEvent}
+                          className="event-action-btn edit-btn"
+                        >
+                          Editar Evento
+                        </StandardButton>
+                        <StandardButton
+                          variant="danger"
+                          size="medium"
+                          icon={IoCloseOutline}
+                          onClick={handleCancelEvent}
+                          className="event-action-btn cancel-btn"
+                        >
+                          Cancelar Evento
+                        </StandardButton>
                       </>
                     ) : event.state === 'ACTIVE' ? (
                       <>
@@ -643,8 +662,7 @@ const EventDetails = () => {
                     <span>Participar do Evento</span>
                   </button>
                 )}
-                
-                {/* Botão para gerar QR Code para participantes confirmados */}
+                  {/* Botão para gerar QR Code para participantes confirmados */}
                 {!canEdit && userConfirmed && isEventActive && (
                   <button className="modern-btn event-action-btn qrcode-btn" onClick={handleGenerateQRCode}>
                     <IoQrCodeOutline />
@@ -653,11 +671,10 @@ const EventDetails = () => {
                 )}
               </div>
             </div>
-          </div>
-          
-          {/* Collaborators Section - Visível apenas para donos */}
+          </StandardCard>
+            {/* Collaborators Section - Visível apenas para donos */}
           {event.userStatus === 'owner' && collaborators && collaborators.length > 0 && (
-            <div className="glass-card">
+            <StandardCard variant="glass" padding="large">
               <div className="section-header">
                 <h3>Colaboradores ({collaborators.length})</h3>
                 <button className="modern-btn-secondary small-btn" onClick={handlePrintList}>
@@ -668,7 +685,7 @@ const EventDetails = () => {
               
               <div className="participant-list">
                 {collaborators.map(collaborator => (
-                  <div key={collaborator.id || `collab-${Math.random()}`} className="participant-item">                    <div className="participant-avatar">
+                  <div key={collaborator.id || `collab-${Math.random()}`} className="participant-item"><div className="participant-avatar">
                       <img src={
                         collaborator.imageUrl 
                           ? (collaborator.imageUrl.startsWith('data:') ? collaborator.imageUrl : `data:image/jpeg;base64,${collaborator.imageUrl}`)
@@ -683,16 +700,13 @@ const EventDetails = () => {
                     </div>
                     <button className="participant-action remove-btn" onClick={() => handleRemoveCollaborator(collaborator.id)}>
                       <IoRemoveCircleOutline />
-                    </button>
-                  </div>
+                    </button>                  </div>
                 ))}
               </div>
-            </div>
-          )}
-
-          {/* Participants List Section - Visible only to owners and collaborators */}
+            </StandardCard>
+          )}          {/* Participants List Section - Visible only to owners and collaborators */}
           {canEdit && confirmationList && confirmationList.length > 0 && (
-            <div className="glass-card">
+            <StandardCard variant="glass" padding="large">
               <div className="section-header">
                 <h3>Lista de Participantes ({confirmationList.length})</h3>
                 <button className="modern-btn-secondary small-btn" onClick={handlePrintList}>
@@ -733,13 +747,12 @@ const EventDetails = () => {
                   </div>
                 ))}
               </div>
-              
-              <div className="list-footer">
+                <div className="list-footer">
                 <span>Confirmados: {confirmationList.filter(p => p.confirmed).length}</span>
                 <span>Pendentes: {confirmationList.filter(p => !p.confirmed).length}</span>
               </div>
-            </div>
-          )}        </div>
+            </StandardCard>
+          )}</div>
       </div>
       
       {/* Image Modal */}
@@ -850,14 +863,26 @@ const EventDetails = () => {
                 <IoCloseOutline />
               </button>
             </div>
-            
-            <div className="qr-modal-content">
+              <div className="qr-modal-content">
               <div className="qr-code-display">
-                <div className="qr-code-text">{qrCode.qrCode}</div>
+                {qrCode.qrCode && (
+                  <div className="qr-code-image">
+                    <img 
+                      src={`data:image/png;base64,${qrCode.qrCode}`} 
+                      alt="QR Code de Presença" 
+                      className="qr-image"
+                    />
+                  </div>
+                )}
                 <p>Mostre este código para o organizador marcar sua presença</p>
                 <div className="qr-event-info">
                   <strong>Evento:</strong> {qrCode.eventName}
                 </div>
+                {qrCode.qrCodeText && (
+                  <div className="qr-code-text-info">
+                    <small>Código: {qrCode.qrCodeText}</small>
+                  </div>
+                )}
               </div>
             </div>
           </div>

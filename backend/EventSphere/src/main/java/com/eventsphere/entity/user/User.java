@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 
 @Entity
+@Table(name = "app_user")
 public class User {
 
     @Id
@@ -17,10 +18,8 @@ public class User {
     private String username;
 
     @Column(nullable = false, unique = false)
-    private String name;
-
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
+    private String name;    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "app_user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "role", unique = false)
     private Set<String> roles = new HashSet<>();
 

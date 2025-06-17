@@ -1,12 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
-import EventCard from '../components/EventCard';
+import { Header, Footer, EventCard, PageTitle, StandardButton, StandardCard } from '../components';
 import { IoCalendarOutline, IoSearch, IoGridOutline, IoListOutline, IoAddCircleOutline } from 'react-icons/io5';
 import './AllEvents.css';
 import EventService from '../services/EventService';
-import ParticipantService from '../services/ParticipantService';
 
 const AllEvents = () => {
   const [events, setEvents] = useState([]);
@@ -18,13 +15,36 @@ const AllEvents = () => {
   const [filter, setFilter] = useState('all'); // 'all', 'my-events', 'participating'
   const navigate = useNavigate();
 
+  // Função para filtrar eventos
+  const filterEvents = useCallback(() => {
+    let filtered = events;
+
+    // Filtrar por tipo
+    if (filter === 'my-events') {
+      filtered = filtered.filter(event => event.source === 'created');
+    } else if (filter === 'participating') {
+      filtered = filtered.filter(event => event.source === 'participating');
+    }
+
+    // Filtrar por termo de busca
+    if (searchTerm) {
+      filtered = filtered.filter(event =>
+        event.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        event.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        event.localization?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    setFilteredEvents(filtered);
+  }, [events, filter, searchTerm]);
+
   useEffect(() => {
     loadAllEvents();
   }, []);
 
   useEffect(() => {
     filterEvents();
-  }, [events, searchTerm, filter]);
+  }, [filterEvents]);
 
   const loadAllEvents = async () => {
     try {
@@ -61,31 +81,8 @@ const AllEvents = () => {
     } catch (error) {
       console.error('Error loading events:', error);
       setError('Erro ao carregar eventos');
-    } finally {
-      setLoading(false);
+    } finally {      setLoading(false);
     }
-  };
-
-  const filterEvents = () => {
-    let filtered = events;
-
-    // Filtrar por tipo
-    if (filter === 'my-events') {
-      filtered = filtered.filter(event => event.source === 'created');
-    } else if (filter === 'participating') {
-      filtered = filtered.filter(event => event.source === 'participating');
-    }
-
-    // Filtrar por termo de busca
-    if (searchTerm) {
-      filtered = filtered.filter(event =>
-        event.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.localization?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    setFilteredEvents(filtered);
   };
 
   const handleParticipate = async (eventId, success, message) => {
@@ -109,32 +106,28 @@ const AllEvents = () => {
     if (event.userStatus === 'collaborator') return '🤝';
     return '👤';
   };
-
   return (
     <>
       <Header />
       <div className="page-container">
         <div className="page-main">
           <div className="page-header">
-            <div className="page-title">
-              <IoCalendarOutline className="page-icon" />
-              <div>
-                <h1>Meus Eventos</h1>
-                <div className="subtitle">Eventos criados por você e onde você participa</div>
-              </div>
-            </div>
+            <PageTitle
+              icon={IoCalendarOutline}
+              title="Meus Eventos"
+              subtitle="Eventos criados por você e onde você participa"
+            />
             
-            <button 
-              className="modern-btn"
+            <StandardButton
+              variant="primary"
+              size="large"
+              icon={IoAddCircleOutline}
               onClick={() => navigate('/create-event')}
             >
-              <IoAddCircleOutline />
-              <span>Criar Evento</span>
-            </button>
-          </div>
-
-          {/* Filtros e busca */}
-          <div className="events-controls">
+              Criar Evento
+            </StandardButton>
+          </div>          {/* Filtros e busca */}
+          <StandardCard variant="glass" padding="medium" className="events-controls">
             <div className="search-container">
               <IoSearch className="search-icon" />
               <input
@@ -147,43 +140,43 @@ const AllEvents = () => {
             </div>
 
             <div className="filter-buttons">
-              <button 
-                className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
+              <StandardButton
+                variant={filter === 'all' ? 'primary' : 'secondary'}
+                size="small"
                 onClick={() => setFilter('all')}
               >
                 Todos ({events.length})
-              </button>
-              <button 
-                className={`filter-btn ${filter === 'my-events' ? 'active' : ''}`}
+              </StandardButton>
+              <StandardButton
+                variant={filter === 'my-events' ? 'primary' : 'secondary'}
+                size="small"
                 onClick={() => setFilter('my-events')}
               >
                 Criados ({events.filter(e => e.source === 'created').length})
-              </button>
-              <button 
-                className={`filter-btn ${filter === 'participating' ? 'active' : ''}`}
+              </StandardButton>
+              <StandardButton
+                variant={filter === 'participating' ? 'primary' : 'secondary'}
+                size="small"
                 onClick={() => setFilter('participating')}
               >
                 Participando ({events.filter(e => e.source === 'participating').length})
-              </button>
+              </StandardButton>
             </div>
 
             <div className="view-controls">
-              <button 
-                className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
+              <StandardButton
+                variant={viewMode === 'grid' ? 'info' : 'secondary'}
+                size="small"
+                icon={IoGridOutline}
                 onClick={() => setViewMode('grid')}
-                title="Visualização em grade"
-              >
-                <IoGridOutline />
-              </button>
-              <button 
-                className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
-                onClick={() => setViewMode('list')}
-                title="Visualização em lista"
-              >
-                <IoListOutline />
-              </button>
+              />
+              <StandardButton
+                variant={viewMode === 'list' ? 'info' : 'secondary'}
+                size="small"
+                icon={IoListOutline}
+                onClick={() => setViewMode('list')}              />
             </div>
-          </div>
+          </StandardCard>
 
           {/* Lista de eventos */}
           <div className="events-content">
@@ -192,12 +185,11 @@ const AllEvents = () => {
                 <div className="loading-spinner"></div>
                 <p>Carregando eventos...</p>
               </div>
-            ) : error ? (
-              <div className="error-container">
+            ) : error ? (              <div className="error-container">
                 <div className="error-message">{error}</div>
-                <button className="retry-btn" onClick={loadAllEvents}>
+                <StandardButton variant="primary" onClick={loadAllEvents}>
                   Tentar novamente
-                </button>
+                </StandardButton>
               </div>
             ) : filteredEvents.length === 0 ? (
               <div className="empty-container">

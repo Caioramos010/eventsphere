@@ -30,8 +30,13 @@
   border-bottom: 1px solid var(--glass-border);
   padding-bottom: 12px;
 }
+.upload-area{
+  display: flex;
+  flex-direction: column;
+  gap: 15px
+}
 
-.upload-area:hover {
+.upload-placeholder:hover {
   border-color: var(--primary-color);
   background: rgba(255, 255, 255, 0.05);
 }

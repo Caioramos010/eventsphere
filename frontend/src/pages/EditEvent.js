@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { IoArrowBackOutline } from 'react-icons/io5';
+import { IoArrowBackOutline, IoCreateOutline } from 'react-icons/io5';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { PageTitle, StandardButton, StandardCard, BackButton } from '../components';
 import './Main.css';
 import './CreateEvent.css';
 
@@ -100,15 +101,12 @@ export default function EditEvent() {
       <>
         <Header />
         <div className="page-container">
-          <div className="page-main">
-            <div className="page-header">
-              <button 
-                className="back-btn" 
+          <div className="page-main">            <div className="page-header">
+              <BackButton 
                 onClick={() => navigate(`/event/${id}`)}
+                icon={IoArrowBackOutline}
                 aria-label="Voltar para detalhes do evento"
-              >
-                <IoArrowBackOutline />
-              </button>
+              />
               <div className="header-content">
                 <h1>Editar Evento</h1>
                 <div className="subtitle">Carregando dados...</div>
@@ -126,24 +124,23 @@ export default function EditEvent() {
         <Footer />
       </>
     );
-  }
-  return (
+  }  return (
     <>
       <Header />
       <div className="page-container">
-        <div className="page-main">
-          <div className="page-header">
-            <button 
-              className="back-btn" 
+        <div className="page-main">          <div className="page-header">
+            <BackButton 
               onClick={() => navigate(`/event/${id}`)}
+              icon={IoArrowBackOutline}
               aria-label="Voltar para detalhes do evento"
-            >
-              <IoArrowBackOutline />
-            </button>
-            <div className="header-content">
-              <h1>Editar Evento</h1>
-              <div className="subtitle">Atualize as informações do seu evento</div>
-            </div>
+            />
+            
+            <PageTitle
+              icon={IoCreateOutline}
+              title="Editar Evento"
+              subtitle="Atualize as informações do seu evento"
+              description="Modifique dados, datas e configurações do evento"
+            />
           </div>
           
           <form className="modern-form" onSubmit={handleSubmit}>
@@ -254,14 +251,18 @@ export default function EditEvent() {
                   </select>
                 </div>
               </div>
-            </div>
-
-            {error && <div className="status-message status-error">{error}</div>}
+            </div>            {error && <div className="status-message status-error">{error}</div>}
             {success && <div className="status-message status-success">{success}</div>}
             
-            <button type="submit" className="modern-btn" disabled={loading}>
+            <StandardButton 
+              type="submit" 
+              variant="primary"
+              size="large"
+              disabled={loading}
+              className="submit-btn"
+            >
               {loading ? 'Salvando...' : 'Salvar Alterações'}
-            </button>
+            </StandardButton>
           </form>
         </div>
       </div>

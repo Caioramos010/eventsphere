@@ -3,6 +3,7 @@ import './Main.css';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { Link } from '../components/Link';
+import { PageTitle, StandardButton, StandardCard } from '../components';
 import EventService from '../services/EventService';
 import AuthService from '../services/AuthService';
 import { useNavigate } from 'react-router-dom';
@@ -12,6 +13,7 @@ import EventCard from '../components/EventCard';
 import { FaCalendarAlt, FaCrown, FaUserFriends } from 'react-icons/fa';
 import { BsPersonFill } from 'react-icons/bs';
 import { MdPublic, MdLock } from 'react-icons/md';
+import { IoGridOutline } from 'react-icons/io5';
 
 function Main() {  
   const [myEvents, setMyEvents] = useState([]);
@@ -96,44 +98,53 @@ function Main() {
     if (!dateString) return 'Data não definida';
     const date = new Date(dateString);
     return date.toLocaleDateString('pt-BR');  };  
-  
-  return (
+    return (
     <>
       <Header />
       <div className="main-container">
         <div className="main-content">
           {/* Cabeçalho da página */}
           <div className="page-header">
-            <div className="header-content">
-              <h1 className="page-title">Painel Principal</h1>
-            </div>
+            <PageTitle
+              icon={IoGridOutline}
+              title="Painel Principal"
+              subtitle="Gerencie seus eventos"
+              description="Visualize, crie e participe de eventos"
+              size="medium"
+            />
           </div>
-          
-          {/* Calendário e Ações */}
-          <div className="glass-card-large main-top-card">
+            {/* Calendário e Ações */}
+          <StandardCard variant="glass" padding="large" className="main-top-card">
             <div className="main-top-section">
-              <Calendar events={[...myEvents, ...publicEvents]} />             
-              <div className="actions-section">
-                <h3 className="actions-title">Ações Rápidas</h3>                <Link to="/event/enter">
-                  <button className="modern-btn modern-btn-secondary action-btn">
-                    <FaCalendarAlt className="action-icon" />
-                    <span>PARTICIPAR DE UM EVENTO</span>
-                  </button>
+              <Calendar events={[...myEvents, ...publicEvents]} />               <div className="actions-section">
+                <h3 className="actions-title">Ações Rápidas</h3>                
+                <Link to="/event/enter">
+                  <StandardButton
+                    variant="secondary"
+                    size="large"
+                    icon={FaCalendarAlt}
+                    className="action-btn main-action-btn"
+                  >
+                    PARTICIPAR DE UM EVENTO
+                  </StandardButton>
                 </Link>
                 
                 <Link to="/create-event">
-                  <button className="modern-btn action-btn">
-                    <FaCalendarAlt className="action-icon" />
-                    <span>CRIAR EVENTO</span>
-                  </button>
+                  <StandardButton
+                    variant="primary"
+                    size="large"
+                    icon={FaCalendarAlt}
+                    className="action-btn main-action-btn"
+                  >
+                    CRIAR EVENTO
+                  </StandardButton>
                 </Link>
               </div>
             </div>
-          </div>
-
-          {/* Meus Eventos */}
+          </StandardCard>          {/* Meus Eventos */}
           <section className="events-section">
-            <div className="glass-card">              <div className="section-header">
+            <StandardCard variant="glass" padding="large">
+              <div className="section-header">
                 <div className="section-title">
                   <MdLock className="section-icon" />
                   <span>MEUS EVENTOS</span>
@@ -155,19 +166,17 @@ function Main() {
                   myEvents.filter(ev => !!ev.id).map(ev => (
                     <EventCard 
                       key={ev.id} 
-                      event={ev} 
-                      type="primary" 
+                      event={ev}                      type="primary" 
                       linkTo={`/event/${ev.id}`} 
                     />
                   ))
                 )}
               </div>
-            </div>
-          </section>
-
-          {/* Eventos Públicos */}
+            </StandardCard>
+          </section>          {/* Eventos Públicos */}
           <section className="events-section">
-            <div className="glass-card">              <div className="section-header">
+            <StandardCard variant="glass" padding="large">
+              <div className="section-header">
                 <div className="section-title">
                   <MdPublic className="section-icon" />
                   <span>EVENTOS PÚBLICOS</span>
@@ -187,8 +196,7 @@ function Main() {
                   <div className="empty-message">Nenhum evento público encontrado</div>
                 ) : (
                   publicEvents.filter(ev => !!ev.id).map(ev => (
-                    <EventCard 
-                      key={ev.id} 
+                    <EventCard                      key={ev.id} 
                       event={ev} 
                       type="secondary" 
                       linkTo={`/event/${ev.id}`} 
@@ -196,7 +204,7 @@ function Main() {
                   ))
                 )}
               </div>
-            </div>
+            </StandardCard>
           </section>
         </div>
       </div>

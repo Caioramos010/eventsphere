@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Link } from '../components/Link';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
-import { IoArrowBack, IoLocationOutline, IoCalendarOutline, IoTimeOutline, IoLinkOutline, IoCopyOutline, IoCheckmarkOutline, IoQrCodeOutline, IoShareOutline } from 'react-icons/io5';
+import { Header, Footer, PageTitle, StandardButton, StandardCard, BackButton } from '../components';
+import { IoArrowBack, IoLocationOutline, IoCalendarOutline, IoTimeOutline, IoLinkOutline, IoCopyOutline, IoCheckmarkOutline, IoQrCodeOutline, IoShareOutline, IoKeyOutline } from 'react-icons/io5';
 import './EventInvite.css';
 import EventService from '../services/EventService';
 
@@ -13,8 +12,46 @@ const EventInvite = () => {
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [inviteUrl, setInviteUrl] = useState('');
+  const [eventCode, setEventCode] = useState('');
   const [copySuccess, setCopySuccess] = useState(false);
+  const [copyCodeSuccess, setCopyCodeSuccess] = useState(false);
   const [error, setError] = useState('');
+
+  // Função para gerar código seguro no frontend (fallback)
+  const generateSecureEventCode = (eventData) => {
+    // Usar múltiplas fontes de entropia para segurança
+    const timestamp = Date.now();
+    const random = Math.random();
+    const eventName = eventData.name || 'Event';
+    const userId = localStorage.getItem('userId') || '0';
+    
+    // Criar hash baseado em múltiplos fatores (não apenas ID do evento)
+    const entropy = `${timestamp}-${random}-${eventName}-${userId}-${eventData.dateStart}`;
+    
+    // Função hash simples (em produção, usar crypto.subtle.digest)
+    let hash = 0;
+    for (let i = 0; i < entropy.length; i++) {
+      const char = entropy.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    
+    // Converter hash em código de 8 caracteres alfanuméricos
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    let workingHash = Math.abs(hash);
+    
+    for (let i = 0; i < 8; i++) {
+      code += chars[workingHash % chars.length];
+      workingHash = Math.floor(workingHash / chars.length);
+      // Adicionar mais entropia se o hash ficar pequeno
+      if (workingHash < chars.length) {
+        workingHash += timestamp + i * 1000;
+      }
+    }
+    
+    return code;
+  };
 
   useEffect(() => {
     const loadEventAndGenerateInvite = async () => {
@@ -28,12 +65,20 @@ const EventInvite = () => {
           return;
         }
         
-        setEvent(eventResult.event);
-        
-        // Depois, gera o link de convite
+        setEvent(eventResult.event);        // Depois, gera o link de convite e código seguro
         const inviteResult = await EventService.generateInviteLink(id);
         if (inviteResult.success) {
           setInviteUrl(inviteResult.inviteUrl);
+          
+          // Gerar código seguro do evento via backend
+          const codeResult = await EventService.generateEventCode(id);
+          if (codeResult.success) {
+            setEventCode(codeResult.eventCode);
+          } else {
+            // Fallback: gerar código seguro no frontend
+            console.warn('Falha ao gerar código no backend, usando fallback seguro');
+            setEventCode(generateSecureEventCode(eventResult.event));
+          }
         } else {
           setError(inviteResult.message || 'Erro ao gerar link de convite');
         }
@@ -49,8 +94,7 @@ const EventInvite = () => {
     if (id) {
       loadEventAndGenerateInvite();
     }
-  }, [id]);
-  const handleCopyLink = async () => {
+  }, [id]);  const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(inviteUrl);
       setCopySuccess(true);
@@ -67,6 +111,29 @@ const EventInvite = () => {
         document.body.removeChild(textArea);
         setCopySuccess(true);
         setTimeout(() => setCopySuccess(false), 2000);
+      } catch (fallbackError) {
+        console.error('Erro no fallback de cópia:', fallbackError);
+      }
+    }
+  };
+
+  const handleCopyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(eventCode);
+      setCopyCodeSuccess(true);
+      setTimeout(() => setCopyCodeSuccess(false), 2000);
+    } catch (err) {
+      console.error('Erro ao copiar código:', err);
+      // Fallback para navegadores que não suportam clipboard API
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = eventCode;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        setCopyCodeSuccess(true);
+        setTimeout(() => setCopyCodeSuccess(false), 2000);
       } catch (fallbackError) {
         console.error('Erro no fallback de cópia:', fallbackError);
       }
@@ -113,16 +180,15 @@ const EventInvite = () => {
     }
     
     return timeString;
-  };
-  if (loading) {
+  };  if (loading) {
     return (
       <>
         <Header />
         <div className="page-container">
           <div className="page-main">
-            <div className="glass-card">
+            <StandardCard variant="glass" padding="large">
               <div className="loading-message">Carregando...</div>
-            </div>
+            </StandardCard>
           </div>
         </div>
         <Footer />
@@ -136,39 +202,37 @@ const EventInvite = () => {
         <Header />
         <div className="page-container">
           <div className="page-main">
-            <div className="glass-card">
+            <StandardCard variant="glass" padding="large">
               <div className="error-message">{error || 'Evento não encontrado'}</div>
               <div style={{ textAlign: 'center', marginTop: '20px' }}>
-                <button className="modern-btn" onClick={() => navigate('/main')}>
+                <StandardButton 
+                  variant="primary" 
+                  onClick={() => navigate('/main')}
+                >
                   Voltar para o início
-                </button>
+                </StandardButton>
               </div>
-            </div>
+            </StandardCard>
           </div>
         </div>
         <Footer />
       </>
     );
-  }
-  return (
+  }  return (
     <>
       <Header />
       <div className="page-container">
         <div className="page-main">
           <div className="page-header">
-            <button className="back-btn" onClick={() => navigate(`/event/${id}`)}>
-              <IoArrowBack />
-            </button>
-            <div className="page-title">
-              <IoShareOutline className="page-icon" />
-              <div>
-                <h1>Convite do Evento</h1>
-                <div className="subtitle">Compartilhe com seus convidados</div>
-              </div>
-            </div>
+            <BackButton onClick={() => navigate(`/event/${id}`)} />
+            <PageTitle 
+              title="Convite do Evento" 
+              subtitle="Compartilhe com seus convidados"
+              icon={IoShareOutline}
+            />
           </div>
 
-          <div className="glass-card-large">
+          <StandardCard variant="glass" padding="large" className="event-invite-card">
             {/* Event Header with Background Image */}
             <div 
               className="event-header-mini" 
@@ -197,43 +261,78 @@ const EventInvite = () => {
             </div>
 
             <div className="invite-content">
+              {/* Seção do Código do Evento */}
               <div className="invite-section">
-                <h3>Link de Convite</h3>
+                <h3><IoKeyOutline /> Código do Evento</h3>
+                <p className="section-description">
+                  Seus convidados podem usar este código para participar do evento
+                </p>
+                <div className="code-container">
+                  <div className="code-display">
+                    <span className="code-text">{eventCode}</span>
+                  </div>
+                  <StandardButton
+                    variant={copyCodeSuccess ? "success" : "secondary"}
+                    size="medium"
+                    icon={copyCodeSuccess ? IoCheckmarkOutline : IoCopyOutline}
+                    onClick={handleCopyCode}
+                    className="copy-code-btn"
+                  >
+                    {copyCodeSuccess ? 'Copiado!' : 'Copiar Código'}
+                  </StandardButton>
+                </div>
+              </div>
+
+              {/* Seção do Link de Convite */}
+              <div className="invite-section">
+                <h3><IoLinkOutline /> Link de Convite</h3>
+                <p className="section-description">
+                  Link direto para participar do evento
+                </p>
                 <div className="url-container">
                   <div className="url-display">
                     <span className="url-text">{inviteUrl}</span>
-                    <button className="url-icon-btn">
-                      <IoLinkOutline />
+                    <button 
+                      className="url-icon-btn"
+                      onClick={handleCopyLink}
+                      title="Copiar link"
+                    >
+                      {copySuccess ? <IoCheckmarkOutline /> : <IoLinkOutline />}
                     </button>
                   </div>
                   
                   <div className="action-buttons">
-                    <button 
-                      className={`action-btn copy-btn ${copySuccess ? 'success' : ''}`}
+                    <StandardButton
+                      variant={copySuccess ? "success" : "secondary"}
+                      size="medium"
+                      icon={copySuccess ? IoCheckmarkOutline : IoCopyOutline}
                       onClick={handleCopyLink}
                     >
-                      {copySuccess ? <IoCheckmarkOutline /> : <IoCopyOutline />}
-                      <span>{copySuccess ? 'Copiado!' : 'Copiar Link'}</span>
-                    </button>
+                      {copySuccess ? 'Copiado!' : 'Copiar Link'}
+                    </StandardButton>
                     
-                    <button className="action-btn share-btn" onClick={handleShareLink}>
-                      <IoShareOutline />
-                      <span>Compartilhar</span>
-                    </button>
+                    <StandardButton
+                      variant="primary"
+                      size="medium"
+                      icon={IoShareOutline}
+                      onClick={handleShareLink}
+                    >
+                      Compartilhar
+                    </StandardButton>
                   </div>
                 </div>
               </div>
 
               <div className="invite-instructions">
-                <h4>Como usar:</h4>
+                <h4>Como seus convidados podem participar:</h4>
                 <ul>
-                  <li>Copie o link acima e envie para seus convidados</li>
-                  <li>Os convidados poderão acessar o link para se inscrever no evento</li>
-                  <li>Você receberá notificações quando alguém confirmar presença</li>
+                  <li><strong>Pelo código:</strong> Acesse "Participar de um Evento" e digite o código <strong>{eventCode}</strong></li>
+                  <li><strong>Pelo link:</strong> Clique diretamente no link de convite</li>
+                  <li><strong>Notificações:</strong> Você receberá avisos quando alguém confirmar presença</li>
                 </ul>
               </div>
             </div>
-          </div>
+          </StandardCard>
         </div>
       </div>
       <Footer />

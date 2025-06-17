@@ -26,6 +26,39 @@
   box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: activeBadgeGlow 2s ease-in-out infinite alternate;
+}
+
+.event-active-pulse {
+  width: 8px;
+  height: 8px;
+  background: #ffffff;
+  border-radius: 50%;
+  animation: activePulse 1.5s ease-in-out infinite;
+}
+
+@keyframes activeBadgeGlow {
+  from {
+    box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+  }
+  to {
+    box-shadow: 0 4px 25px rgba(39, 174, 96, 0.6);
+  }
+}
+
+@keyframes activePulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* Event Cancelled Badge */
@@ -647,6 +680,18 @@
 .glass-card-large.event-active {
   border: 2px solid var(--color-success);
   box-shadow: 0 0 30px rgba(39, 174, 96, 0.3);
+  animation: activeCardGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes activeCardGlow {
+  from {
+    box-shadow: 0 0 30px rgba(39, 174, 96, 0.3);
+    border-color: rgba(39, 174, 96, 0.8);
+  }
+  to {
+    box-shadow: 0 0 40px rgba(39, 174, 96, 0.5);
+    border-color: rgba(39, 174, 96, 1);
+  }
 }
 
 /* Hover effect - Remove overlay and text on hover */
@@ -1094,6 +1139,20 @@
   text-align: center;
 }
 
+.qr-code-image {
+  margin-bottom: 20px;
+}
+
+.qr-image {
+  max-width: 250px;
+  max-height: 250px;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  border: 3px solid var(--color-primary);
+  background: white;
+  padding: 10px;
+}
+
 .qr-code-text {
   background: var(--color-text-white);
   color: var(--color-background);
@@ -1105,6 +1164,20 @@
   letter-spacing: 2px;
   margin-bottom: 20px;
   border: 3px solid var(--color-primary);
+}
+
+.qr-code-text-info {
+  margin-top: 15px;
+  padding: 10px;
+  background: rgba(124, 58, 237, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(124, 58, 237, 0.3);
+}
+
+.qr-code-text-info small {
+  color: var(--color-text-light);
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
 }
 
 .qr-code-display p {

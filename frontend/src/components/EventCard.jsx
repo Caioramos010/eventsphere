@@ -106,10 +106,19 @@ const EventCard = ({ event, type, linkTo, onParticipate }) => {
         </div>
       </div>
     );
-  };
-  return (
+  };  return (
     <Link to={linkTo} style={{ textDecoration: 'none' }}>
-      <div className={`event-card ${type === 'primary' ? 'primary-card' : 'secondary-card'}`}>        <div className="card-image-container">
+      <div className={`event-card ${type === 'primary' ? 'primary-card' : 'secondary-card'} ${event.state === 'ACTIVE' ? 'active-event' : ''}`}>
+        
+        {/* Indicador de evento ativo */}
+        {event.state === 'ACTIVE' && (
+          <div className="active-indicator">
+            <div className="active-pulse"></div>
+            <span className="active-text">ATIVO</span>
+          </div>
+        )}
+        
+        <div className="card-image-container">
           {getEventImage()}
           <div className="card-image-overlay"></div>
         </div>

@@ -12,6 +12,7 @@ import com.eventsphere.entity.user.User;
 import com.eventsphere.repository.EventRepository;
 import com.eventsphere.repository.ParticipantRepository;
 import com.eventsphere.repository.UserRepository;
+import com.eventsphere.utils.EventCodeGenerator;        // Verificar se o evento ainda está válido
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -281,13 +282,12 @@ public class EventService {
         if (event.getInviteToken() != null && !event.getInviteToken().isEmpty()) {
             return event.getInviteToken();
         }
-        
-        // Gerar novo token único
+          // Gerar novo token único
         String inviteToken = UUID.randomUUID().toString();
         event.setInviteToken(inviteToken);
         
-        // Gerar código de convite simples (6 caracteres)
-        String inviteCode = generateInviteCode();
+        // Gerar código de convite seguro (8 caracteres únicos)
+        String inviteCode = generateSecureInviteCode();
         event.setInviteCode(inviteCode);
         
         eventRepository.save(event);
@@ -296,18 +296,18 @@ public class EventService {
     }
     
     /**
-     * Gera um código de convite de 6 caracteres
+     * Gera um código de convite seguro de 8 caracteres usando EventCodeGenerator
+     * Garante unicidade verificando códigos existentes no banco
      */
-    private String generateInviteCode() {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        StringBuilder code = new StringBuilder();
-        Random random = new Random();
+    private String generateSecureInviteCode() {
+        // Buscar todos os códigos existentes para garantir unicidade
+        Set<String> existingCodes = eventRepository.findAll()
+                .stream()
+                .map(Event::getInviteCode)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
         
-        for (int i = 0; i < 6; i++) {
-            code.append(chars.charAt(random.nextInt(chars.length())));
-        }
-        
-        return code.toString();
+        return EventCodeGenerator.generateEventCode(existingCodes);
     }
     
     /**
@@ -648,5 +648,64 @@ public class EventService {
         response.put("success", true);
         
         return response;
+    }
+    
+    /**
+     * Valida um código de evento e retorna o evento
+     * 
+     * @param eventCode Código do evento (8 caracteres)
+     * @return EventDTO do evento
+     */
+    public EventDTO validateEventCode(String eventCode) {
+        // Validar formato do código
+        if (!EventCodeGenerator.isValidCodeFormat(eventCode)) {
+            throw new IllegalArgumentException("Código de evento inválido. Deve conter 8 caracteres (letras e números).");
+        }
+        
+        Event event = eventRepository.findByInviteCode(eventCode);
+          if (event == null) {
+            throw new EntityNotFoundException("Evento não encontrado com o código fornecido.");
+        }
+        
+        // Verificar se o evento ainda está válido
+        if (event.getState() == State.CANCELED) {
+            throw new IllegalStateException("Este evento foi cancelado.");
+        }
+        
+        if (event.getState() == State.FINISHED) {
+            throw new IllegalStateException("Este evento já foi finalizado.");
+        }
+        
+        return convertToDTO(event);
+    }
+    
+    /**
+     * Valida um código de evento e retorna a entidade Event
+     * 
+     * @param eventCode Código do evento (8 caracteres)
+     * @return Event entity
+     */
+    public Event validateEventCodeAndGetEvent(String eventCode) {
+        // Validar formato do código
+        if (!EventCodeGenerator.isValidCodeFormat(eventCode)) {
+            throw new IllegalArgumentException("Código de evento inválido. Deve conter 8 caracteres (letras e números).");
+        }
+        
+        Event event = eventRepository.findByInviteCode(eventCode);
+        
+        if (event == null) {
+            throw new IllegalArgumentException("Evento não encontrado com o código fornecido.");
+        }
+        
+        // Verificar se o evento ainda está válido
+        if (event.getState() == State.CANCELED) {
+            throw new IllegalStateException("Este evento foi cancelado.");
+        }
+        
+        if (event.getState() == State.FINISHED) {
+            throw new IllegalStateException("Este evento já foi finalizado.");
+        }
+        
+        return event;
     }
 }

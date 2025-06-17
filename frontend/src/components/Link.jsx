@@ -17,3 +17,5 @@ export function Link({ to, className = '', children, ...props }) {
     </RouterLink>
   );
 }
+
+export default Link;

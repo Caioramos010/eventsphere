@@ -3,7 +3,7 @@
 /* Color Palette */
 :root {
   /* Primary Colors */
-  --color-primary: #E82E9B;           /* Rosa principal */
+  --color-primary: #fa49b0;           /* Rosa principal */
   --color-primary-light: #E46FAF;    /* Rosa claro */
   --color-primary-dark: #c81e7b;     /* Rosa escuro */
   --color-primary-bg: #fff0fa;       /* Rosa background */
@@ -13,13 +13,17 @@
   --color-secondary: #4a9eff;        /* Azul secundário */
   --color-secondary-light: #74b5ff;  /* Azul claro */
   --color-secondary-dark: #2980b9;   /* Azul escuro */
-
   /* Neutral Colors */
   --color-gray-dark: #423742;        /* Cinza escuro principal */
   --color-gray-medium: #a099a0;      /* Cinza médio */
   --color-gray-light: #e6e3e3;       /* Cinza claro */
   --color-gray-bg: #f3f3f3;          /* Cinza background */
   --color-gray-border: #bdbdbd;      /* Cinza border */
+
+  /* Background Colors */
+  --color-bg-white: #ffffff;         /* Background branco */
+  --color-bg-light: #f8f9fa;         /* Background claro */
+  --color-bg-gray: #f5f5f5;          /* Background cinza */
 
   /* Background Gradients */
   --gradient-main: linear-gradient(135deg, #504a50 0%, #808080 50%, #504a50 100%);
@@ -262,7 +266,18 @@ html, body {
   min-height: 70px;
 }
 
-/* Input Styles */
+/* Global Input Standardization */
+input, textarea, select {
+  color: var(--color-gray-dark) !important;
+  font-family: var(--font-family);
+}
+
+input::placeholder, textarea::placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+  opacity: 1;
+}
+
+/* Standard Input Styles */
 .input {
   font-family: var(--font-family);
   font-size: var(--font-size-base);
@@ -271,7 +286,7 @@ html, body {
   border: 1px solid var(--color-border-medium);
   border-radius: var(--radius-md);
   background: var(--color-bg-white);
-  color: var(--color-text-primary);
+  color: var(--color-gray-dark);
   outline: none;
   transition: all var(--transition-fast);
   box-shadow: 0 2px 4px var(--shadow-light);

@@ -189,6 +189,26 @@ const ParticipantService = {
     }
   },
 
+  // Participar de um evento via código (eventos privados)
+  async joinEventWithCode(eventId, eventCode) {
+    try {
+      const response = await post(`${API_CONFIG.BASE_URL}/api/participant/join-with-code`, { 
+        eventId, 
+        eventCode 
+      });
+      const data = await response.json();
+      
+      if (data.success || response.ok) {
+        return { success: true, message: 'Participação no evento confirmada com sucesso via código' };
+      } else {
+        return { success: false, message: data.message || 'Erro ao participar do evento via código' };
+      }
+    } catch (error) {
+      console.error('Error joining event with code:', error);
+      return { success: false, message: error.message || 'Erro de conexão' };
+    }
+  },
+
   // Remover participante de um evento
   async removeParticipant(eventId, participantId) {
     try {

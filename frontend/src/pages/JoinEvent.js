@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { IoEnterOutline, IoArrowBack, IoCheckmarkCircleOutline, IoCloseCircleOutline, IoLinkOutline, IoCalendarOutline, IoLocationOutline, IoTimeOutline } from 'react-icons/io5';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
+import { IoEnterOutline, IoArrowBack, IoCheckmarkCircleOutline, IoCloseCircleOutline, IoLinkOutline, IoCalendarOutline, IoLocationOutline, IoTimeOutline, IoKeyOutline } from 'react-icons/io5';
+import { Header, Footer, PageTitle, StandardButton, StandardCard, BackButton } from '../components';
 import EventService from '../services/EventService';
 import ParticipantService from '../services/ParticipantService';
 import AuthService from '../services/AuthService';
@@ -11,13 +10,11 @@ import './JoinEvent.css';
 export default function JoinEvent() {
   const { token } = useParams();
   const [event, setEvent] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const [validating, setValidating] = useState(false);
-  const [joining, setJoining] = useState(false);
-  const [manualToken, setManualToken] = useState('');
-  const [showTokenForm, setShowTokenForm] = useState(false);
+  const [joining, setJoining] = useState(false);  const [eventCode, setEventCode] = useState('');
+  const [showCodeForm, setShowCodeForm] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -30,13 +27,38 @@ export default function JoinEvent() {
     // Se há token na URL, validar automaticamente
     if (token) {
       setValidating(true);
-      validateInviteToken(token);
-    } else {
-      // Se não há token, mostrar formulário para inserir token
-      setShowTokenForm(true);
+      validateInviteToken(token);    } else {
+      // Se não há token, mostrar formulário para código do evento
+      setShowCodeForm(true);
     }
-  }, [navigate, token]);
-  const validateInviteToken = async (tokenToValidate = null) => {
+  }, [navigate, token]);  const validateEventCode = useCallback(async (code) => {
+    setValidating(true);
+    setError('');
+    
+    if (!code) {
+      setError('Código do evento é obrigatório');
+      setValidating(false);
+      return;
+    }
+    
+    try {
+      const result = await EventService.validateEventCode(code);
+        if (result.success) {
+        setEvent(result.data);
+        setValidating(false);
+        setShowCodeForm(false);
+      } else {
+        setError(result.message || 'Código de evento inválido');
+        setValidating(false);
+      }
+    } catch (err) {
+      console.error('Code validation error:', err);
+      setError('Erro ao validar código do evento');
+      setValidating(false);
+    }
+  }, []);
+
+  const validateInviteToken = useCallback(async (tokenToValidate = null) => {
     setValidating(true);
     setError('');
     
@@ -50,12 +72,10 @@ export default function JoinEvent() {
     try {
       const result = await EventService.validateInviteToken(targetToken);
       
-      if (result.success) {
-        setEvent(result.data);
+      if (result.success) {        setEvent(result.data);
         setValidating(false);
-        setShowTokenForm(false);
-      } else {
-        setError(result.message || 'Token de convite inválido');
+        setShowCodeForm(false);
+      } else {setError(result.message || 'Token de convite inválido');
         setValidating(false);
       }
     } catch (err) {
@@ -63,7 +83,7 @@ export default function JoinEvent() {
       setError('Erro ao validar token de convite');
       setValidating(false);
     }
-  };
+  }, [token]);
 
   // Função para formatar data
   const formatDate = (dateString) => {
@@ -88,8 +108,7 @@ export default function JoinEvent() {
     }
     
     return timeString;
-  };
-  const handleJoinEvent = async () => {
+  };  const handleJoinEvent = async () => {
     setJoining(true);
     setError('');
     setSuccess('');
@@ -97,11 +116,12 @@ export default function JoinEvent() {
     try {
       let result;
       
-      // Se há token, usar o método de convite, senão usar o método público
+      // Se há token, usar o método de convite, senão usar o método com código
       if (token) {
         result = await ParticipantService.joinEventWithInvite(event.id, token);
       } else {
-        result = await ParticipantService.joinPublicEvent(event.id);
+        // Usar código do evento para participar
+        result = await ParticipantService.joinEventWithCode(event.id, eventCode);
       }
 
       if (result.success) {
@@ -118,15 +138,13 @@ export default function JoinEvent() {
     } finally {
       setJoining(false);
     }
-  };
-
-  const handleManualTokenSubmit = (e) => {
+  };const handleEventCodeSubmit = (e) => {
     e.preventDefault();
-    if (!manualToken.trim()) {
-      setError('Por favor, insira um token válido');
+    if (!eventCode.trim()) {
+      setError('Por favor, insira um código válido');
       return;
     }
-    validateInviteToken(manualToken.trim());
+    validateEventCode(eventCode.trim());
   };
 
   if (validating) {
@@ -147,24 +165,29 @@ export default function JoinEvent() {
       </>
     );
   }
-  if (error && !event && !showTokenForm) {
+  if (error && !event && !showCodeForm) {
     return (
       <>
         <Header />
         <div className="page-container">
           <div className="page-main">
-            <div className="glass-card">
-              <div className="error-message">{error}</div>
-              <div style={{ textAlign: 'center', marginTop: '20px' }}>
-                <button className="modern-btn" onClick={() => {
-                  setError('');
-                  setShowTokenForm(true);
-                }}>
+            <div className="glass-card">              <div className="error-message">{error}</div>
+              <div style={{ textAlign: 'center', marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                <StandardButton 
+                  variant="primary"
+                  onClick={() => {
+                    setError('');
+                    setShowCodeForm(true);
+                  }}
+                >
                   Tentar novamente
-                </button>
-                <button className="modern-btn" onClick={() => navigate('/main')} style={{ marginLeft: '10px' }}>
+                </StandardButton>
+                <StandardButton 
+                  variant="secondary"
+                  onClick={() => navigate('/main')}
+                >
                   Voltar para o início
-                </button>
+                </StandardButton>
               </div>
             </div>
           </div>
@@ -172,108 +195,97 @@ export default function JoinEvent() {
         <Footer />
       </>
     );
-  }
-
-  // Show token form when no token in URL
-  if (showTokenForm && !event) {
+  }  // Show code form when no token in URL
+  if (showCodeForm && !event) {
     return (
       <>
         <Header />
         <div className="page-container">
           <div className="page-main">
             <div className="page-header">
-              <button className="back-btn" onClick={() => navigate('/main')}>
-                <IoArrowBack />
-              </button>
-              <div className="page-title">
-                <IoEnterOutline className="page-icon" />
-                <div>
-                  <h1>Participar de Evento</h1>
-                  <div className="subtitle">Insira o código de convite</div>
-                </div>
-              </div>
+              <BackButton onClick={() => navigate('/main')} />
+              
+              <PageTitle
+                icon={IoEnterOutline}
+                title="Participar de Evento"
+                subtitle="Digite o código do evento"
+                description="Insira o código de 8 caracteres que você recebeu do organizador"
+              />
             </div>
 
-            <div className="glass-card">
-              <div className="token-form-section">
-                <div className="token-form-header">
-                  <IoLinkOutline className="token-icon" />
-                  <h3>Código de Convite</h3>
-                  <p>Insira o código de convite que você recebeu para participar do evento.</p>
+            <StandardCard variant="glass" padding="large">
+              <div className="entry-form-section">
+                <div className="form-header">
+                  <IoKeyOutline className="form-icon" />
+                  <div>
+                    <h3>Código do Evento</h3>
+                    <p>Digite o código que você recebeu (formato: EV123456)</p>
+                  </div>
                 </div>
 
-                <form onSubmit={handleManualTokenSubmit} className="token-form">
+                <form onSubmit={handleEventCodeSubmit} className="entry-form">
                   <div className="form-group">
-                    <label htmlFor="token">Código de Convite</label>
+                    <label htmlFor="eventCode">Código do Evento</label>
                     <input
                       type="text"
-                      id="token"
-                      value={manualToken}
-                      onChange={(e) => setManualToken(e.target.value)}
-                      placeholder="Cole aqui o código de convite"
+                      id="eventCode"
+                      value={eventCode}
+                      onChange={(e) => setEventCode(e.target.value.toUpperCase())}
+                      placeholder="EV123456"
                       className="form-input"
                       disabled={validating}
+                      maxLength={8}
                     />
                   </div>
 
                   {error && <div className="status-message status-error">{error}</div>}
 
-                  <button 
-                    type="submit" 
-                    className="modern-btn modern-btn-primary"
-                    disabled={validating || !manualToken.trim()}
+                  <StandardButton
+                    type="submit"
+                    variant="primary"
+                    size="large"
+                    fullWidth
+                    loading={validating}
+                    disabled={!eventCode.trim()}
+                    icon={IoCheckmarkCircleOutline}
                   >
-                    {validating ? (
-                      <>
-                        <div className="loading-spinner" />
-                        Validando...
-                      </>
-                    ) : (
-                      <>
-                        <IoCheckmarkCircleOutline />
-                        Validar Convite
-                      </>
-                    )}
-                  </button>
+                    {validating ? 'Validando...' : 'Entrar no Evento'}
+                  </StandardButton>
                 </form>
-
-                <div className="token-help">
-                  <h4>💡 Onde encontrar o código?</h4>
-                  <ul>
-                    <li>Em um link de convite recebido por mensagem</li>
-                    <li>Em um QR code compartilhado pelo organizador</li>
-                    <li>Diretamente do organizador do evento</li>
-                  </ul>
-                </div>
               </div>
-            </div>
+
+              <div className="entry-help">
+                <h4>Como obter o código?</h4>
+                <ul>
+                  <li><strong>Página de convite:</strong> O organizador pode gerar e compartilhar o código</li>
+                  <li><strong>Mensagem direta:</strong> Solicite o código diretamente ao organizador</li>
+                  <li><strong>Formato:</strong> O código sempre tem 8 caracteres (ex: EV123456)</li>
+                </ul>
+              </div>
+            </StandardCard>
           </div>
         </div>
         <Footer />
       </>
     );
   }
-
   return (
     <>
       <Header />
       <div className="page-container">
-        <div className="page-main">
-          <div className="page-header">
-            <button className="back-btn" onClick={() => navigate('/main')}>
-              <IoArrowBack />
-            </button>
-            <div className="page-title">
-              <IoEnterOutline className="page-icon" />
-              <div>
-                <h1>Convite para Evento</h1>
-                <div className="subtitle">Você foi convidado para participar</div>
-              </div>
-            </div>
+        <div className="page-main">          <div className="page-header">
+            <BackButton onClick={() => navigate('/main')} />
+            
+            <PageTitle
+              icon={IoEnterOutline}
+              title="Convite para Evento"
+              subtitle="Você foi convidado para participar"
+              size="medium"
+            />
           </div>
 
           {event && (
-            <div className="glass-card-large">
+            <StandardCard variant="glass" padding="large" className="event-details-card">
               {/* Event Header with Background Image */}
               <div 
                 className="event-header-join" 
@@ -324,32 +336,18 @@ export default function JoinEvent() {
                       <p>Clique no botão abaixo para confirmar sua participação neste evento.</p>
                       
                       {error && <div className="status-message status-error">{error}</div>}
-                      {success && <div className="status-message status-success">{success}</div>}
-
-                      <button 
-                        className="join-btn"
+                      {success && <div className="status-message status-success">{success}</div>}                      <StandardButton
+                        variant={success ? "success" : "primary"}
+                        size="large"
+                        fullWidth
+                        loading={joining}
+                        disabled={success}
+                        icon={success ? IoCheckmarkCircleOutline : IoEnterOutline}
                         onClick={handleJoinEvent}
-                        disabled={joining || success}
                       >
-                        {joining ? (
-                          <>
-                            <div className="loading-spinner" />
-                            Participando...
-                          </>
-                        ) : success ? (
-                          <>
-                        <IoCheckmarkCircleOutline />
-                        Participação Confirmada!
-                      </>
-                    ) : (
-                      <>
-                        <IoEnterOutline />
-                        Confirmar Participação
-                      </>
-                    )}
-                  </button>                  <div className="join-info">
-                    <p>
-                      <strong>📋 O que acontece depois:</strong>
+                        {joining ? 'Participando...' : success ? 'Participação Confirmada!' : 'Confirmar Participação'}
+                      </StandardButton><div className="join-info">
+                    <p>                      <strong>📋 O que acontece depois:</strong>
                     </p>
                     <ul>
                       <li>Você será adicionado à lista de participantes</li>
@@ -361,7 +359,7 @@ export default function JoinEvent() {
                   )}
                 </div>
               </div>
-            </div>
+            </StandardCard>
           )}
         </div>
       </div>

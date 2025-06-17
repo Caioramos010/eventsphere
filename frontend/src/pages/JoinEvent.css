@@ -1,7 +1,49 @@
 /* JoinEvent.css - Modern Design Pattern */
 @import url('../styles/common.css');
 
-/* Specific styles for Join Event page */
+/* Usando o padrão global - sem inventar background */
+
+/* Token form section */
+
+.token-form-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.token-icon {
+  background: linear-gradient(135deg, #E82E9B, #4a9eff);
+  color: white;
+  padding: 1rem;
+  border-radius: 16px;
+  font-size: 1.5rem;
+  box-shadow: 0 8px 32px rgba(232, 46, 155, 0.3);
+  flex-shrink: 0;
+}
+
+.token-form-header div {
+  flex: 1;
+}
+
+.token-form-header h3 {
+  color: var(--color-text-white);
+  font-family: 'Lexend Deca', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.token-form-header p {
+  color: var(--color-text-white);
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0;
+}
 .form-group {
   margin-bottom: 24px;
 }
@@ -61,7 +103,7 @@
   border: 1px solid var(--glass-border);
   border-radius: 12px;
   font-size: 13px;
-  color: var(--color-gray-light);
+  color: var(--color-text-white);
   line-height: 1.4;
 }
 
@@ -173,7 +215,7 @@
 }
 
 .event-description-join p {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--color-text-white);
   line-height: 1.6;
   margin: 0;
 }
@@ -196,7 +238,7 @@
 }
 
 .join-section > p {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--color-text-white);
   margin: 0 0 24px 0;
   line-height: 1.5;
 }
@@ -256,7 +298,7 @@
 }
 
 .join-info ul {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--color-text-white);
   margin: 0;
   padding-left: 20px;
   line-height: 1.6;
@@ -288,6 +330,8 @@
 
 /* Token Form Styles */
 .token-form-section {
+  display: flex;
+  flex-direction: column;
   max-width: 500px;
   margin: 0 auto;
   padding: 30px;
@@ -300,48 +344,65 @@
 
 .token-form-header .token-icon {
   font-size: 3rem;
-  color: var(--primary-color);
+  color: var(--color-text-white);
   margin-bottom: 15px;
   display: block;
 }
 
 .token-form-header h3 {
-  color: var(--text-primary);
+  color: var(--color-text-white);
   margin-bottom: 10px;
   font-size: 1.5rem;
 }
 
 .token-form-header p {
-  color: var(--text-secondary);
+  color: var(--color-text-white);
   line-height: 1.5;
 }
 
 .token-form {
   margin-bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.token-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .token-form .form-group label {
   display: block;
   margin-bottom: 8px;
-  color: var(--text-primary);
+  color: var(--color-text-white);
   font-weight: 500;
 }
 
 .token-form .form-input {
   width: 100%;
-  padding: 12px 16px;
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  padding: 1rem 1.25rem;
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  color: var(--text-primary);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: var(--color-gray-dark); /* Texto dos inputs em cinza escuro */
   font-size: 1rem;
+  font-family: 'Inter', sans-serif;
   transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.token-form .form-input::placeholder {
+  color: var(--color-gray-medium) !important;
+  opacity: 0.7;
 }
 
 .token-form .form-input:focus {
   outline: none;
-  border-color: var(--primary-color);
-  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--color-primary);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(232, 46, 155, 0.2);
 }
 
 .token-form .form-input:disabled {
@@ -349,38 +410,49 @@
   cursor: not-allowed;
 }
 
+/* Help section */
 .token-help {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  padding: 20px;
+  background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-top: 1rem;
 }
 
 .token-help h4 {
-  color: var(--text-primary);
-  margin-bottom: 12px;
-  font-size: 1rem;
+  color: var(--color-text-white);
+  font-family: 'Lexend Deca', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .token-help ul {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .token-help li {
-  color: var(--text-secondary);
-  padding: 6px 0;
-  padding-left: 20px;
+  color: var(--color-gray-light);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  padding-left: 1.5rem;
   position: relative;
 }
 
 .token-help li::before {
-  content: '•';
-  color: var(--primary-color);
+  content: '→';
   position: absolute;
   left: 0;
-  top: 6px;
+  color: var(--color-primary);
+  font-weight: bold;
 }
 
 .event-active-warning {
@@ -412,6 +484,151 @@
   font-size: 14px;
 }
 
+/* Opções de entrada */
+.entry-options {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.entry-options h3 {
+  color: var(--color-text-white);
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0 0 32px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.option-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.option-btn {
+  text-align: left !important;
+  padding: 20px !important;
+  height: auto !important;
+  min-height: 80px !important;
+}
+
+.option-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.option-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text-white);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.option-description {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+/* Formulários de entrada */
+.entry-form-section {
+  padding: 20px 0;
+}
+
+.form-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.form-icon {
+  color: var(--color-primary);
+  font-size: 1.5rem;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.form-header h3 {
+  color: var(--color-text-white);
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-header p {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.back-btn {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  color: var(--color-text-white);
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.back-btn:hover {
+  background: var(--glass-bg-strong);
+  color: var(--color-primary);
+}
+
+.entry-form {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* Ajuda */
+.entry-help {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.entry-help h4 {
+  color: var(--color-text-white);
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.entry-help ul {
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.6;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.entry-help li {
+  margin-bottom: 8px;
+}
+
+.entry-help strong {
+  color: var(--color-text-white);
+  font-weight: 700;
+}
+
+/* Responsividade */
 @media (max-width: 768px) {
   .event-header-join {
     min-height: 220px;
@@ -431,12 +648,33 @@
     padding: 14px 20px;
   }
   
-  .token-form-section {
-    padding: 20px;
-  }
-  
   .token-form-header .token-icon {
     font-size: 2.5rem;
+  }
+  
+  .option-buttons {
+    max-width: 100%;
+  }
+  
+  .form-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .back-btn {
+    position: static;
+    align-self: flex-start;
+    margin-top: 8px;
+  }
+  
+  .code-container {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .copy-code-btn {
+    min-width: auto;
+    width: 100%;
   }
 }
 

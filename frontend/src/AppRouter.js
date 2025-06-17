@@ -10,10 +10,10 @@ import EditEvent from './pages/EditEvent';
 import EventDetails from './pages/EventDetails';
 import EventInvite from './pages/EventInvite';
 import QRScanner from './pages/QRScanner';
-import Settings from './pages/Settings';
 import AllEvents from './pages/AllEvents';
 import ProtectedRoute from './components/ProtectedRoute';
 import InviteRedirect from './components/InviteRedirect';
+import CameraDebugger from './components/CameraDebugger';
 
 function AppRouter() {
   return (
@@ -65,17 +65,13 @@ function AppRouter() {
           <ProtectedRoute>
             <QRScanner />
           </ProtectedRoute>
-        } />
-        <Route path='/edit-event/:id' element={
+        } />        <Route path='/edit-event/:id' element={
           <ProtectedRoute>
             <EditEvent />
           </ProtectedRoute>
         } />
-        <Route path='/configuracoes' element={
-          <ProtectedRoute>
-            <Settings />
-          </ProtectedRoute>
-        } />
+        {/* Rota para debug de câmera */}
+        <Route path='/camera-debug' element={<CameraDebugger />} />
       </Routes>
     </Router>
   );

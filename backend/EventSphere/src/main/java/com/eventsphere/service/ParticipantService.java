@@ -4,6 +4,7 @@ import com.eventsphere.entity.event.Event;
 import com.eventsphere.entity.event.EventParticipant;
 import com.eventsphere.entity.event.ParticipantHistory;
 import com.eventsphere.entity.event.ParticipantStatus;
+import com.eventsphere.entity.event.State;
 import com.eventsphere.entity.user.User;
 import com.eventsphere.repository.EventRepository;
 import com.eventsphere.repository.ParticipantHistoryRepository;
@@ -315,6 +316,46 @@ public class ParticipantService {    @Autowired
         participantRepository.save(participant);
     }
     
+    // Método para participar de evento via código
+    public void joinEventWithCode(String eventCode, Long userId) {
+        // Validar o código do evento primeiro
+        Event event = eventService.validateEventCodeAndGetEvent(eventCode);
+        
+        if (event == null) {
+            throw new IllegalArgumentException("Código de evento inválido");
+        }
+        
+        // Verificar se o evento aceita novos participantes
+        validateEventAcceptsParticipants(event);
+          
+        // Verificar se o usuário já é participante
+        boolean alreadyParticipating = event.getParticipants().stream()
+                .anyMatch(p -> p.getUser().getId().equals(userId));
+                
+        if (alreadyParticipating) {
+            throw new IllegalArgumentException("Você já é um participante deste evento");
+        }
+        
+        // Buscar o usuário
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
+        
+        // Criar participação
+        EventParticipant participant = new EventParticipant();
+        participant.setEvent(event);
+        participant.setUser(user);
+        participant.setCurrentStatus(ParticipantStatus.INVITED);
+        participant.setIsCollaborator(false);
+        
+        // Inicializar lista de participantes se necessário
+        if (event.getParticipants() == null) {
+            event.setParticipants(new ArrayList<>());
+        }
+        
+        event.getParticipants().add(participant);
+        participantRepository.save(participant);
+    }
+
     // Método auxiliar para verificar se o evento aceita novos participantes
     private void validateEventAcceptsParticipants(Event event) {
         // Verificar se o evento está ativo (se estiver ativo, não permite mais participações)
@@ -350,9 +391,7 @@ public class ParticipantService {    @Autowired
         if (state == com.eventsphere.entity.event.State.FINISHED) {
             throw new IllegalStateException("Não é possível modificar participantes após o evento ser encerrado.");
         }
-    }
-
-    /**
+    }    /**
      * Gera QR Code para um participante
      */
     public Map<String, Object> generateQrCodeForParticipant(Long eventId, Long userId) {
@@ -366,10 +405,11 @@ public class ParticipantService {    @Autowired
             throw new IllegalArgumentException("QR Code só está disponível durante eventos ativos");
         }
         
-        String qrCode = qrCodeService.createQrCode(participant.getId());
+        Map<String, String> qrCodeData = qrCodeService.createQrCodeComplete(participant.getId());
         
         Map<String, Object> response = new HashMap<>();
-        response.put("qrCode", qrCode);
+        response.put("qrCode", qrCodeData.get("qrCodeImage")); // Imagem Base64
+        response.put("qrCodeText", qrCodeData.get("qrCodeText")); // Texto do QR Code
         response.put("participantId", participant.getId());
         response.put("eventName", participant.getEvent().getName());
         
@@ -439,4 +479,101 @@ public class ParticipantService {    @Autowired
         authorizeRemoveParticipant(eventID, userID, authUserID);
         removeParticipant(eventID, userID);
     }
+    
+    /**
+     * Marca presença de um participante
+     * 
+     * @param participantId ID do participante
+     * @param eventIdObj ID do evento
+     * @param authUserId ID do usuário autenticado
+     * @return Dados do participante
+     */
+    public Object markPresence(Long participantId, Object eventIdObj, Long authUserId) {
+        // Converter eventId para Long
+        Long eventId;
+        if (eventIdObj instanceof String) {
+            try {
+                eventId = Long.parseLong((String) eventIdObj);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("ID do evento inválido");
+            }
+        } else if (eventIdObj instanceof Number) {
+            eventId = ((Number) eventIdObj).longValue();
+        } else {
+            throw new IllegalArgumentException("Tipo de ID do evento inválido");
+        }
+
+        // Verificar se o evento existe
+        Event event = eventRepository.findById(eventId)
+            .orElseThrow(() -> new IllegalArgumentException("Evento não encontrado"));        // Verificar se o usuário tem permissão (deve ser organizador ou colaborador)
+        EventParticipant authParticipant = participantRepository.findByEventIdAndUserId(eventId, authUserId);
+        if (authParticipant == null || (!authParticipant.isCollaborator() && !event.getOwner().getId().equals(authUserId))) {
+            throw new SecurityException("Você não tem permissão para marcar presença neste evento");
+        }
+
+        // Verificar se o participante existe
+        EventParticipant participant = participantRepository.findById(participantId)
+            .orElseThrow(() -> new IllegalArgumentException("Participante não encontrado"));
+
+        // Verificar se o participante pertence ao evento
+        if (!participant.getEvent().getId().equals(eventId)) {
+            throw new IllegalArgumentException("Participante não pertence a este evento");
+        }        // Verificar se o evento já começou
+        if (event.getState() != State.ACTIVE) {
+            throw new IllegalArgumentException("Só é possível marcar presença em eventos ativos");
+        }
+
+        // Marcar presença
+        if (participant.getCurrentStatus() != ParticipantStatus.PRESENT) {
+            updateParticipantStatus(eventId, participant.getUser().getId(), ParticipantStatus.PRESENT);
+        }
+
+        // Retornar dados do participante
+        Map<String, Object> participantData = new HashMap<>();
+        participantData.put("id", participant.getId());
+        participantData.put("userId", participant.getUser().getId());
+        participantData.put("status", participant.getCurrentStatus().toString());
+        
+        Map<String, Object> userData = new HashMap<>();
+        userData.put("name", participant.getUser().getName());
+        userData.put("email", participant.getUser().getEmail());
+        participantData.put("user", userData);
+        
+        return participantData;
+    }
+    
+    public List<Object> getPresentParticipants(Long eventId, Long authUserId) {
+        // Verificar se o evento existe
+        Event event = eventRepository.findById(eventId)
+            .orElseThrow(() -> new IllegalArgumentException("Evento não encontrado"));        // Verificar se o usuário tem permissão (deve ser organizador ou colaborador)
+        EventParticipant authParticipant = participantRepository.findByEventIdAndUserId(eventId, authUserId);
+        if (authParticipant == null || (!authParticipant.isCollaborator() && !event.getOwner().getId().equals(authUserId))) {
+            throw new SecurityException("Você não tem permissão para ver a lista de presença");
+        }        // Buscar participantes presentes
+        List<EventParticipant> presentParticipants = participantRepository.findByEventIdAndCurrentStatus(eventId, ParticipantStatus.PRESENT);
+        
+        List<Object> result = new ArrayList<>();
+        for (EventParticipant participant : presentParticipants) {
+            Map<String, Object> participantData = new HashMap<>();
+            participantData.put("id", participant.getId());
+            participantData.put("userId", participant.getUser().getId());
+            participantData.put("name", participant.getUser().getName());
+            participantData.put("status", participant.getCurrentStatus().toString());
+            String scannedAt = "Agora";
+            if (!participant.getParticipantHistory().isEmpty()) {
+                for (ParticipantHistory history : participant.getParticipantHistory()) {
+                    if (history.getStatus() == ParticipantStatus.PRESENT) {
+                        scannedAt = history.getChangeTimestamp().toLocalTime().toString();
+                        break;
+                    }
+                }
+            }
+            participantData.put("scannedAt", scannedAt);
+            result.add(participantData);
+        }
+        
+        return result;
+    }
+
+    // ...existing code...
 }

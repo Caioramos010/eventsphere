@@ -198,6 +198,24 @@ public class EventController {
     }
 
     /**
+     * Valida um código de evento
+     * 
+     * @param eventCode Código do evento
+     * @return Dados do evento
+     */
+    @GetMapping("/validate-code")
+    public ResponseEntity<ApiResponse<?>> validateEventCode(@RequestParam String eventCode) {
+        try {
+            EventDTO eventDTO = eventService.validateEventCode(eventCode);
+            return ResponseEntity.ok(ApiResponse.success("Código válido", eventDTO));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(ApiResponse.error("Erro interno do servidor"));
+        }
+    }
+
+    /**
      * Obter eventos onde o usuário é participante
      */
     @GetMapping("/participating")
@@ -205,5 +223,26 @@ public class EventController {
         User user = securityUtils.getAuthenticatedUser();
         List<EventDTO> participatingEvents = eventService.getParticipatingEventsForUser(user.getId());
         return ResponseEntity.ok(ApiResponse.success("Eventos carregados com sucesso", participatingEvents));
+    }
+
+    /**
+     * Obtém detalhes de um evento específico por ID (path variable)
+     * 
+     * @param eventId ID do evento na URL
+     * @return Dados do evento com informações do usuário
+     */
+    @GetMapping("/{eventId}")
+    public ResponseEntity<ApiResponse<?>> getEventById(@PathVariable Long eventId) {
+        try {
+            User user = securityUtils.getAuthenticatedUser();
+            EventDTO eventDTO = eventService.getEventWithUserInfo(eventId, user.getId());
+            return ResponseEntity.ok(ApiResponse.success("Evento encontrado", eventDTO));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(ApiResponse.error("Erro interno do servidor"));
+        }
     }
 }

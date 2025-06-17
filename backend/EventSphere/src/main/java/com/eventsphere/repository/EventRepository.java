@@ -14,6 +14,13 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     Event findByName(String name);    Event findByDescription(String description);
 
     Optional<Event> findByInviteToken(String inviteToken);    /**
+     * Encontra evento por código de convite
+     * @param inviteCode Código de convite do evento
+     * @return Evento encontrado ou null
+     */
+    Event findByInviteCode(String inviteCode);
+
+    /**
      * Encontra eventos em que o usuário é um participante
      * @param userID ID do usuário
      * @return Lista de eventos

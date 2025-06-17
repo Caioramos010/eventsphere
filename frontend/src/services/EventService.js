@@ -426,6 +426,45 @@ const EventService = {
       return { success: false, message: error.message || 'Erro de conexão', events: [] };
     }
   },
+
+  // Validar código de evento
+  async validateEventCode(code) {
+    try {
+      const url = buildUrl(API_CONFIG.ENDPOINTS.EVENT_CODE_VALIDATE, { code });
+      const response = await get(url);
+      const data = await response.json();
+      
+      if (data.success || response.ok) {
+        return { success: true, data: data.data, message: data.message || 'Código válido' };
+      } else {
+        return { success: false, message: data.message || 'Código inválido' };
+      }
+    } catch (error) {
+      console.error('Error validating event code:', error);
+      return { success: false, message: error.message || 'Erro de conexão' };
+    }
+  },
+
+  // Gerar código seguro para o evento
+  async generateEventCode(eventId) {
+    try {
+      const response = await post(API_CONFIG.ENDPOINTS.EVENT_CODE_GENERATE, { eventId });
+      const data = await response.json();
+      
+      if (data.success || response.ok) {
+        return { 
+          success: true, 
+          eventCode: data.eventCode || data.data?.eventCode,
+          message: data.message || 'Código gerado com sucesso' 
+        };
+      } else {
+        return { success: false, message: data.message || 'Erro ao gerar código' };
+      }
+    } catch (error) {
+      console.error('Error generating event code:', error);
+      return { success: false, message: error.message || 'Erro de conexão' };
+    }
+  },
 };
 
 export default EventService;

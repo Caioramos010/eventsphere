@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { IoPersonOutline, IoArrowBack, IoCamera, IoTrash, IoSave } from 'react-icons/io5';
+import { IoPersonOutline, IoArrowBack, IoCamera, IoTrash, IoSave, IoMailOutline, IoLockClosedOutline, IoPersonCircleOutline } from 'react-icons/io5';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import UserService from '../services/UserService';
@@ -15,7 +15,7 @@ export default function UserProfile() {
     username: '',
     currentPassword: '',
     newPassword: '',
-    confirmPassword: ''
+    confirmPassword: '',
   });
   const [activeTab, setActiveTab] = useState('photo');
   const [loading, setLoading] = useState(false);
@@ -24,6 +24,7 @@ export default function UserProfile() {
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState('');
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (!AuthService.isAuthenticated()) {
@@ -34,14 +35,12 @@ export default function UserProfile() {
     const userData = AuthService.getCurrentUser();
     if (userData) {
       setUser(userData);
-      setForm(prevForm => ({
+      setForm((prevForm) => ({
         ...prevForm,
         name: userData.name || '',
         email: userData.email || '',
-        username: userData.username || ''
+        username: userData.username || '',
       }));
-      
-      // Set photo preview if user has a photo
       if (userData.photo) {
         setPhotoPreview(userData.photo);
       }
@@ -50,7 +49,7 @@ export default function UserProfile() {
 
   function handleChange(e) {
     const { name, value } = e.target;
-    setForm(f => ({ ...f, [name]: value }));
+    setForm((f) => ({ ...f, [name]: value }));
     setError('');
     setSuccess('');
   }
@@ -58,18 +57,14 @@ export default function UserProfile() {
   function handlePhotoChange(e) {
     const file = e.target.files[0];
     if (file) {
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         setError('Por favor, selecione apenas arquivos de imagem');
         return;
       }
-      
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         setError('A imagem deve ter no máximo 5MB');
         return;
       }
-      
       setPhotoFile(file);
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -83,9 +78,7 @@ export default function UserProfile() {
   function handleRemovePhoto() {
     setPhotoFile(null);
     setPhotoPreview(user?.photo || '');
-    // Clear file input
-    const fileInput = document.getElementById('photo-input');
-    if (fileInput) fileInput.value = '';
+    if (fileInputRef.current) fileInputRef.current.value = '';
     setError('');
     setSuccess('');
   }
@@ -95,30 +88,27 @@ export default function UserProfile() {
       setError('Selecione uma foto para fazer o upload');
       return;
     }
-    
     setLoading(true);
     setError('');
     setSuccess('');
-    
     try {
-      const result = await UserService.uploadUserPhoto(photoFile);
-      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      const result = await UserService.uploadUserPhoto(photoFile, { signal: controller.signal });
+      clearTimeout(timeoutId);
       if (result.success) {
         setSuccess('Foto atualizada com sucesso!');
-        // Update local user data
         const updatedUser = { ...user, photo: result.photoUrl };
         setUser(updatedUser);
         AuthService.updateCurrentUser(updatedUser);
-        // Clear file input but keep preview
         setPhotoFile(null);
-        const fileInput = document.getElementById('photo-input');
-        if (fileInput) fileInput.value = '';
+        if (fileInputRef.current) fileInputRef.current.value = '';
       } else {
         setError(result.message || 'Erro ao fazer upload da foto');
       }
     } catch (err) {
       console.error('Photo upload error:', err);
-      setError('Erro ao conectar com o servidor');
+      setError(err.name === 'AbortError' ? 'Tempo de requisição esgotado' : 'Erro ao conectar com o servidor');
     } finally {
       setLoading(false);
     }
@@ -129,18 +119,19 @@ export default function UserProfile() {
     setLoading(true);
     setError('');
     setSuccess('');
-
     try {
       if (!form.email || form.email === user.email) {
         setError('Digite um novo email válido');
         return;
       }
-
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(form.email)) {
+        setError('Formato de email inválido');
+        return;
+      }
       const result = await UserService.updateEmail(form.email);
-
       if (result.success) {
         setSuccess(result.message || 'Email atualizado com sucesso!');
-        // Atualizar dados locais
         const updatedUser = { ...user, email: form.email };
         setUser(updatedUser);
         AuthService.updateCurrentUser(updatedUser);
@@ -160,18 +151,14 @@ export default function UserProfile() {
     setLoading(true);
     setError('');
     setSuccess('');
-
     try {
       if (!form.username || form.username === user.username) {
         setError('Digite um novo login válido');
         return;
       }
-
       const result = await UserService.updateUsername(form.username);
-
       if (result.success) {
         setSuccess(result.message || 'Login atualizado com sucesso!');
-        // Atualizar dados locais
         const updatedUser = { ...user, username: form.username };
         setUser(updatedUser);
         AuthService.updateCurrentUser(updatedUser);
@@ -191,40 +178,32 @@ export default function UserProfile() {
     setLoading(true);
     setError('');
     setSuccess('');
-
     try {
       if (!form.currentPassword || !form.newPassword || !form.confirmPassword) {
         setError('Preencha todos os campos de senha');
         return;
       }
-
       if (form.newPassword !== form.confirmPassword) {
         setError('A nova senha e confirmação não coincidem');
         return;
       }
-
       if (form.newPassword.length < 8) {
         setError('A nova senha deve ter pelo menos 8 caracteres');
         return;
       }
-
-      // Validação de senha forte
       const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/;
       if (!passwordRegex.test(form.newPassword)) {
         setError('A nova senha deve conter: maiúscula, minúscula, número e caractere especial');
         return;
       }
-
       const result = await UserService.updatePassword(form.currentPassword, form.newPassword);
-
       if (result.success) {
         setSuccess(result.message || 'Senha atualizada com sucesso!');
-        // Limpar campos de senha
-        setForm(prevForm => ({
+        setForm((prevForm) => ({
           ...prevForm,
           currentPassword: '',
           newPassword: '',
-          confirmPassword: ''
+          confirmPassword: '',
         }));
       } else {
         setError(result.message || 'Erro ao atualizar senha');
@@ -236,6 +215,7 @@ export default function UserProfile() {
       setLoading(false);
     }
   }
+
   if (!user) {
     return (
       <>
@@ -243,7 +223,7 @@ export default function UserProfile() {
         <div className="page-container">
           <div className="page-main">
             <div className="glass-card">
-              <div style={{textAlign: 'center', color: 'var(--color-text-white)'}}>
+              <div style={{ textAlign: 'center', color: 'var(--color-text-white)' }}>
                 Carregando...
               </div>
             </div>
@@ -271,224 +251,228 @@ export default function UserProfile() {
               </div>
             </div>
           </div>
-
           <div className="glass-card">
             <div className="profile-tabs">
-              <button 
+              <button
                 className={`profile-tab ${activeTab === 'photo' ? 'active' : ''}`}
                 onClick={() => setActiveTab('photo')}
               >
+                <IoCamera />
                 Foto
               </button>
-              <button 
+              <button
                 className={`profile-tab ${activeTab === 'email' ? 'active' : ''}`}
                 onClick={() => setActiveTab('email')}
               >
+                <IoMailOutline />
                 Email
               </button>
-              <button 
+              <button
                 className={`profile-tab ${activeTab === 'username' ? 'active' : ''}`}
                 onClick={() => setActiveTab('username')}
               >
+                <IoPersonCircleOutline />
                 Login
               </button>
-              <button 
+              <button
                 className={`profile-tab ${activeTab === 'password' ? 'active' : ''}`}
                 onClick={() => setActiveTab('password')}
               >
+                <IoLockClosedOutline />
                 Senha
               </button>
             </div>
-            
-            {/* Photo Tab */}
-            {activeTab === 'photo' && (              <div className="profile-form">                <div className="photo-container">
+            {activeTab === 'photo' && (
+              <div className="profile-section">
+                <h3 className="profile-section-title">Foto de perfil</h3>
+                <div className="photo-container">
                   <div className="photo-wrapper">
                     {photoPreview ? (
-                      <img src={photoPreview} alt="Foto de perfil" className="profile-photo" />
+                      <img
+                        src={photoPreview}
+                        alt="Foto de perfil"
+                        className="profile-photo"
+                        onError={() => setPhotoPreview('')}
+                      />
                     ) : (
                       <div className="photo-placeholder">
                         <IoPersonOutline size={60} />
+                        <br />
+                        Nenhuma foto
                       </div>
-                    )}                  </div>
-                    <div style={{ position: 'relative', marginTop: '-50px', marginLeft: '110px', marginBottom: '35px', zIndex: 30 }} className="photo-upload-container">
+                    )}
                     <label htmlFor="photo-input" className="photo-upload-btn">
-                      <IoCamera size={24} />
+                      <IoCamera />
                     </label>
+                    {(photoPreview || photoFile) && (
+                      <button
+                        className="photo-remove-btn"
+                        onClick={handleRemovePhoto}
+                        disabled={loading}
+                        title="Remover foto"
+                      >
+                        <IoTrash />
+                      </button>
+                    )}
                   </div>
-                    <input 
-                      type="file" 
-                      id="photo-input"
-                      accept="image/*"
-                      onChange={handlePhotoChange}
-                      style={{ display: 'none' }}
+                  <input
+                    type="file"
+                    id="photo-input"
+                    ref={fileInputRef}
+                    accept="image/*"
+                    onChange={handlePhotoChange}
+                    style={{ display: 'none' }}
+                  />
+                  <div className="photo-info">
+                    A foto deve ter no máximo 5MB e estar nos formatos JPG, PNG ou GIF
+                  </div>
+                  {photoFile && (
+                    <div className="photo-actions">
+                      <button
+                        className="modern-btn photo-action-btn"
+                        onClick={handleUploadPhoto}
+                        disabled={loading}
+                      >
+                        {loading ? (
+                          <>
+                            <div className="loading-spinner" />
+                            Salvando...
+                          </>
+                        ) : (
+                          <>
+                            <IoSave size={16} />
+                            Salvar foto
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            {activeTab === 'email' && (
+              <div className="profile-section">
+                <h3 className="profile-section-title">Alterar email</h3>
+                <form onSubmit={handleUpdateEmail} className="profile-form">
+                  <div className="form-group">
+                    <label className="modern-label">Email Atual</label>
+                    <input
+                      type="text"
+                      value={user.email || ''}
+                      className="modern-input"
+                      disabled
+                      style={{ opacity: 0.7 }}
                     />
                   </div>
-                  <div className="photo-actions">
-                    <button 
-                      className="modern-btn-secondary photo-action-btn"
-                      onClick={handleRemovePhoto}
-                      disabled={loading || (!photoFile && !photoPreview)}
-                    >
-                      <IoTrash size={16} />
-                      Remover
-                    </button>
-                    <button 
-                      className="modern-btn photo-action-btn"
-                      onClick={handleUploadPhoto}
-                      disabled={loading || !photoFile}
-                    >
-                      {loading ? (
-                        <>
-                          <div className="loading-spinner" />
-                          Salvando...
-                        </>
-                      ) : (
-                        <>
-                          <IoSave size={16} />
-                          Salvar foto
-                        </>
-                      )}
-                    </button>
+                  <div className="form-group">
+                    <label className="modern-label">Novo Email *</label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={form.email}
+                      onChange={handleChange}
+                      className="modern-input"
+                      placeholder="Digite o novo email"
+                      required
+                    />
                   </div>
-                  <div className="photo-info">
-                    <small>
-                      A foto deve ter no máximo 5MB. Formatos aceitos: JPG, PNG, GIF
-                    </small>
-                  </div>
-                </div>
+                  <button className="modern-btn" type="submit" disabled={loading}>
+                    {loading && <div className="loading-spinner" />}
+                    {loading ? 'Atualizando...' : 'Atualizar Email'}
+                  </button>
+                </form>
+              </div>
             )}
-
-            {/* Email Tab */}
-            {activeTab === 'email' && (
-              <form onSubmit={handleUpdateEmail} className="profile-form">
-                <div className="form-group">
-                  <label className="modern-label">Email Atual</label>
-                  <input
-                    type="text"
-                    value={user.email}
-                    className="modern-input"
-                    disabled
-                    style={{opacity: 0.7}}
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="modern-label">Novo Email *</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={form.email}
-                    onChange={handleChange}
-                    className="modern-input"
-                    placeholder="Digite o novo email"
-                    required
-                  />
-                </div>
-                <button 
-                  className="modern-btn" 
-                  type="submit" 
-                  disabled={loading}
-                >
-                  {loading && <div className="loading-spinner" />}
-                  {loading ? 'Atualizando...' : 'Atualizar Email'}
-                </button>
-              </form>
-            )}
-
-            {/* Username Tab */}
             {activeTab === 'username' && (
-              <form onSubmit={handleUpdateUsername} className="profile-form">
-                <div className="form-group">
-                  <label className="modern-label">Login Atual</label>
-                  <input
-                    type="text"
-                    value={user.username}
-                    className="modern-input"
-                    disabled
-                    style={{opacity: 0.7}}
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="modern-label">Novo Login *</label>
-                  <input
-                    type="text"
-                    name="username"
-                    value={form.username}
-                    onChange={handleChange}
-                    className="modern-input"
-                    placeholder="Digite o novo login"
-                    required
-                  />
-                </div>
-                <button 
-                  className="modern-btn" 
-                  type="submit" 
-                  disabled={loading}
-                >
-                  {loading && <div className="loading-spinner" />}
-                  {loading ? 'Atualizando...' : 'Atualizar Login'}
-                </button>
-              </form>
+              <div className="profile-section">
+                <h3 className="profile-section-title">Alterar login</h3>
+                <form onSubmit={handleUpdateUsername} className="profile-form">
+                  <div className="form-group">
+                    <label className="modern-label">Login Atual</label>
+                    <input
+                      type="text"
+                      value={user.username || ''}
+                      className="modern-input"
+                      disabled
+                      style={{ opacity: 0.7 }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="modern-label">Novo Login *</label>
+                    <input
+                      type="text"
+                      name="username"
+                      value={form.username}
+                      onChange={handleChange}
+                      className="modern-input"
+                      placeholder="Digite o novo login"
+                      required
+                    />
+                  </div>
+                  <button className="modern-btn" type="submit" disabled={loading}>
+                    {loading && <div className="loading-spinner" />}
+                    {loading ? 'Atualizando...' : 'Atualizar Login'}
+                  </button>
+                </form>
+              </div>
             )}
-
-            {/* Password Tab */}
             {activeTab === 'password' && (
-              <form onSubmit={handleUpdatePassword} className="profile-form">
-                <div className="form-group">
-                  <label className="modern-label">Senha Atual *</label>
-                  <input
-                    type="password"
-                    name="currentPassword"
-                    value={form.currentPassword}
-                    onChange={handleChange}
-                    className="modern-input"
-                    placeholder="Digite sua senha atual"
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="modern-label">Nova Senha *</label>
-                  <input
-                    type="password"
-                    name="newPassword"
-                    value={form.newPassword}
-                    onChange={handleChange}
-                    className="modern-input"
-                    placeholder="Digite a nova senha"
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="modern-label">Confirmar Nova Senha *</label>
-                  <input
-                    type="password"
-                    name="confirmPassword"
-                    value={form.confirmPassword}
-                    onChange={handleChange}
-                    className="modern-input"
-                    placeholder="Confirme a nova senha"
-                    required
-                  />
-                </div>
-                <div style={{
-                  fontSize: '12px',
-                  color: 'var(--color-gray-light)',
-                  marginBottom: '16px',
-                  textAlign: 'center'
-                }}>
-                  Senha deve ter: 8+ caracteres, maiúscula, minúscula, número e caractere especial (@$!%*?&)
-                </div>
-                <button 
-                  className="modern-btn" 
-                  type="submit" 
-                  disabled={loading}
-                >
-                  {loading && <div className="loading-spinner" />}
-                  {loading ? 'Atualizando...' : 'Atualizar Senha'}
-                </button>
-              </form>
+              <div className="profile-section">
+                <h3 className="profile-section-title">Alterar senha</h3>
+                <form onSubmit={handleUpdatePassword} className="profile-form">
+                  <div className="form-group">
+                    <label className="modern-label">Senha Atual *</label>
+                    <input
+                      type="password"
+                      name="currentPassword"
+                      value={form.currentPassword}
+                      onChange={handleChange}
+                      className="modern-input"
+                      placeholder="Digite sua senha atual"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="modern-label">Nova Senha *</label>
+                    <input
+                      type="password"
+                      name="newPassword"
+                      value={form.newPassword}
+                      onChange={handleChange}
+                      className="modern-input"
+                      placeholder="Digite a nova senha"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="modern-label">Confirmar Nova Senha *</label>
+                    <input
+                      type="password"
+                      name="confirmPassword"
+                      value={form.confirmPassword}
+                      onChange={handleChange}
+                      className="modern-input"
+                      placeholder="Confirme a nova senha"
+                      required
+                    />
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '12px',
+                      color: 'var(--color-gray-light)',
+                      marginBottom: '16px',
+                      textAlign: 'center',
+                    }}
+                  >
+                    Senha deve ter: 8+ caracteres, maiúscula, minúscula, número e caractere especial (@$!%*?&)
+                  </div>
+                  <button className="modern-btn" type="submit" disabled={loading}>
+                    {loading && <div className="loading-spinner" />}
+                    {loading ? 'Atualizando...' : 'Atualizar Senha'}
+                  </button>
+                </form>
+              </div>
             )}
-
-            {/* Status Messages */}
             {error && <div className="status-message status-error">{error}</div>}
             {success && <div className="status-message status-success">{success}</div>}
           </div>

@@ -1,6 +1,9 @@
 /* Import global variables */
 @import './styles/variables.css';
 
+/* Import input text standardization */
+@import './styles/input-standardization.css';
+
 body {
   margin: 0;
   font-family: var(--font-family);

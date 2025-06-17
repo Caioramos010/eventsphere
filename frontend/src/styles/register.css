@@ -99,7 +99,7 @@
   padding: 0 var(--spacing-lg);
   outline: none;
   transition: all var(--transition-fast);
-  color: var(--color-text-dark);
+  color: var(--color-gray-dark);
 }
 
 .register-input:focus {

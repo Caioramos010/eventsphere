@@ -193,4 +193,73 @@ public class ParticipantController {
         Map<String, Object> report = participantService.generateAttendanceReport(eventId, authUser.getId());
         return ResponseEntity.ok(ApiResponse.success("Relatório de presença gerado", report));
     }
+    /**
+     * Marca presença de um participante
+     *
+     * @param participantId ID do participante
+     * @param request Dados da requisição
+     * @return Resposta de sucesso
+     */
+    @PostMapping("/{participantId}/presence")
+    public ResponseEntity<ApiResponse<?>> markPresence(@PathVariable Long participantId, @RequestBody Map<String, Object> request) {
+        try {
+            User authUser = securityUtils.getAuthenticatedUser();
+            Object eventIdObj = request.get("eventId");
+            
+            Object result = participantService.markPresence(participantId, eventIdObj, authUser.getId());
+            return ResponseEntity.ok(ApiResponse.success("Presença marcada com sucesso", result));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(ApiResponse.error("Erro interno do servidor"));
+        }
+    }
+
+    /**
+     * Lista participantes presentes em um evento
+     *
+     * @param eventId ID do evento
+     * @return Lista de participantes presentes
+     */
+    @GetMapping("/event/{eventId}/present")
+    public ResponseEntity<ApiResponse<?>> getPresentParticipants(@PathVariable Long eventId) {
+        try {
+            User authUser = securityUtils.getAuthenticatedUser();
+            List<Object> presentParticipants = participantService.getPresentParticipants(eventId, authUser.getId());
+            return ResponseEntity.ok(ApiResponse.success("Lista de participantes presentes", presentParticipants));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(ApiResponse.error("Erro interno do servidor"));
+        }
+    }
+
+    /**
+     * Permite que um usuário participe de um evento usando código de convite
+     *
+     * @param request Dados da requisição contendo eventCode
+     * @return Resposta de sucesso
+     */
+    @PostMapping("/join-with-code")
+    public ResponseEntity<ApiResponse<?>> joinEventWithCode(@RequestBody Map<String, String> request) {
+        try {
+            User authUser = securityUtils.getAuthenticatedUser();
+            String eventCode = request.get("eventCode");
+            
+            if (eventCode == null || eventCode.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(ApiResponse.error("Código do evento é obrigatório"));
+            }
+            
+            participantService.joinEventWithCode(eventCode, authUser.getId());
+            return ResponseEntity.ok(ApiResponse.success("Você agora é um participante deste evento", null));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(ApiResponse.error("Erro interno do servidor"));
+        }
+    }
 }

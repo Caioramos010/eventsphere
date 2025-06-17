@@ -20,9 +20,10 @@ const API_CONFIG = {
     MY_EVENTS: '/api/event/get-myevents',
     PUBLIC_EVENTS: '/api/event/get-public',
     EVENT_START: '/api/event/start',
-    EVENT_FINISH: '/api/event/finish',    EVENT_CANCEL: '/api/event/cancel',
-    INVITE_GENERATE: '/api/event/invite/generate',
-    INVITE_VALIDATE: '/api/event/invite/validate',// Upload endpoints
+    EVENT_FINISH: '/api/event/finish',      EVENT_CANCEL: '/api/event/cancel',    INVITE_GENERATE: '/api/event/invite/generate',
+    INVITE_VALIDATE: '/api/event/invite/validate',
+    EVENT_CODE_GENERATE: '/api/event/code/generate',
+    EVENT_CODE_VALIDATE: '/api/event/code/validate',// Upload endpoints
     USER_PHOTO: '/api/upload/user-photo',
     FILE_DOWNLOAD: '/api/files',
     

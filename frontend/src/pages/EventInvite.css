@@ -221,7 +221,82 @@
   margin-bottom: 8px;
 }
 
-/* Responsive Design */
+/* Código do Evento */
+.code-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.code-display {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  flex: 1;
+  text-align: center;
+}
+
+.code-text {
+  color: var(--color-text-white);
+  font-family: 'Courier New', monospace;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.copy-code-btn {
+  min-width: 140px;
+  flex-shrink: 0;
+}
+
+/* Seções de convite */
+.invite-section {
+  margin-bottom: 32px;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.invite-section h3 {
+  color: var(--color-text-white);
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.section-description {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+  margin: 0 0 20px 0;
+  line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+  .code-container {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .copy-code-btn {
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .code-text {
+    font-size: 1.2rem;
+    letter-spacing: 1px;
+  }
+}
+
 @media (max-width: 768px) {
   .event-header-mini {
     min-height: 180px;

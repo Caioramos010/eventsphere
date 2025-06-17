@@ -61,14 +61,12 @@ const Header = () => {
               />
               {dropdownOpen && (
                 <div 
-                  className="user-dropdown"
-                  style={{ 
+                  className="user-dropdown"                  style={{ 
                     top: `${dropdownPosition.top}px`, 
                     right: `${dropdownPosition.right}px` 
                   }}
                 >
                   <Link to="/profile" className="dropdown-item">PERFIL</Link>
-                  <Link to="/configuracoes" className="dropdown-item">CONFIGURAÇÕES</Link>
                   <button onClick={handleLogout} className="dropdown-item">SAIR</button>
                 </div>
               )}

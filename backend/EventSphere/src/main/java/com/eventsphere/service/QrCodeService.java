@@ -10,8 +10,17 @@ import com.eventsphere.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.WriterException;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.logging.Logger;
 
 /**
@@ -32,19 +41,38 @@ public class QrCodeService {
     private EventService eventService;
 
     @Autowired
-    private UserRepository userRepository;
-    /**
+    private UserRepository userRepository;    /**
      * Cria um código QR para um participante
      * O formato do código é "participantId:token", onde token é um número aleatório de 6 dígitos
      * 
      * @param participantId ID do participante
-     * @return String contendo o código QR
+     * @return String contendo a imagem QR Code em Base64
      */
     public String createQrCode(Long participantId) {
-        // Gera um token aleatório de 6 dígitos (entre 100000 e 999999)
-        int token = 100000 + new SecureRandom().nextInt(900000);
-        return participantId + ":" + token;
-    }    /**
+        try {
+            // Gera um token aleatório de 6 dígitos (entre 100000 e 999999)
+            int token = 100000 + new SecureRandom().nextInt(900000);
+            String qrCodeText = participantId + ":" + token;
+            
+            // Configurações do QR Code
+            int width = 300;
+            int height = 300;
+            
+            QRCodeWriter qrCodeWriter = new QRCodeWriter();
+            BitMatrix bitMatrix = qrCodeWriter.encode(qrCodeText, BarcodeFormat.QR_CODE, width, height);
+            
+            // Converte a imagem para Base64
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            MatrixToImageWriter.writeToStream(bitMatrix, "PNG", outputStream);
+            byte[] imageBytes = outputStream.toByteArray();
+            
+            return Base64.getEncoder().encodeToString(imageBytes);
+            
+        } catch (WriterException | IOException e) {
+            logger.severe("Erro ao gerar QR Code: " + e.getMessage());
+            throw new RuntimeException("Erro ao gerar QR Code", e);
+        }
+    }/**
      * Processa um código QR e marca o participante como presente se válido
      * 
      * @param codeOrQr Código QR a ser processado
@@ -169,5 +197,57 @@ public class QrCodeService {
         participant.setCurrentStatus(ParticipantStatus.PRESENT);
         participantRepository.save(participant);
         logParticipantHistory(participant, ParticipantStatus.PRESENT);
+    }
+    /**
+     * Gera o texto que será codificado no QR Code
+     * 
+     * @param participantId ID do participante
+     * @return String contendo o texto do QR Code
+     */
+    public String generateQrCodeText(Long participantId) {
+        int token = 100000 + new SecureRandom().nextInt(900000);
+        return participantId + ":" + token;
+    }
+
+    /**
+     * Cria um código QR completo com texto e imagem
+     * 
+     * @param participantId ID do participante
+     * @return Map contendo o texto e a imagem Base64 do QR Code
+     */
+    public java.util.Map<String, String> createQrCodeComplete(Long participantId) {
+        try {
+            // Gera o texto do QR Code
+            String qrCodeText = generateQrCodeText(participantId);
+            
+            // Configurações do QR Code
+            int width = 300;
+            int height = 300;
+            
+            QRCodeWriter qrCodeWriter = new QRCodeWriter();
+            BitMatrix bitMatrix = qrCodeWriter.encode(qrCodeText, BarcodeFormat.QR_CODE, width, height);
+            
+            // Converte a imagem para Base64
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            MatrixToImageWriter.writeToStream(bitMatrix, "PNG", outputStream);
+            byte[] imageBytes = outputStream.toByteArray();
+            String base64Image = Base64.getEncoder().encodeToString(imageBytes);
+            
+            // Salva o texto do QR Code no participante
+            EventParticipant participant = participantRepository.findById(participantId)
+                .orElseThrow(() -> new IllegalArgumentException("Participante não encontrado"));
+            participant.setQrCode(qrCodeText);
+            participantRepository.save(participant);
+            
+            java.util.Map<String, String> result = new java.util.HashMap<>();
+            result.put("qrCodeText", qrCodeText);
+            result.put("qrCodeImage", base64Image);
+            
+            return result;
+            
+        } catch (WriterException | IOException e) {
+            logger.severe("Erro ao gerar QR Code completo: " + e.getMessage());
+            throw new RuntimeException("Erro ao gerar QR Code", e);
+        }
     }
 }

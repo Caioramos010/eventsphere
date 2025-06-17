@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import './calendar.css';
 import { useNavigate } from 'react-router-dom';
 
@@ -17,14 +18,15 @@ function getFirstDayOfWeek(year, month) {
 
 export default function Calendar({ events = [], onMonthChange }) {
   const today = new Date();
-  const navigate = useNavigate();
-  const [selected, setSelected] = useState({
+  const navigate = useNavigate();  const [selected, setSelected] = useState({
     year: today.getFullYear(),
     month: today.getMonth(),
     open: false
   });
   const [selectedDay, setSelectedDay] = useState(null);
   const [dayEvents, setDayEvents] = useState([]);
+  const [isMonthClickArea, setIsMonthClickArea] = useState(false);
+  const [lastClickTarget, setLastClickTarget] = useState(null);
 
   const daysInMonth = getDaysInMonth(selected.year, selected.month);
   const firstDay = getFirstDayOfWeek(selected.year, selected.month);
@@ -65,10 +67,31 @@ export default function Calendar({ events = [], onMonthChange }) {
     if (m > 11) { m = 0; y++; }
     setSelected(s => ({ ...s, month: m, year: y }));
     if (onMonthChange) onMonthChange(y, m);
+  }  function handleOpen(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    // Verifica se realmente foi clicado no elemento correto
+    const isCalendarMonthElement = e.target.classList.contains('calendar-month') || 
+                                   e.target.closest('.calendar-month');
+    
+    if (isCalendarMonthElement && isMonthClickArea) {
+      setLastClickTarget(e.target);
+      setSelected(s => ({ ...s, open: !s.open }));
+    }
   }
 
-  function handleOpen() {
-    setSelected(s => ({ ...s, open: !s.open }));
+  function handleMonthMouseEnter(e) {
+    setIsMonthClickArea(true);
+  }
+
+  function handleMonthMouseLeave(e) {
+    // Pequeno delay para evitar problemas de hover rápido
+    setTimeout(() => setIsMonthClickArea(false), 100);
+  }  function handleCloseExpanded() {
+    setSelected(s => ({ ...s, open: false }));
+    setIsMonthClickArea(false);
+    setLastClickTarget(null);
   }
   function handleSelectMonth(y, m) {
     setSelected(s => ({ ...s, year: y, month: m, open: false }));
@@ -106,10 +129,9 @@ export default function Calendar({ events = [], onMonthChange }) {
   function handleCloseEventModal() {
     setSelectedDay(null);
     setDayEvents([]);
-  }
-  // Renderização do modal de eventos do dia
+  }  // Renderização do modal de eventos do dia
   function renderDayEventsModal() {
-    return (
+    const modalContent = (
       <div className="calendar-events-modal" onClick={handleCloseEventModal}>
         <div className="calendar-events-container" onClick={e => e.stopPropagation()}>
           <div className="calendar-events-header">
@@ -124,8 +146,7 @@ export default function Calendar({ events = [], onMonthChange }) {
                 onClick={(e) => handleEventClick(event, e)}
               >
                 <div className="event-item-title">{event.name}</div>
-                <div className="event-item-date">{formatDate(event.dateFixedStart || event.dateStart)}</div>
-                <div className="event-item-info">
+                <div className="event-item-date">{formatDate(event.dateFixedStart || event.dateStart)}</div>                <div className="event-item-info">
                   {event.local && <div className="event-item-local">Local: {event.local}</div>}
                   {event.description && <div className="event-item-description">{event.description}</div>}
                 </div>
@@ -135,20 +156,23 @@ export default function Calendar({ events = [], onMonthChange }) {
         </div>
       </div>
     );
-  }
 
-  // Renderização do calendário expandido
+    // Renderiza o modal usando portal para escapar do contexto do card
+    return createPortal(modalContent, document.body);
+  }// Renderização do calendário expandido
   function renderExpanded() {
     // Geração de anos para o dropdown (apenas anos a partir do ano atual)
     const currentYear = today.getFullYear();
     const years = Array.from({ length: 11 }, (_, i) => currentYear + i); // 11 anos a partir do atual
-    return (
-      <div className="calendar-expanded-modal" onClick={handleOpen}>
+    
+    const modalContent = (
+      <div className="calendar-expanded-modal" onClick={handleCloseExpanded}>
         <div className="calendar-expanded" onClick={e => e.stopPropagation()}>
           <div className="calendar-expanded-header">
             <button onClick={() => handleMonthChange(-1)} disabled={selected.year === currentYear && selected.month === 0}>{'<'}</button>
             <span>{monthNames[selected.month]} {selected.year}</span>
             <button onClick={() => handleMonthChange(1)}>{'>'}</button>
+            <button className="calendar-expanded-close" onClick={handleCloseExpanded}>×</button>
           </div>
           <div className="calendar-expanded-grid">
             {Array.from({ length: 12 }).map((_, m) => (
@@ -160,8 +184,7 @@ export default function Calendar({ events = [], onMonthChange }) {
               >
                 {monthNames[m]}
               </div>
-            ))}
-            <div className="calendar-expanded-year-select-wrapper">
+            ))}            <div className="calendar-expanded-year-select-wrapper">
               <select
                 className="calendar-expanded-year-select"
                 value={selected.year}
@@ -176,17 +199,39 @@ export default function Calendar({ events = [], onMonthChange }) {
         </div>
       </div>
     );
-  }
 
-  return (
-    <div className="calendar-container glass-card">
+    // Renderiza o modal usando portal para escapar do contexto do card
+    return createPortal(modalContent, document.body);
+  }return (
+    <div 
+      className="calendar-container glass-card" 
+      onClick={(e) => {
+        e.stopPropagation();
+        // Se clicou fora do calendar-month, não faz nada
+        const isCalendarMonth = e.target.classList.contains('calendar-month') || 
+                               e.target.closest('.calendar-month');
+        if (!isCalendarMonth) {
+          // Ignora cliques fora da área do mês
+        }
+      }}
+      onMouseLeave={() => {
+        // Se sair do calendário completamente, reseta o estado
+        setIsMonthClickArea(false);
+      }}
+      style={{ isolation: 'isolate' }}
+    >
       <div className="calendar-header-wrapper">
         <div className="calendar-title">
           <span>CALENDÁRIO</span>
         </div>
         <div className="calendar-header">
-          <button className="calendar-arrow" onClick={() => handleMonthChange(-1)}>{'<'}</button>
-          <span className="calendar-month" onClick={handleOpen} style={{ cursor: 'pointer' }}>
+          <button className="calendar-arrow" onClick={() => handleMonthChange(-1)}>{'<'}</button>          <span 
+            className="calendar-month" 
+            onClick={handleOpen} 
+            onMouseEnter={handleMonthMouseEnter}
+            onMouseLeave={handleMonthMouseLeave}
+            style={{ cursor: 'pointer', zIndex: 2, position: 'relative' }}
+          >
             {monthNames[selected.month]} {selected.year}
           </span>
           <button className="calendar-arrow" onClick={() => handleMonthChange(1)}>{'>'}</button>

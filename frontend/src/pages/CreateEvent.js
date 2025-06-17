@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IoCreateOutline, IoImageOutline, IoArrowBackOutline } from 'react-icons/io5';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
+import { Header, Footer, PageTitle, StandardButton, StandardCard, BackButton } from '../components';
 import EventService from '../services/EventService';
 import AuthService from '../services/AuthService';
 import './CreateEvent.css';
@@ -127,29 +126,24 @@ export default function CreateEvent() {
     <>      <Header />
       <div className="page-container">
         <div className="page-main">
-          {/* Page Header */}
-          <div className="page-header">
-            <button 
-              className="back-btn" 
+          {/* Page Header */}          <div className="page-header">            <BackButton 
               onClick={() => navigate('/main')}
-              aria-label="Voltar para a página principal"
-            >
-              <IoArrowBackOutline />
-            </button>
-            <div className="header-content">
-              <IoCreateOutline className="page-icon" />
-              <div className="page-title">
-                <h1>Criar Evento</h1>
-                <span className="subtitle">Configure seu novo evento</span>
-              </div>
-            </div>
+              icon={IoArrowBackOutline}
+            />
+            
+            <PageTitle
+              icon={IoCreateOutline}
+              title="Criar Evento"
+              subtitle="Configure seu novo evento"
+              description="Preencha as informações abaixo para criar um novo evento"
+            />
           </div>
 
           <div className="content-wrapper">
             <form className="modern-form" onSubmit={handleSubmit}>
               
               {/* Photo Upload Section */}
-              <div className="glass-card">
+              <StandardCard variant="glass" padding="large">
                 <label className="upload-area" htmlFor="photo-input">
                   {photoPreview ? (
                     <img src={photoPreview} alt="Preview" className="photo-preview" />
@@ -168,12 +162,11 @@ export default function CreateEvent() {
                     accept="image/*"
                     onChange={handleChange}
                     className="hidden-input"
-                  />
-                </label>
-              </div>
+                  />                </label>
+              </StandardCard>
 
               {/* Basic Information */}
-              <div className="glass-card">
+              <StandardCard variant="glass" padding="large">
                 <h3 className="card-title">Informações Básicas</h3>
                 
                 <div className="form-group">
@@ -209,14 +202,13 @@ export default function CreateEvent() {
                     value={form.description}
                     onChange={handleChange}
                     className="modern-textarea"
-                    placeholder="Descreva seu evento..."
-                    maxLength={1000}
+                    placeholder="Descreva seu evento..."                    maxLength={1000}
                   />
                 </div>
-              </div>
+              </StandardCard>
 
               {/* Date and Time */}
-              <div className="glass-card">
+              <StandardCard variant="glass" padding="large">
                 <h3 className="card-title">Data e Horário</h3>
                 
                 <div className="form-row">
@@ -265,16 +257,15 @@ export default function CreateEvent() {
                       type="time"
                       name="timeFixedEnd"
                       value={form.timeFixedEnd}
-                      onChange={handleChange}
-                      className="modern-input"
+                      onChange={handleChange}                      className="modern-input"
                       required
                     />
                   </div>
                 </div>
-              </div>
+              </StandardCard>
 
               {/* Settings */}
-              <div className="glass-card">
+              <StandardCard variant="glass" padding="large">
                 <h3 className="card-title">Configurações</h3>
                 
                 <div className="form-row-three">
@@ -311,8 +302,7 @@ export default function CreateEvent() {
                   <div className="form-group">
                     <label className="modern-label">Acesso</label>
                     <select
-                      name="acess"
-                      value={form.acess}
+                      name="acess"                      value={form.acess}
                       onChange={handleChange}
                       className="modern-select"
                     >
@@ -321,24 +311,27 @@ export default function CreateEvent() {
                     </select>
                   </div>
                 </div>
-              </div>              {/* Status Messages */}
+              </StandardCard>
+              
+              {/* Status Messages */}
               {error && <div className="status-message status-error">{error}</div>}
               {success && <div className="status-message status-success">{success}</div>}
 
-              {/* Submit Button */}
-              <button type="submit" className="modern-btn" disabled={loading}>
-                {loading ? (
-                  <>
-                    <div className="loading-spinner"></div>
-                    Criando Evento...
-                  </>
-                ) : 'Criar Evento'}
-              </button>
+              {/* Submit Button */}              <StandardButton
+                type="submit"
+                variant="primary"
+                size="large"
+                fullWidth
+                loading={loading}
+                disabled={loading}
+              >
+                {loading ? 'Criando Evento...' : 'Criar Evento'}
+              </StandardButton>
             </form>
           </div>
         </div>
       </div>
       <Footer />
     </>
-  )
+  );
 }
