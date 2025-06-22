@@ -62,20 +62,48 @@ export default function CreateEvent() {
         return;
       }
 
-      if (form.timeFixedEnd <= form.timeFixedStart) {
-        setError('O horário de fim deve ser posterior ao horário de início');
+      // Validação aprimorada: data/hora final deve ser depois da inicial
+      const startDate = form.dateFixedStart;
+      const endDate = form.dateFixedEnd || form.dateFixedStart;
+      const startDateTime = new Date(`${startDate}T${form.timeFixedStart}`);
+      const endDateTime = new Date(`${endDate}T${form.timeFixedEnd}`);
+
+      // Se a data de término for igual à de início, horário de término deve ser maior
+      if (startDate === endDate && endDateTime <= startDateTime) {
+        setError('O horário de término deve ser posterior ao horário de início para eventos no mesmo dia');
+        setLoading(false);
+        return;
+      }
+      // Se a data de término for anterior à de início, não permitir
+      if (endDateTime < startDateTime && endDate !== startDate) {
+        setError('A data/hora de término deve ser posterior à data/hora de início');
         setLoading(false);
         return;
       }
 
-      const selectedDate = new Date(form.dateFixedStart);
+      // Corrige comparação de datas para permitir eventos hoje
+      const selectedDate = new Date(form.dateFixedStart + 'T00:00:00');
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
-      if (selectedDate < today) {
+      if (selectedDate.getTime() < today.getTime()) {
         setError('A data do evento não pode ser no passado');
         setLoading(false);
         return;
+      }
+      // Se o evento for hoje, o horário de início deve ser igual ou posterior ao horário atual
+      const now = new Date();
+      if (
+        selectedDate.getTime() === today.getTime() &&
+        form.timeFixedStart
+      ) {
+        const [h, m] = form.timeFixedStart.split(':');
+        const eventStart = new Date(selectedDate);
+        eventStart.setHours(Number(h), Number(m), 0, 0);
+        if (eventStart < now) {
+          setError('O horário de início deve ser igual ou posterior ao horário atual');
+          setLoading(false);
+          return;
+        }
       }
 
       // Create event data without the photo

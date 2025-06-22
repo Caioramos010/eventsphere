@@ -86,10 +86,20 @@ export async function fetchWithAuth(url, options = {}) {
     return response;
   } catch (error) {
     console.error('Request failed:', error);
-    
-    // Melhorar mensagens de erro de rede
-    if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-      throw new Error('Erro de conexão. Verifique sua internet e tente novamente.');
+
+    // Detecta erro de conexão ou timeout (backend offline)
+    if (
+      (error.name === 'TypeError' && error.message.includes('Failed to fetch')) ||
+      error.message.includes('Erro de conexão') ||
+      error.message.includes('Servidor indisponível') ||
+      error.message.includes('Tempo limite') ||
+      error.message.includes('NetworkError')
+    ) {
+      if (window.location.pathname !== '/server-off') {
+        window.location.href = '/server-off';
+      }
+      // Opcional: pode retornar uma Promise rejeitada para evitar erros em await
+      return Promise.reject(error);
     } else if (error.name === 'AbortError') {
       throw new Error('Requisição cancelada pelo usuário.');
     } else if (error.name === 'TimeoutError') {

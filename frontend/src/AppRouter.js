@@ -14,6 +14,7 @@ import AllEvents from './pages/AllEvents';
 import ProtectedRoute from './components/ProtectedRoute';
 import InviteRedirect from './components/InviteRedirect';
 import CameraDebugger from './components/CameraDebugger';
+import { Forbidden, ServerOff, NotFound } from './pages/ErrorPages';
 
 function AppRouter() {
   return (
@@ -72,6 +73,9 @@ function AppRouter() {
         } />
         {/* Rota para debug de câmera */}
         <Route path='/camera-debug' element={<CameraDebugger />} />
+        <Route path="/forbidden" element={<Forbidden />} />
+        <Route path="/server-off" element={<ServerOff />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
   );

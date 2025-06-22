@@ -524,7 +524,13 @@ const EventDetails = () => {
                 <div className="event-header-left">
                   <h2 className="event-title">{event.name}</h2>
                 </div>
-                <div className="event-access-badge">{event.access || event.acess || event.type || 'PÚBLICO'}</div>
+                <div className="event-access-badge">
+                  {event.access === 'PUBLIC'
+                    ? 'PÚBLICO'
+                    : event.access === 'PRIVATE'
+                    ? 'PRIVADO'
+                    : (event.access || 'PÚBLICO')}
+                </div>
               </div>
             </div>
             

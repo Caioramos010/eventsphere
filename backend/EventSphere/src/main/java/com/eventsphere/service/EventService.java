@@ -132,6 +132,19 @@ public class EventService {
 
     public Event updateEvent(Long eventID, EventDTO eventDTO, Long userId) {
         checkPermission(eventID, userId);
+        // Validação: data/hora final deve ser depois da inicial
+        LocalDate startDate = eventDTO.getDateFixedStart();
+        LocalDate endDate = eventDTO.getDateFixedEnd() != null ? eventDTO.getDateFixedEnd() : eventDTO.getDateFixedStart();
+        LocalTime startTime = eventDTO.getTimeFixedStart();
+        LocalTime endTime = eventDTO.getTimeFixedEnd();
+        if (startDate == null || startTime == null || endDate == null || endTime == null) {
+            throw new IllegalArgumentException("Data e hora de início e fim são obrigatórias");
+        }
+        LocalDateTime startDateTime = LocalDateTime.of(startDate, startTime);
+        LocalDateTime endDateTime = LocalDateTime.of(endDate, endTime);
+        if (!endDateTime.isAfter(startDateTime)) {
+            throw new IllegalArgumentException("A data/hora de término deve ser posterior à data/hora de início");
+        }
         Optional<Event> optionalEvent = eventRepository.findById(eventID);
         if (optionalEvent.isEmpty()){
             throw new IllegalArgumentException("Evento não encontrado!");
@@ -509,30 +522,20 @@ public class EventService {
      * @param userId ID do usuário
      * @return Lista de DTOs dos eventos com informações de status do usuário
      */    public List<EventDTO> getMyEventsWithUserInfo(Long userId) {
-        // Estados a serem excluídos (FINISHED e CANCELED)
-        List<State> excludedStates = Arrays.asList(State.FINISHED, State.CANCELED);
-        
-        // Busca eventos onde o usuário é o dono, excluindo eventos finalizados/cancelados
-        List<Event> ownedEvents = eventRepository.findByOwnerIdAndStateNotIn(userId, excludedStates);
-        
-        // Busca eventos onde o usuário é participante, excluindo estados indesejados
-        List<Event> participantEvents = eventRepository.findByParticipantsUserIdAndStateNot(userId, State.CANCELED);
-        // Filtrar também os FINISHED dos eventos de participante
-        participantEvents = participantEvents.stream()
-                .filter(event -> event.getState() != State.FINISHED)
-                .collect(Collectors.toList());
-        
+        // Busca eventos onde o usuário é o dono (sem filtrar por estado)
+        List<Event> ownedEvents = eventRepository.findByOwnerId(userId);
+        // Busca eventos onde o usuário é participante (sem filtrar por estado)
+        List<Event> participantEvents = eventRepository.findEventsByParticipantUserId(userId);
         // Juntar as listas e remover duplicatas usando um Set
         Set<Event> allEvents = new HashSet<>();
         allEvents.addAll(ownedEvents);
         allEvents.addAll(participantEvents);
-        
         // Converter para DTOs com informações detalhadas do usuário
         List<EventDTO> result = new ArrayList<>();
         for (Event event : allEvents) {
             result.add(getEventWithUserInfo(event.getId(), userId));
         }
-          return result;
+        return result;
     }
     
     /**
@@ -542,11 +545,8 @@ public class EventService {
      * @param userId ID do usuário atual
      * @return Lista de DTOs dos eventos com informações de status do usuário
      */    public List<EventDTO> getPublicEventsWithUserInfo(Long userId) {
-        // Estados a serem excluídos (FINISHED e CANCELED)
-        List<State> excludedStates = Arrays.asList(State.FINISHED, State.CANCELED);
-        
-        // Busca todos os eventos públicos excluindo os finalizados/cancelados
-        List<Event> events = eventRepository.findByAcessAndStateNotIn(Acess.PUBLIC, excludedStates);
+        // Busca todos os eventos públicos (sem filtrar por estado)
+        List<Event> events = eventRepository.findByAcess(Acess.PUBLIC);
         
         if (events.isEmpty()) {
             return new ArrayList<>();
@@ -578,27 +578,17 @@ public class EventService {
      */
     public List<EventDTO> getParticipatingEventsForUser(Long userId) {
         List<Event> events = eventRepository.findEventsByParticipantUserId(userId);
-        
-        // Filtrar eventos ativos (não cancelados nem encerrados)
-        events = events.stream()
-                .filter(event -> event.getState() == State.CREATED || event.getState() == State.ACTIVE)
-                .collect(Collectors.toList());
-        
+        // Não filtra por estado
         return events.stream()
                 .map(event -> {
                     EventDTO dto = convertToDTO(event);
-                    
-                    // Determinar o status do usuário no evento
                     String userStatus = determineUserStatus(event, userId);
                     dto.setUserStatus(userStatus);
-                    
-                    // Verificar se o usuário confirmou presença
                     boolean userConfirmed = event.getParticipants() != null && 
                             event.getParticipants().stream()
                                     .anyMatch(p -> p.getUser().getId().equals(userId) && 
                                                p.getCurrentStatus() == ParticipantStatus.CONFIRMED);
                     dto.setUserConfirmed(userConfirmed);
-                    
                     return dto;
                 })
                 .collect(Collectors.toList());

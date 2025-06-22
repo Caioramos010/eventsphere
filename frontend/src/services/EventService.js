@@ -428,9 +428,10 @@ const EventService = {
   },
 
   // Validar código de evento
-  async validateEventCode(code) {
+  async validateEventCode(eventCode) {
     try {
-      const url = buildUrl(API_CONFIG.ENDPOINTS.EVENT_CODE_VALIDATE, { code });
+      // Corrige a URL para o endpoint correto do backend
+      const url = buildUrl(API_CONFIG.ENDPOINTS.EVENT_CODE_VALIDATE, { eventCode });
       const response = await get(url);
       const data = await response.json();
       
