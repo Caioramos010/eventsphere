@@ -17,26 +17,26 @@ const EventInvite = () => {
   const [copyCodeSuccess, setCopyCodeSuccess] = useState(false);
   const [error, setError] = useState('');
 
-  // Função para gerar código seguro no frontend (fallback)
+  
   const generateSecureEventCode = (eventData) => {
-    // Usar múltiplas fontes de entropia para segurança
+    
     const timestamp = Date.now();
     const random = Math.random();
     const eventName = eventData.name || 'Event';
     const userId = localStorage.getItem('userId') || '0';
     
-    // Criar hash baseado em múltiplos fatores (não apenas ID do evento)
+    
     const entropy = `${timestamp}-${random}-${eventName}-${userId}-${eventData.dateStart}`;
     
-    // Função hash simples (em produção, usar crypto.subtle.digest)
+    
     let hash = 0;
     for (let i = 0; i < entropy.length; i++) {
       const char = entropy.charCodeAt(i);
       hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32-bit integer
+      hash = hash & hash; 
     }
     
-    // Converter hash em código de 8 caracteres alfanuméricos
+    
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let code = '';
     let workingHash = Math.abs(hash);
@@ -44,7 +44,7 @@ const EventInvite = () => {
     for (let i = 0; i < 8; i++) {
       code += chars[workingHash % chars.length];
       workingHash = Math.floor(workingHash / chars.length);
-      // Adicionar mais entropia se o hash ficar pequeno
+      
       if (workingHash < chars.length) {
         workingHash += timestamp + i * 1000;
       }
@@ -58,24 +58,24 @@ const EventInvite = () => {
       try {
         setLoading(true);
         
-        // Primeiro, carrega os dados do evento
+        
         const eventResult = await EventService.getEventDetails(id);
         if (!eventResult.success) {
           setError(eventResult.message || 'Evento não encontrado');
           return;
         }
         
-        setEvent(eventResult.event);        // Depois, gera o link de convite e código seguro
+        setEvent(eventResult.event);        
         const inviteResult = await EventService.generateInviteLink(id);
         if (inviteResult.success) {
           setInviteUrl(inviteResult.inviteUrl);
           
-          // Gerar código seguro do evento via backend
+          
           const codeResult = await EventService.generateEventCode(id);
           if (codeResult.success) {
             setEventCode(codeResult.eventCode);
           } else {
-            // Fallback: gerar código seguro no frontend
+            
             console.warn('Falha ao gerar código no backend, usando fallback seguro');
             setEventCode(generateSecureEventCode(eventResult.event));
           }
@@ -101,7 +101,7 @@ const EventInvite = () => {
       setTimeout(() => setCopySuccess(false), 2000);
     } catch (err) {
       console.error('Erro ao copiar link:', err);
-      // Fallback para navegadores que não suportam clipboard API
+      
       try {
         const textArea = document.createElement('textarea');
         textArea.value = inviteUrl;
@@ -124,7 +124,7 @@ const EventInvite = () => {
       setTimeout(() => setCopyCodeSuccess(false), 2000);
     } catch (err) {
       console.error('Erro ao copiar código:', err);
-      // Fallback para navegadores que não suportam clipboard API
+      
       try {
         const textArea = document.createElement('textarea');
         textArea.value = eventCode;
@@ -152,12 +152,12 @@ const EventInvite = () => {
         console.error('Erro ao compartilhar:', error);
       }
     } else {
-      // Fallback para navegadores sem Web Share API
+      
       handleCopyLink();
     }
   };
 
-  // Função para formatar data
+  
   const formatDate = (dateString) => {
     if (!dateString) return 'Data não definida';
     const date = new Date(dateString);
@@ -168,7 +168,7 @@ const EventInvite = () => {
     });
   };
 
-  // Função para formatar hora
+  
   const formatTime = (timeString) => {
     if (!timeString) return 'Horário não definido';
     
@@ -233,7 +233,6 @@ const EventInvite = () => {
           </div>
 
           <StandardCard variant="glass" padding="large" className="event-invite-card">
-            {/* Event Header with Background Image */}
             <div 
               className="event-header-mini" 
               style={{
@@ -261,7 +260,6 @@ const EventInvite = () => {
             </div>
 
             <div className="invite-content">
-              {/* Seção do Código do Evento */}
               <div className="invite-section">
                 <h3><IoKeyOutline /> Código do Evento</h3>
                 <p className="section-description">
@@ -283,7 +281,6 @@ const EventInvite = () => {
                 </div>
               </div>
 
-              {/* Seção do Link de Convite */}
               <div className="invite-section">
                 <h3><IoLinkOutline /> Link de Convite</h3>
                 <p className="section-description">

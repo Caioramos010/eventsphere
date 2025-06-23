@@ -19,10 +19,10 @@ const Register = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   
-  // Verificar se usuário já está logado
+  
   useEffect(() => {
     if (AuthService.isAuthenticated()) {
-      // Se há token de convite, redirecionar para a página de participação
+      
       const inviteToken = searchParams.get('token');
       if (inviteToken) {
         navigate(`/join-event/${inviteToken}`);
@@ -32,17 +32,17 @@ const Register = () => {
     }
   }, [navigate, searchParams]);
 
-  // Handler para upload de foto
+  
   const handleFotoChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validar tipo de arquivo
+      
       if (!file.type.startsWith('image/')) {
         setError('Por favor, selecione apenas arquivos de imagem');
         return;
       }
       
-      // Validar tamanho (max 5MB)
+      
       if (file.size > 5 * 1024 * 1024) {
         setError('A imagem deve ter no máximo 5MB');
         return;
@@ -53,17 +53,17 @@ const Register = () => {
         const base64 = e.target.result;
         setFoto(base64);
         setFotoPreview(base64);
-        setError(''); // Limpar erro se havia
+        setError(''); 
       };
       reader.readAsDataURL(file);
     }
   };
 
-  // Remover foto
+  
   const handleRemoveFoto = () => {
     setFoto('');
     setFotoPreview('');
-    // Limpar o input file
+    
     const fileInput = document.getElementById('foto-input');
     if (fileInput) fileInput.value = '';
   };
@@ -86,10 +86,10 @@ const Register = () => {
       const result = await AuthService.register(userData);
         if (result.success) {
         setSuccess(result.message || 'Registro realizado com sucesso!');
-        // Verificar se há token de convite para fazer login automático e redirecionar
+        
         const inviteToken = searchParams.get('token');
         if (inviteToken) {
-          // Fazer login automático após o registro
+          
           setTimeout(async () => {
             try {
               const loginResult = await AuthService.login({

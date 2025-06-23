@@ -1,18 +1,18 @@
-// Utilitário para requisições autenticadas - EventSphere
+
 import API_CONFIG, { buildUrl } from './config/api';
 
-// Função principal para requisições autenticadas
+
 export async function fetchWithAuth(url, options = {}) {
   const token = localStorage.getItem('token');
   
-  // Configurar headers padrão
+  
   const headers = {
     ...API_CONFIG.DEFAULT_HEADERS,
     ...(options.headers || {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {})
   };
 
-  // Configurar opções da requisição
+  
   const config = {
     ...options,
     headers,
@@ -20,27 +20,27 @@ export async function fetchWithAuth(url, options = {}) {
   };
 
   try {
-    // Fazer a requisição
+    
     const response = await fetch(url, config);
     
-    // Verificar se a resposta é válida
+    
     if (!response.ok) {
-      // Se token expirou, remover do localStorage
+      
       if (response.status === 401) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        // Redirecionar para login se necessário
+        
         if (window.location.pathname !== '/login') {
           window.location.href = '/login';
         }
       }
       
-      // Tentar extrair mensagem de erro do corpo da resposta
+      
       let errorMessage = `HTTP error! status: ${response.status}`;      try {
         const errorData = await response.clone().json();
         errorMessage = errorData.message || errorData.error || errorMessage;
       } catch (e) {
-        // Se não conseguir parse do JSON, usar mensagem padrão baseada no status
+        
         switch (response.status) {
           case 400:
             errorMessage = 'Dados inválidos enviados para o servidor';
@@ -87,7 +87,7 @@ export async function fetchWithAuth(url, options = {}) {
   } catch (error) {
     console.error('Request failed:', error);
 
-    // Detecta erro de conexão ou timeout (backend offline)
+    
     if (
       (error.name === 'TypeError' && error.message.includes('Failed to fetch')) ||
       error.message.includes('Erro de conexão') ||
@@ -98,7 +98,7 @@ export async function fetchWithAuth(url, options = {}) {
       if (window.location.pathname !== '/server-off') {
         window.location.href = '/server-off';
       }
-      // Opcional: pode retornar uma Promise rejeitada para evitar erros em await
+      
       return Promise.reject(error);
     } else if (error.name === 'AbortError') {
       throw new Error('Requisição cancelada pelo usuário.');
@@ -110,16 +110,15 @@ export async function fetchWithAuth(url, options = {}) {
   }
 }
 
-// Função para fazer requisições GET
+
 export async function get(endpoint, params = {}) {
   let url;
   
   if (endpoint.startsWith('http://') || endpoint.startsWith('https://')) {
-    // Se já for uma URL completa, usa diretamente
     url = endpoint;
     console.log('GET: URL completa fornecida:', url);
   } else {
-    // Caso contrário, constrói a URL
+    
     url = buildUrl(endpoint, params);
     console.log('GET: URL construída:', url, 'de endpoint:', endpoint, 'e params:', params);
   }
@@ -127,7 +126,7 @@ export async function get(endpoint, params = {}) {
   return fetchWithAuth(url, { method: 'GET' });
 }
 
-// Função para fazer requisições POST
+
 export async function post(endpoint, data = {}) {
   const url = buildUrl(endpoint);
   console.log('POST request to:', url);
@@ -139,7 +138,7 @@ export async function post(endpoint, data = {}) {
   });
 }
 
-// Função para fazer requisições PUT
+
 export async function put(endpoint, data = {}) {
   const url = buildUrl(endpoint);
   return fetchWithAuth(url, {
@@ -148,23 +147,23 @@ export async function put(endpoint, data = {}) {
   });
 }
 
-// Função para fazer requisições DELETE
+
 export async function del(endpoint) {
   const url = buildUrl(endpoint);
   return fetchWithAuth(url, { method: 'DELETE' });
 }
 
-// Função para upload de arquivos
+
 export async function uploadFile(endpoint, formData) {
   const token = localStorage.getItem('token');
   const headers = {
     ...(token ? { Authorization: `Bearer ${token}` } : {})
-    // Não definir Content-Type para FormData - o browser fará isso automaticamente
+    
   };
 
   const url = buildUrl(endpoint);
   
-  // Remove o Content-Type padrão para permitir que o browser defina o boundary correto
+  
   return fetch(url, {
     method: 'POST',
     headers,

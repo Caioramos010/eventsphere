@@ -245,4 +245,24 @@ public class EventController {
             return ResponseEntity.internalServerError().body(ApiResponse.error("Erro interno do servidor"));
         }
     }
+
+    /**
+     * Obtém os próximos eventos (não finalizados nem cancelados)
+     * @return Lista de eventos futuros
+     */
+    @GetMapping("/next-events")
+    public ResponseEntity<ApiResponse<?>> getNextEvents() {
+        User user = securityUtils.getAuthenticatedUser();
+        return ResponseEntity.ok(ApiResponse.success(eventService.getNextEventsWithUserInfo(user.getId())));
+    }
+
+    /**
+     * Obtém os próximos eventos públicos (não finalizados nem cancelados)
+     * @return Lista de eventos públicos futuros
+     */
+    @GetMapping("/next-public-events")
+    public ResponseEntity<ApiResponse<?>> getNextPublicEvents() {
+        User user = securityUtils.getAuthenticatedUser();
+        return ResponseEntity.ok(ApiResponse.success(eventService.getNextPublicEventsWithUserInfo(user.getId())));
+    }
 }

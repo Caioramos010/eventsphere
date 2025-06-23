@@ -1,6 +1,6 @@
-/* Input Text Color Standardization - EventSphere */
 
-/* Global input text color override - ensures all inputs use dark gray text */
+
+
 input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]),
 textarea,
 select {
@@ -8,14 +8,14 @@ select {
   font-family: var(--font-family) !important;
 }
 
-/* Global placeholder standardization */
+
 input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"])::placeholder,
 textarea::placeholder {
   color: rgba(255, 255, 255, 0.6) !important;
   opacity: 1 !important;
 }
 
-/* Specific overrides for dark theme inputs that should maintain dark gray text */
+
 .auth-input,
 .modern-input,
 .form-input,
@@ -37,14 +37,14 @@ textarea::placeholder {
   opacity: 1 !important;
 }
 
-/* For inputs on light backgrounds */
+
 input[style*="background: rgba(255, 255, 255"],
 input[style*="background: white"],
 input[style*="background: #fff"] {
   color: var(--color-gray-dark) !important;
 }
 
-/* For inputs on dark/glass backgrounds, ensure text is still readable */
+
 input[style*="background: rgba(255, 255, 255, 0.1)"],
 input[style*="background: rgba(255, 255, 255, 0.05)"],
 .glass-bg input,
@@ -52,7 +52,7 @@ input[style*="background: rgba(255, 255, 255, 0.05)"],
   color: var(--color-gray-dark) !important;
 }
 
-/* Date, time, and number inputs */
+
 input[type="date"],
 input[type="time"],
 input[type="datetime-local"],
@@ -60,13 +60,13 @@ input[type="number"] {
   color: var(--color-gray-dark) !important;
 }
 
-/* Select dropdowns */
+
 select option {
   color: var(--color-gray-dark) !important;
   background: var(--color-bg-white) !important;
 }
 
-/* Focus states maintain the standardized color */
+
 input:focus:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]),
 textarea:focus,
 select:focus {

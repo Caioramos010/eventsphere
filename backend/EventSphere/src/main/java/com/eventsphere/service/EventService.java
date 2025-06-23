@@ -12,7 +12,7 @@ import com.eventsphere.entity.user.User;
 import com.eventsphere.repository.EventRepository;
 import com.eventsphere.repository.ParticipantRepository;
 import com.eventsphere.repository.UserRepository;
-import com.eventsphere.utils.EventCodeGenerator;        // Verificar se o evento ainda está válido
+import com.eventsphere.utils.EventCodeGenerator;        
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -74,21 +74,21 @@ public class EventService {
                 eventDTO.getState(),
                 owner);
                 
-        // Salva o evento primeiro para obter um ID
+        
         event = eventRepository.save(event);
-          // Inicializa a lista de participantes se necessário
+          
         if (event.getParticipants() == null) {
             event.setParticipants(new ArrayList<>());
         }
         
-        // Adiciona o criador automaticamente como participante confirmado
+        
         EventParticipant ownerParticipant = new EventParticipant();
         ownerParticipant.setEvent(event);
         ownerParticipant.setUser(owner);
         ownerParticipant.setCurrentStatus(ParticipantStatus.CONFIRMED);
-        ownerParticipant.setIsCollaborator(false); // Não é necessário ser colaborador, já é dono
+        ownerParticipant.setIsCollaborator(false); 
         
-        // Adiciona histórico inicial
+        
         ParticipantHistory history = new ParticipantHistory();
         history.setParticipant(ownerParticipant);
         history.setStatus(ParticipantStatus.CONFIRMED);
@@ -99,27 +99,25 @@ public class EventService {
         }
         ownerParticipant.getParticipantHistory().add(history);
         
-        // Adiciona o participante à lista do evento
+        
         event.getParticipants().add(ownerParticipant);
         
-        // Salva o participante no repositório
+        
         participantRepository.save(ownerParticipant);
         
-        // Salva o evento com o participante
+        
         return eventRepository.save(event);
     }
     
-    private void checkPermission(Long eventID, Long userId) {
+    public void checkPermission(Long eventID, Long userId) {
         Event event = eventRepository.findById(eventID)
                 .orElseThrow(() -> new IllegalArgumentException("Evento não encontrado!"));
         
-        // Verificar se é o proprietário
         boolean isOwner = event.getOwner().getId().equals(userId);
         if (isOwner) {
-            return; // Se for o proprietário, tem permissão
+            return; 
         }
         
-        // Verificar se é colaborador
         boolean isCollaborator = false;
         if (event.getCollaborators() != null) {
             isCollaborator = event.getCollaborators().stream().anyMatch(u -> u.getId().equals(userId));
@@ -132,7 +130,7 @@ public class EventService {
 
     public Event updateEvent(Long eventID, EventDTO eventDTO, Long userId) {
         checkPermission(eventID, userId);
-        // Validação: data/hora final deve ser depois da inicial
+        
         LocalDate startDate = eventDTO.getDateFixedStart();
         LocalDate endDate = eventDTO.getDateFixedEnd() != null ? eventDTO.getDateFixedEnd() : eventDTO.getDateFixedStart();
         LocalTime startTime = eventDTO.getTimeFixedStart();
@@ -255,13 +253,13 @@ public class EventService {
         Event event = eventRepository.findById(eventID)
                 .orElseThrow(() -> new IllegalArgumentException("Evento não encontrado!"));
         
-        // Verificar se é o proprietário
+        
         boolean isOwner = event.getOwner().getId().equals(userId);
         if (isOwner) {
-            return; // Se for o proprietário, tem permissão
+            return; 
         }
         
-        // Verificar se é colaborador
+        
         boolean isCollaborator = false;
         if (event.getCollaborators() != null) {
             isCollaborator = event.getCollaborators().stream().anyMatch(u -> u.getId().equals(userId));
@@ -288,18 +286,18 @@ public class EventService {
     public String generateInviteLink(Long eventId, Long userId) {
         Event event = getEvent(eventId);
         
-        // Verificar se o usuário tem permissão para gerar convites
+        
         authorizeEditEvent(eventId, userId);
         
-        // Se já existe um token, retornar o existente
+        
         if (event.getInviteToken() != null && !event.getInviteToken().isEmpty()) {
             return event.getInviteToken();
         }
-          // Gerar novo token único
+          
         String inviteToken = UUID.randomUUID().toString();
         event.setInviteToken(inviteToken);
         
-        // Gerar código de convite seguro (8 caracteres únicos)
+        
         String inviteCode = generateSecureInviteCode();
         event.setInviteCode(inviteCode);
         
@@ -313,7 +311,7 @@ public class EventService {
      * Garante unicidade verificando códigos existentes no banco
      */
     private String generateSecureInviteCode() {
-        // Buscar todos os códigos existentes para garantir unicidade
+        
         Set<String> existingCodes = eventRepository.findAll()
                 .stream()
                 .map(Event::getInviteCode)
@@ -333,7 +331,7 @@ public class EventService {
         Event event = eventRepository.findByInviteToken(inviteToken)
                 .orElseThrow(() -> new IllegalArgumentException("Token de convite inválido ou expirado"));
         
-        // Verificar se o evento não está cancelado
+        
         if (event.getState() == State.CANCELED) {
             throw new IllegalArgumentException("Este evento foi cancelado");
         }
@@ -345,7 +343,7 @@ public class EventService {
         Event event = eventRepository.findByInviteToken(inviteToken)
                 .orElseThrow(() -> new IllegalArgumentException("Token de convite inválido ou expirado"));
         
-        // Verificar se o evento não está cancelado
+        
         if (event.getState() == State.CANCELED) {
             throw new IllegalArgumentException("Este evento foi cancelado");
         }
@@ -353,7 +351,7 @@ public class EventService {
         return event;
     }
 
-    // Exemplo de uso: adicionar colaborador
+    
     public Event addCollaborator(Long eventID, Long userID, Long requesterId) {
         checkPermission(eventID, requesterId);
         Event event = eventRepository.findById(eventID)
@@ -394,7 +392,7 @@ public class EventService {
         List<Event> ownedEvents = eventRepository.findByOwnerId(userId);
         List<Event> participantEvents = eventRepository.findAllMyEvents(userId);
         
-        // Combine owned and participated events
+        
         Set<Event> allEvents = new HashSet<>();
         allEvents.addAll(ownedEvents);
         allEvents.addAll(participantEvents);
@@ -421,38 +419,38 @@ public class EventService {
         Event event = getEvent(eventID);
         EventDTO eventDTO = convertToDTO(event);
         
-        // Determinar o status do usuário em relação ao evento
+        
         boolean isOwner = event.getOwner().getId().equals(userId);
         boolean isCollaborator = false;
         boolean isParticipant = false;
         boolean isConfirmed = false;
         
-        // Se for o proprietário, não precisamos verificar outras coisas
+        
         if (isOwner) {
             eventDTO.setUserStatus("owner");
-            eventDTO.setUserConfirmed(true); // O proprietário está sempre confirmado
+            eventDTO.setUserConfirmed(true); 
             return eventDTO;
         }
         
-        // Verificar se o usuário é colaborador
+        
         if (event.getCollaborators() != null) {
             isCollaborator = event.getCollaborators().stream()
                 .anyMatch(u -> u.getId().equals(userId));
         }
         
-        // Verificar entre os participantes
+        
         if (event.getParticipants() != null) {
             for (EventParticipant participant : event.getParticipants()) {
                 if (participant.getUser().getId().equals(userId)) {
                     isParticipant = true;
-                    isCollaborator = participant.isCollaborator() || isCollaborator; // Também poderia ser marcado como colaborador na lista de participantes
+                    isCollaborator = participant.isCollaborator() || isCollaborator; 
                     isConfirmed = participant.getCurrentStatus() == ParticipantStatus.CONFIRMED;
                     break;
                 }
             }
         }
         
-        // Definir o status do usuário
+        
         if (isCollaborator) {
             eventDTO.setUserStatus("collaborator");
         } else if (isParticipant) {
@@ -484,12 +482,12 @@ public class EventService {
         dto.setAcess(event.getAcess());
         dto.setPhoto(event.getPhoto());
         dto.setState(event.getState());
-        dto.setOwnerId(event.getOwner().getId());        // Criar listas para IDs
+        dto.setOwnerId(event.getOwner().getId());        
         List<Long> collaboratorIds = new ArrayList<>();
         List<Long> participantIds = new ArrayList<>();
         List<ParticipantDTO> participants = new ArrayList<>();
         
-        // Processar participantes
+        
         for (EventParticipant participant : event.getParticipants()) {
             ParticipantDTO participantDTO = new ParticipantDTO();
             participantDTO.setId(participant.getId());
@@ -522,15 +520,15 @@ public class EventService {
      * @param userId ID do usuário
      * @return Lista de DTOs dos eventos com informações de status do usuário
      */    public List<EventDTO> getMyEventsWithUserInfo(Long userId) {
-        // Busca eventos onde o usuário é o dono (sem filtrar por estado)
+        
         List<Event> ownedEvents = eventRepository.findByOwnerId(userId);
-        // Busca eventos onde o usuário é participante (sem filtrar por estado)
+        
         List<Event> participantEvents = eventRepository.findEventsByParticipantUserId(userId);
-        // Juntar as listas e remover duplicatas usando um Set
+        
         Set<Event> allEvents = new HashSet<>();
         allEvents.addAll(ownedEvents);
         allEvents.addAll(participantEvents);
-        // Converter para DTOs com informações detalhadas do usuário
+        
         List<EventDTO> result = new ArrayList<>();
         for (Event event : allEvents) {
             result.add(getEventWithUserInfo(event.getId(), userId));
@@ -545,17 +543,17 @@ public class EventService {
      * @param userId ID do usuário atual
      * @return Lista de DTOs dos eventos com informações de status do usuário
      */    public List<EventDTO> getPublicEventsWithUserInfo(Long userId) {
-        // Busca todos os eventos públicos (sem filtrar por estado)
+        
         List<Event> events = eventRepository.findByAcess(Acess.PUBLIC);
         
         if (events.isEmpty()) {
             return new ArrayList<>();
         }
         
-        // Converter para DTOs com informações detalhadas do usuário
+        
         List<EventDTO> result = new ArrayList<>();
         for (Event event : events) {
-            // Para cada evento, adiciona informação sobre o status do usuário em relação ao evento
+            
             result.add(getEventWithUserInfo(event.getId(), userId));
         }
         
@@ -578,7 +576,7 @@ public class EventService {
      */
     public List<EventDTO> getParticipatingEventsForUser(Long userId) {
         List<Event> events = eventRepository.findEventsByParticipantUserId(userId);
-        // Não filtra por estado
+        
         return events.stream()
                 .map(event -> {
                     EventDTO dto = convertToDTO(event);
@@ -595,7 +593,7 @@ public class EventService {
     }
 
     private String determineUserStatus(Event event, Long userId) {
-        // Lógica para determinar o status do usuário no evento
+        
         if (event.getOwner().getId().equals(userId)) {
             return "owner";
         }
@@ -623,13 +621,13 @@ public class EventService {
      * Upload de imagem para evento
      */
     public Map<String, Object> uploadEventImage(Long eventId, org.springframework.web.multipart.MultipartFile file, Long userId) {
-        // Verificar se o usuário tem permissão para editar o evento
+        
         authorizeEditEvent(eventId, userId);
         
-        // Converter arquivo para Base64
+        
         String base64Image = imageService.convertToBase64(file);
         
-        // Atualizar evento com a imagem Base64
+        
         Event updatedEvent = updateEventPhoto(eventId, base64Image);
         
         Map<String, Object> response = new HashMap<>();
@@ -647,7 +645,7 @@ public class EventService {
      * @return EventDTO do evento
      */
     public EventDTO validateEventCode(String eventCode) {
-        // Validar formato do código
+        
         if (!EventCodeGenerator.isValidCodeFormat(eventCode)) {
             throw new IllegalArgumentException("Código de evento inválido. Deve conter 8 caracteres (letras e números).");
         }
@@ -657,7 +655,7 @@ public class EventService {
             throw new EntityNotFoundException("Evento não encontrado com o código fornecido.");
         }
         
-        // Verificar se o evento ainda está válido
+        
         if (event.getState() == State.CANCELED) {
             throw new IllegalStateException("Este evento foi cancelado.");
         }
@@ -676,7 +674,7 @@ public class EventService {
      * @return Event entity
      */
     public Event validateEventCodeAndGetEvent(String eventCode) {
-        // Validar formato do código
+        
         if (!EventCodeGenerator.isValidCodeFormat(eventCode)) {
             throw new IllegalArgumentException("Código de evento inválido. Deve conter 8 caracteres (letras e números).");
         }
@@ -687,7 +685,7 @@ public class EventService {
             throw new IllegalArgumentException("Evento não encontrado com o código fornecido.");
         }
         
-        // Verificar se o evento ainda está válido
+        
         if (event.getState() == State.CANCELED) {
             throw new IllegalStateException("Este evento foi cancelado.");
         }
@@ -697,5 +695,39 @@ public class EventService {
         }
         
         return event;
+    }
+    
+    /**
+     * Retorna eventos que não estão finalizados nem cancelados (próximos eventos)
+     */
+    public List<EventDTO> getNextEventsWithUserInfo(Long userId) {
+        List<State> excludedStates = Arrays.asList(State.FINISHED, State.CANCELED);
+        List<Event> ownedEvents = eventRepository.findByOwnerIdAndStateNotIn(userId, excludedStates);
+        List<Event> participantEvents = eventRepository.findByParticipantsUserIdAndStateNot(userId, State.FINISHED);
+        // Remove eventos cancelados manualmente (caso algum participante esteja em evento cancelado)
+        participantEvents = participantEvents.stream()
+            .filter(e -> !excludedStates.contains(e.getState()))
+            .collect(Collectors.toList());
+        Set<Event> allEvents = new HashSet<>();
+        allEvents.addAll(ownedEvents);
+        allEvents.addAll(participantEvents);
+        List<EventDTO> result = new ArrayList<>();
+        for (Event event : allEvents) {
+            result.add(getEventWithUserInfo(event.getId(), userId));
+        }
+        return result;
+    }
+    
+    /**
+     * Retorna próximos eventos públicos (não finalizados nem cancelados)
+     */
+    public List<EventDTO> getNextPublicEventsWithUserInfo(Long userId) {
+        List<State> excludedStates = Arrays.asList(State.FINISHED, State.CANCELED);
+        List<Event> publicEvents = eventRepository.findByAcessAndStateNotIn(com.eventsphere.entity.event.Acess.PUBLIC, excludedStates);
+        List<EventDTO> result = new ArrayList<>();
+        for (Event event : publicEvents) {
+            result.add(getEventWithUserInfo(event.getId(), userId));
+        }
+        return result;
     }
 }

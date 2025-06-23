@@ -24,7 +24,7 @@ function AppRouter() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         
-        {/* Rotas protegidas */}        <Route path='/main' element={
+        {}        <Route path='/main' element={
           <ProtectedRoute>
             <Main />
           </ProtectedRoute>
@@ -46,7 +46,7 @@ function AppRouter() {
             <JoinEvent />
           </ProtectedRoute>
         } />
-        {/* Rota para redirecionamento de convites */}
+        {}
         <Route path='/invite/:token' element={<InviteRedirect />} />
         <Route path='/profile' element={
           <ProtectedRoute>
@@ -71,7 +71,7 @@ function AppRouter() {
             <EditEvent />
           </ProtectedRoute>
         } />
-        {/* Rota para debug de câmera */}
+        {}
         <Route path='/camera-debug' element={<CameraDebugger />} />
         <Route path="/forbidden" element={<Forbidden />} />
         <Route path="/server-off" element={<ServerOff />} />

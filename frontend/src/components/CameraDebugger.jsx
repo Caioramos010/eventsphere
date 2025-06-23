@@ -63,7 +63,7 @@ const CameraDebugger = () => {
       await videoRef.current.play();
       setIsStreaming(true);
 
-      // Obter informações do stream
+      
       const track = streamRef.current.getVideoTracks()[0];
       const settings = track.getSettings();
       const capabilities = track.getCapabilities();
@@ -74,7 +74,7 @@ const CameraDebugger = () => {
         label: track.label
       });
 
-      // Iniciar scanning
+      
       startScanning();
 
     } catch (err) {
@@ -104,7 +104,7 @@ const CameraDebugger = () => {
           });
         }
       } catch (err) {
-        // Ignorar erros de não encontrar QR code
+        
       }
     };
 

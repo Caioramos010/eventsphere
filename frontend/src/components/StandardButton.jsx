@@ -3,13 +3,13 @@ import './StandardButton.css';
 
 const StandardButton = ({
   children,
-  variant = 'primary', // 'primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'
-  size = 'medium', // 'small', 'medium', 'large'
+  variant = 'primary', 
+  size = 'medium', 
   disabled = false,
   loading = false,
   fullWidth = false,
   icon: Icon,
-  iconPosition = 'left', // 'left', 'right'
+  iconPosition = 'left', 
   onClick,
   type = 'button',
   className = '',

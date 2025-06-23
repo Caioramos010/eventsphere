@@ -21,13 +21,7 @@ public class FileController {
     @Autowired
     private FileStorageService fileStorageService;
     
-    /**
-     * Endpoint para servir arquivos armazenados
-     *
-     * @param fileName Nome do arquivo a ser baixado
-     * @param request HttpServletRequest para determinar o tipo de conteúdo
-     * @return ResponseEntity contendo o recurso de arquivo
-     */
+
     @GetMapping("/{fileName:.+}")
     public ResponseEntity<Resource> downloadFile(@PathVariable String fileName, HttpServletRequest request) {
         try {

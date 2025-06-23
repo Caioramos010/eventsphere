@@ -4,6 +4,7 @@ import logo from '../images/logo.png';
 import userIcon from '../images/user.png';
 import { Link } from './Link';
 import AuthService from '../services/AuthService';
+import getUserPhotoUrl from '../utils/getUserPhotoUrl';
 
 const Header = () => {
   const currentUser = AuthService.getCurrentUser();  const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -16,7 +17,7 @@ const Header = () => {
   };
   
   const toggleDropdown = (e) => {
-    e.stopPropagation(); // Prevent event from bubbling up
+    e.stopPropagation(); 
     
     if (iconRef.current) {
       const rect = iconRef.current.getBoundingClientRect();
@@ -28,7 +29,7 @@ const Header = () => {
     
     setDropdownOpen(!dropdownOpen);
   };
-    // Close dropdown when clicking outside
+    
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -36,7 +37,7 @@ const Header = () => {
       }
     };
     
-    // Only add the event listener if dropdown is open
+    
     if (dropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
@@ -46,6 +47,9 @@ const Header = () => {
     };
   }, [dropdownOpen]);
 
+  // Garante que a foto do usuário tenha o prefixo correto
+  const userPhoto = getUserPhotoUrl(currentUser?.photo) || userIcon;
+
   return (
     <header className="main-header">
       <img src={logo} alt="EventSphere" className="main-header-logo" />      <nav className="main-header-nav">
@@ -54,7 +58,7 @@ const Header = () => {
           <div className="main-header-user">
             <div className="profile-icon-container" ref={dropdownRef}>              <img 
                 ref={iconRef}
-                src={currentUser.photo || userIcon} 
+                src={userPhoto} 
                 alt="User Profile" 
                 className={`main-header-user-icon ${dropdownOpen ? 'active' : ''}`}
                 onClick={toggleDropdown}

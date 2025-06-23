@@ -33,6 +33,9 @@ public class User {
     @Column(columnDefinition = "LONGTEXT")
     private String photo;
 
+    @Column(nullable = false)
+    private boolean isBlocked = false;
+
     public User(String username, String name, Set<String> roles, String email, LocalDateTime registerDate, String photo) {
         this.username = username;
         this.name = name;
@@ -115,5 +118,12 @@ public class User {
 
     public void setPhoto(String photo) {
         this.photo = photo;
+    }
+
+    public boolean isBlocked() {
+        return isBlocked;
+    }
+    public void setBlocked(boolean blocked) {
+        isBlocked = blocked;
     }
 }

@@ -35,10 +35,10 @@ export default function CreateEvent() {
     const { name, value, type, files } = e.target;
     if (type === 'file' && files[0]) {
       const file = files[0];
-      // Store the actual file for later upload
+      
       setForm(f => ({ ...f, photoFile: file }));
       
-      // Create preview for UI only
+      
       const reader = new FileReader();
       reader.onload = (e) => {
         const base64 = e.target.result;
@@ -62,26 +62,26 @@ export default function CreateEvent() {
         return;
       }
 
-      // Validação aprimorada: data/hora final deve ser depois da inicial
+      
       const startDate = form.dateFixedStart;
       const endDate = form.dateFixedEnd || form.dateFixedStart;
       const startDateTime = new Date(`${startDate}T${form.timeFixedStart}`);
       const endDateTime = new Date(`${endDate}T${form.timeFixedEnd}`);
 
-      // Se a data de término for igual à de início, horário de término deve ser maior
+      
       if (startDate === endDate && endDateTime <= startDateTime) {
         setError('O horário de término deve ser posterior ao horário de início para eventos no mesmo dia');
         setLoading(false);
         return;
       }
-      // Se a data de término for anterior à de início, não permitir
+      
       if (endDateTime < startDateTime && endDate !== startDate) {
         setError('A data/hora de término deve ser posterior à data/hora de início');
         setLoading(false);
         return;
       }
 
-      // Corrige comparação de datas para permitir eventos hoje
+      
       const selectedDate = new Date(form.dateFixedStart + 'T00:00:00');
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -90,7 +90,7 @@ export default function CreateEvent() {
         setLoading(false);
         return;
       }
-      // Se o evento for hoje, o horário de início deve ser igual ou posterior ao horário atual
+      
       const now = new Date();
       if (
         selectedDate.getTime() === today.getTime() &&
@@ -106,7 +106,7 @@ export default function CreateEvent() {
         }
       }
 
-      // Create event data without the photo
+      
       const eventData = {
         name: form.name,
         dateFixedStart: form.dateFixedStart,
@@ -118,20 +118,20 @@ export default function CreateEvent() {
         maxParticipants: parseInt(form.maxParticipants) || 50,
         classification: parseInt(form.classification) || 0,
         acess: form.acess,
-        photo: null // Don't include the photo in the initial request
+        photo: null 
       };
 
-      // First create the event
+      
       const result = await EventService.createEvent(eventData);
 
       if (result.success && form.photoFile) {
-        // If event creation was successful and we have a photo file, upload it separately
+        
         try {
           await EventService.uploadEventPhoto(result.event.id, form.photoFile);
           console.log('Photo uploaded successfully');
         } catch (photoError) {
           console.error('Error uploading photo:', photoError);
-          // Continue anyway since the event was created
+          
         }
       }
 

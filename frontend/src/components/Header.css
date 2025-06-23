@@ -1,4 +1,4 @@
-/* Header styles for EventSphere */
+
 .main-header {
   width: 100%;
   max-width: 100%;
@@ -113,7 +113,7 @@
   }
 }
 
-/* Profile dropdown styles */
+
 .profile-icon-container {
   position: relative;
   cursor: pointer;
@@ -136,7 +136,7 @@
   border: 2px solid var(--color-primary);
 }
 
-/* Add a small triangle pointer to the dropdown */
+
 .user-dropdown::before {
   content: '';
   position: absolute;
@@ -205,7 +205,7 @@
     height: 24px;
   }
   
-  /* No need to set top and right here as it's now dynamic */
+ 
   .user-dropdown {
     width: 150px;
   }

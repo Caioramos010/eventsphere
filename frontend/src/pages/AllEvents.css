@@ -1,4 +1,3 @@
-/* AllEvents.css - Modern Design Pattern */
 @import url('../styles/common.css');
 
 .events-controls {
@@ -281,7 +280,7 @@
   box-shadow: 0 6px 20px rgba(124, 58, 237, 0.3);
 }
 
-/* List view specific styles */
+
 .events-grid.list-view .event-item {
   display: flex;
   flex-direction: column;
@@ -293,33 +292,47 @@
   padding: 0 15px;
 }
 
-/* Responsive adjustments */
+
 @media (max-width: 768px) {
   .events-controls {
-    padding: 20px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    padding: 12px;
   }
-  
+  .search-container {
+    max-width: 100%;
+    margin-bottom: 10px;
+  }
   .filter-buttons {
-    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-start;
   }
-  
+  .view-controls {
+    margin-top: 10px;
+    align-self: flex-start;
+  }
   .events-grid {
     grid-template-columns: 1fr;
-    gap: 20px;
-  }
-  
-  .view-controls {
-    align-self: center;
+    gap: 16px;
   }
 }
 
 @media (max-width: 480px) {
+  .events-controls {
+    padding: 8px;
+    gap: 8px;
+  }
   .filter-buttons {
     flex-direction: column;
-    align-items: stretch;
+    gap: 6px;
   }
-  
-  .filter-btn {
-    text-align: center;
+  .search-input {
+    font-size: 12px;
+    padding: 10px 10px 10px 35px;
+  }
+  .events-grid {
+    gap: 10px;
   }
 }

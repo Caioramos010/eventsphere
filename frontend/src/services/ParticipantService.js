@@ -1,9 +1,9 @@
-// Serviço de Participantes - EventSphere
+
 import { get, post, put } from '../fetchWithAuth';
 import API_CONFIG, { buildUrlWithId } from '../config/api';
 
 const ParticipantService = {
-  // Convidar participante para evento
+  
   async inviteParticipant(eventId, participantData) {
     try {
       const response = await post(API_CONFIG.ENDPOINTS.PARTICIPANT_INVITE, {
@@ -22,7 +22,7 @@ const ParticipantService = {
       return { success: false, message: error.message || 'Erro de conexão' };
     }
   },
-  // Atualizar status do participante
+  
   async updateParticipantStatus(participantId, status) {
     try {
       const url = buildUrlWithId(API_CONFIG.ENDPOINTS.PARTICIPANT_STATUS, participantId);
@@ -47,7 +47,7 @@ const ParticipantService = {
     }
   },
   
-  // Confirmar presença em um evento
+  
   async confirmAttendance(eventId) {
     try {
       const url = `${API_CONFIG.BASE_URL}/api/participant/confirm`;
@@ -65,7 +65,7 @@ const ParticipantService = {
     }
   },
 
-  // Buscar participantes de um evento
+  
   async getEventParticipants(eventId) {
     try {
       const url = buildUrlWithId(API_CONFIG.ENDPOINTS.EVENTS, eventId) + '/participants';
@@ -83,7 +83,7 @@ const ParticipantService = {
     }
   },
 
-  // Confirmar presença no evento
+  
   async confirmPresence(eventId) {
     try {
       const response = await post(`${API_CONFIG.ENDPOINTS.EVENTS}/${eventId}/confirm`, {});
@@ -100,7 +100,7 @@ const ParticipantService = {
     }
   },
 
-  // Cancelar participação no evento
+  
   async cancelParticipation(eventId) {
     try {
       const response = await post(`${API_CONFIG.ENDPOINTS.EVENTS}/${eventId}/cancel`, {});
@@ -117,7 +117,7 @@ const ParticipantService = {
     }
   },
 
-  // Marcar presença via QR Code
+  
   async markPresenceByQR(qrCode) {
     try {
       const response = await post(`${API_CONFIG.ENDPOINTS.EVENTS}/qr-presence`, { qrCode });
@@ -133,7 +133,7 @@ const ParticipantService = {
       return { success: false, message: error.message || 'Erro de conexão' };
     }
   },
-  // Buscar estatísticas de participantes
+  
   async getParticipantStats(eventId) {
     try {
       const url = buildUrlWithId(API_CONFIG.ENDPOINTS.EVENTS, eventId) + '/participants/stats';
@@ -151,10 +151,10 @@ const ParticipantService = {
     }
   },
 
-  // Participar diretamente de um evento público
+  
   async joinPublicEvent(eventId) {
     try {
-      // Como estamos adicionando o usuário diretamente, vamos usar o endpoint de participantes
+      
       const response = await post(`${API_CONFIG.BASE_URL}/api/participant/join-event`, { eventId });
       const data = await response.json();
       
@@ -169,7 +169,7 @@ const ParticipantService = {
     }
   },
 
-  // Participar de um evento via convite (eventos privados)
+  
   async joinEventWithInvite(eventId, inviteToken) {
     try {
       const response = await post(`${API_CONFIG.BASE_URL}/api/participant/join-with-invite`, { 
@@ -189,7 +189,7 @@ const ParticipantService = {
     }
   },
 
-  // Participar de um evento via código (eventos privados)
+  
   async joinEventWithCode(eventId, eventCode) {
     try {
       const response = await post(`${API_CONFIG.BASE_URL}/api/participant/join-with-code`, { 
@@ -209,7 +209,7 @@ const ParticipantService = {
     }
   },
 
-  // Remover participante de um evento
+  
   async removeParticipant(eventId, participantId) {
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}/api/participant/remove/${eventId}/${participantId}`, {
@@ -232,7 +232,7 @@ const ParticipantService = {
     }
   },
 
-  // Confirmar participação de um participante
+  
   async confirmParticipant(eventId, participantId) {
     try {
       const response = await put(`${API_CONFIG.BASE_URL}/api/participant/confirm/${eventId}/${participantId}`, {});
@@ -249,7 +249,7 @@ const ParticipantService = {
     }
   },
 
-  // Promover participante a colaborador
+  
   async promoteToCollaborator(eventId, participantId) {
     try {
       const response = await put(`${API_CONFIG.BASE_URL}/api/participant/promote/${eventId}/${participantId}`, {});
@@ -266,7 +266,7 @@ const ParticipantService = {
     }
   },
 
-  // Remover colaborador (rebaixar para participante comum)
+  
   async demoteCollaborator(eventId, participantId) {
     try {
       const response = await put(`${API_CONFIG.BASE_URL}/api/participant/demote/${eventId}/${participantId}`, {});
@@ -283,7 +283,7 @@ const ParticipantService = {
     }
   },
 
-  // Gerar QR code para participante
+  
   async generateQrCode(eventId) {
     try {
       const response = await get(`${API_CONFIG.BASE_URL}/api/participant/qr-code/${eventId}`);
@@ -300,7 +300,7 @@ const ParticipantService = {
     }
   },
 
-  // Obter relatório de presença
+  
   async getAttendanceReport(eventId) {
     try {
       const response = await get(`${API_CONFIG.BASE_URL}/api/participant/attendance-report/${eventId}`);

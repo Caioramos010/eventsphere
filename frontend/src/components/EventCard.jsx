@@ -7,12 +7,12 @@ import API_CONFIG from '../config/api';
 import ParticipantService from '../services/ParticipantService';
 
 const EventCard = ({ event, type, linkTo, onParticipate }) => {
-  // Log do evento recebido para debug
+  
   console.log('EventCard recebeu evento:', event);
   console.log('EventCard linkTo:', linkTo);
 
   const handleParticipateClick = async (e) => {
-    e.preventDefault(); // Evita o redirecionamento do Link
+    e.preventDefault(); 
     e.stopPropagation();
     
     if (onParticipate) {
@@ -29,40 +29,40 @@ const EventCard = ({ event, type, linkTo, onParticipate }) => {
         onParticipate(event.id, false, 'Erro de conexão');
       }
     }
-  };// Função para formatar URL de imagem
+  };
   const formatImageUrl = (imagePath) => {
     if (!imagePath) return null;
     
-    // Se for Base64 (data:image/...), retornar diretamente
+    
     if (imagePath.startsWith('data:image/')) {
       return imagePath;
     }
     
-    // Se já for uma URL completa, retornar como está
+    
     if (imagePath.startsWith('http')) {
       return imagePath;
     }
     
-    // Caso contrário, é um nome de arquivo armazenado no servidor (legacy)
+    
     return `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.FILE_DOWNLOAD}/${imagePath}`;
   };
-  // Função para formatar data
+  
   const formatDate = (dateString) => {
     if (!dateString) return 'Data não definida';
     
-    // Se for uma string ISO ou objeto Date
+    
     let date;
     if (typeof dateString === 'string') {
-      // Verificar se é no formato ISO (2023-04-15) ou um timestamp
+      
       if (dateString.includes('T') || !isNaN(Date.parse(dateString))) {
         date = new Date(dateString);
       } else {
-        // Para datas no formato dd/mm/yyyy
+        
         const parts = dateString.split('/');
         if (parts.length === 3) {
           date = new Date(parts[2], parts[1] - 1, parts[0]);
         } else {
-          return dateString; // Retorna a string original se não conseguir parsear
+          return dateString; 
         }
       }
     } else if (dateString instanceof Date) {
@@ -77,7 +77,7 @@ const EventCard = ({ event, type, linkTo, onParticipate }) => {
       year: 'numeric'
     });
   };
-  // Função para retornar o ícone correto baseado no status do usuário
+  
   const getUserStatusIcon = (userStatus) => {
     switch (userStatus) {
       case 'owner':
@@ -87,16 +87,16 @@ const EventCard = ({ event, type, linkTo, onParticipate }) => {
       case 'participant':
         return <BsPersonFill className="status-icon participant-icon" />;
       default:
-        return null; // Não mostra ícone se não estiver participando
+        return null; 
     }
-  };  // Função para obter a imagem do evento ou o placeholder padrão
+  };  
   const getEventImage = () => {
     const imageUrl = formatImageUrl(event.imageUrl || event.photo || event.image);
     if (imageUrl) {
       return <img src={imageUrl} alt={event.name} className="card-image" />;
     }
     
-    // Placeholder padrão clean com gradiente
+    
     return (
       <div className="default-event-placeholder">
         <div className="placeholder-gradient"></div>

@@ -1,7 +1,7 @@
-/* PageTitle.css - Componente de título de página padronizado */
+
 .page-title {
   display: flex;
-  align-items: flex-start; /* Alinha no topo para combinar com o botão */
+  align-items: flex-start;
   margin-bottom: 2rem;
   text-align: center;
   color: white;
@@ -10,7 +10,7 @@
 
 .page-title-content {
   display: flex;
-  align-items: flex-start; /* Alinha no topo */
+  align-items: flex-start;
   gap: 1.5rem;
   max-width: 800px;
   width: 100%;
@@ -75,7 +75,7 @@
   opacity: 0.9;
 }
 
-/* Tamanhos diferentes */
+
 .page-title.small .page-title-icon {
   padding: 1rem;
   border-radius: 16px;
@@ -118,7 +118,7 @@
   font-size: 0.95rem;
 }
 
-/* Responsividade */
+
 @media (max-width: 768px) {
   .page-title {
     margin-bottom: 1.5rem;

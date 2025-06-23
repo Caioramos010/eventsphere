@@ -11,22 +11,22 @@ const AllEvents = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' ou 'list'
-  const [filter, setFilter] = useState('all'); // 'all', 'my-events', 'participating'
+  const [viewMode, setViewMode] = useState('grid'); 
+  const [filter, setFilter] = useState('all'); 
   const navigate = useNavigate();
 
-  // Função para filtrar eventos
+  
   const filterEvents = useCallback(() => {
     let filtered = events;
 
-    // Filtrar por tipo
+    
     if (filter === 'my-events') {
       filtered = filtered.filter(event => event.source === 'created');
     } else if (filter === 'participating') {
       filtered = filtered.filter(event => event.source === 'participating');
     }
 
-    // Filtrar por termo de busca
+    
     if (searchTerm) {
       filtered = filtered.filter(event =>
         event.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -50,7 +50,7 @@ const AllEvents = () => {
     try {
       setLoading(true);
       
-      // Carregar eventos criados pelo usuário
+      
       const myEventsResult = await EventService.getMyEvents();
       const myEvents = myEventsResult.success ? myEventsResult.events.map(event => ({
         ...event,
@@ -58,7 +58,7 @@ const AllEvents = () => {
         source: 'created'
       })) : [];
 
-      // Carregar eventos onde o usuário é participante
+      
       const participatingEventsResult = await EventService.getParticipatingEvents();
       const participatingEvents = participatingEventsResult.success ? participatingEventsResult.events.map(event => ({
         ...event,
@@ -66,7 +66,7 @@ const AllEvents = () => {
         source: 'participating'
       })) : [];
 
-      // Combinar e remover duplicatas (caso o usuário seja owner e participante)
+      
       const allEvents = [...myEvents];
       participatingEvents.forEach(event => {
         if (!allEvents.find(e => e.id === event.id)) {
@@ -74,7 +74,7 @@ const AllEvents = () => {
         }
       });
 
-      // Ordenar por data de criação (mais recentes primeiro)
+      
       allEvents.sort((a, b) => new Date(b.dateCreated || b.createdAt || 0) - new Date(a.dateCreated || a.createdAt || 0));
 
       setEvents(allEvents);
@@ -87,7 +87,7 @@ const AllEvents = () => {
 
   const handleParticipate = async (eventId, success, message) => {
     if (success) {
-      // Recarregar eventos para atualizar o status
+      
       await loadAllEvents();
     } else {
       alert(message || 'Erro ao participar do evento');

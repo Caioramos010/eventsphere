@@ -38,7 +38,7 @@
   word-break: break-word;
 }
 
-/* BOTÕES PRINCIPAIS */
+
 .link-btn {
   width: 155px;
   height: 55px;
@@ -70,7 +70,7 @@
 .link-btn.pink .btn-text {
   color: #fff;
 }
-/* HOVER STATES */
+
 .link-btn:hover {
   background: #E82E9B;
   outline: none;
@@ -85,7 +85,7 @@
   color: #E82E9B;
 }
 
-/* HERO BUTTON */
+
 .hero-btn {
   width: 300px;
   height: 44px;
@@ -111,7 +111,7 @@
 
 }
 
-/* CRIE AGORA BUTTON */
+
 .crie-agora-link {
   text-decoration: none;
 }

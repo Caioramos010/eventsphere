@@ -8,15 +8,15 @@ const InviteRedirect = () => {
 
   useEffect(() => {
     if (AuthService.isAuthenticated()) {
-      // Se o usuário já está logado, redirecionar para a página de participação
+      
       navigate(`/join-event/${token}`);
     } else {
-      // Se não está logado, redirecionar para login com o token
+      
       navigate(`/login?token=${token}`);
     }
   }, [token, navigate]);
 
-  // Mostrar uma tela de carregamento enquanto redireciona
+  
   return (
     <div style={{
       display: 'flex',

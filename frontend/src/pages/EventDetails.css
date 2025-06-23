@@ -1,7 +1,7 @@
-/* EventDetails.css - Modern Design Pattern */
+
 @import url('../styles/common.css');
 
-/* Event Status Container - Posicionado no topo direito */
+
 .event-status-container {
   position: absolute;
   top: 20px;
@@ -9,7 +9,7 @@
   z-index: 10;
 }
 
-/* Event Active Badge */
+
 .event-active-badge {
   display: flex;
   align-items: center;
@@ -61,7 +61,7 @@
   }
 }
 
-/* Event Cancelled Badge */
+
 .event-cancelled-badge {
   display: flex;
   align-items: center;
@@ -80,7 +80,7 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* Event Finished Badge */
+
 .event-finished-badge {
   display: flex;
   align-items: center;
@@ -99,7 +99,7 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* Event Inactive Badge */
+
 .event-inactive-badge {
   display: flex;
   align-items: center;
@@ -118,7 +118,7 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* Event Header */
+
 .event-header {
   display: flex;
   justify-content: space-between;
@@ -152,7 +152,7 @@
   letter-spacing: 0.5px;
 }
 
-/* Event Content */
+
 .event-content {
   display: flex;
   gap: 40px;
@@ -198,7 +198,7 @@
   line-height: 1.5;
 }
 
-/* Capacity Bar */
+
 .event-capacity {
   margin-top: 16px;
 }
@@ -234,7 +234,7 @@
   border-radius: 4px;
 }
 
-/* Event Actions */
+
 .event-actions {
   flex: 1;
   display: flex;
@@ -323,7 +323,7 @@
   40%, 80% { transform: translateX(2px); }
 }
 
-/* Section Header */
+
 .section-header {
   display: flex;
   justify-content: space-between;
@@ -344,12 +344,13 @@
 .small-btn {
   display: flex;
   align-items: center;
+  border-radius: 6px;
   gap: 8px;
   padding: 8px 12px;
   font-size: 12px;
 }
 
-/* Participant List */
+
 .participant-list {
   display: flex;
   flex-direction: column;
@@ -449,13 +450,16 @@
 }
 
 .list-footer {
+  display: flex;
+  
+  justify-content: center;
   text-align: center;
   margin-top: 16px;
   font-size: 12px;
   color: var(--color-gray-light);
 }
 
-/* Estilo para o alerta de ID temporário */
+
 .warning-card {
   margin-bottom: 20px;
   border-left: 4px solid #f9a825;
@@ -490,7 +494,7 @@
   font-size: 0.9em;
 }
 
-/* Event Image Styles - New Header Design */
+
 .event-header-with-image {
   position: relative;
   min-height: 300px;
@@ -547,7 +551,7 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
-/* Fallback when no image */
+
 .event-header-with-image:not([style*="background-image"]) {
   background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
   position: relative;
@@ -558,7 +562,7 @@
   position: relative;
 }
 
-/* Add pattern overlay for no-image headers */
+
 .event-header-with-image:not([style*="background-image"])::before,
 .event-header-with-image[style*="background-image: none"]::before {
   content: '';
@@ -575,12 +579,12 @@
   z-index: 1;
 }
 
-/* Content area adjustments */
+
 .event-content {
   padding: 24px 0 0 0;
 }
 
-/* Remove old image container styles */
+
 .event-image-container {
   display: none;
 }
@@ -589,7 +593,7 @@
   display: none;
 }
 
-/* Responsive Design */
+
 @media (max-width: 768px) {
   .event-content {
     flex-direction: column;
@@ -616,7 +620,7 @@
     gap: 12px;
   }
   
-  /* Responsive adjustments for the new header design */
+ 
   .event-header-with-image {
     min-height: 250px;
     margin: -16px -16px 0 -16px;
@@ -642,7 +646,7 @@
     align-self: flex-end;
   }
   
-  /* Ajuste responsivo para o status */
+ 
   .event-status-container {
     top: 15px;
     right: 15px;
@@ -671,7 +675,7 @@
   }
 }
 
-/* Enhanced glass card styles for the new design */
+
 .glass-card-large {
   overflow: hidden;
   position: relative;
@@ -694,7 +698,7 @@
   }
 }
 
-/* Hover effect - Remove overlay and text on hover */
+
 .event-header-with-image {
   transition: transform 0.3s ease;
   cursor: pointer;
@@ -702,7 +706,7 @@
   overflow: hidden;
 }
 
-/* Only show cursor pointer when there's an image */
+
 .event-header-with-image[style*="background-image: none"] {
   cursor: default;
 }
@@ -756,7 +760,7 @@
   transform: scale(1.01);
 }
 
-/* Image Modal Styles */
+
 .image-modal-overlay {
   position: fixed;
   top: 0;
@@ -855,7 +859,7 @@
   }
 }
 
-/* Participant Modal Styles */
+
 .participant-modal-overlay {
   position: fixed;
   top: 0;
@@ -1072,7 +1076,7 @@
   text-align: center;
 }
 
-/* QR Code Modal Styles */
+
 .qr-modal-overlay {
   position: fixed;
   top: 0;
@@ -1195,7 +1199,7 @@
   border: 1px solid rgba(124, 58, 237, 0.3);
 }
 
-/* Attendance Report Modal Styles */
+
 .attendance-modal-overlay {
   position: fixed;
   top: 0;
@@ -1261,8 +1265,16 @@
 }
 
 .attendance-summary {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
   text-align: center;
   margin-bottom: 30px;
+}
+.attendance-summary button{
+  width: 25%;
 }
 
 .attendance-summary h4 {

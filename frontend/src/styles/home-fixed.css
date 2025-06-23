@@ -1,13 +1,13 @@
 @import './variables.css';
 
-/* General Styles */
+
 .home-container {
   font-family: 'Lexend Deca', sans-serif;
   width: 100%;
   overflow-x: hidden;
 }
 
-/* Page transition */
+
 .page-fade-in {
   animation: fadeIn 0.35s ease-in;
 }
@@ -17,7 +17,7 @@
   to { opacity: 1; }
 }
 
-/* Header */
+
 .home-header {
   width: 100%;
   border-radius: 0 0 20% 20%;
@@ -108,7 +108,7 @@
   background: var(--color-primary-dark);
 }
 
-/* Hero Section */
+
 .hero-section {
   width: 100%;
   height: 100vh;
@@ -132,7 +132,7 @@
   z-index: 1;
 }
 
-/* Animated background elements */
+
 .hero-section::before, 
 .hero-section::after {
   content: "";
@@ -242,7 +242,7 @@
   left: 100%;
 }
 
-/* Scroll Indicator */
+
 .scroll-indicator {
   position: absolute;
   bottom: 40px;
@@ -282,7 +282,7 @@
   background: var(--color-primary);
 }
 
-/* Features Section */
+
 .features-section {
   background: linear-gradient(to bottom, #ffffff, var(--color-primary-bg) 50%, #ffffff);
   padding: 100px 20px;
@@ -436,7 +436,7 @@
   transition: color 0.3s ease;
 }
 
-/* Animation Section */
+
 .animation-section {
   background: var(--color-gray-light);
   padding: 80px 20px;
@@ -565,7 +565,7 @@
   left: 100%;
 }
 
-/* Footer */
+
 .home-footer {
   background: var(--color-gray-dark);
   width: 100%;
@@ -587,7 +587,7 @@
   text-align: center;
 }
 
-/* Responsive Styles */
+
 @media (max-width: 992px) {
   .animation-section {
     gap: 40px;

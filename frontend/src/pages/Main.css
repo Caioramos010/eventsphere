@@ -1,6 +1,6 @@
-/* Main.css - Updated styles to fix text issues */
 
-/* Container Layout */
+
+
 .main-container {
   min-height: calc(100vh - 160px);
   background: var(--gradient-main);
@@ -29,7 +29,7 @@
   gap: 24px;
 }
 
-/* Header Section */
+
 .header-content {
   display: flex;
   flex-direction: column;
@@ -45,7 +45,7 @@
   letter-spacing: 1px;
 }
 
-/* Top section with calendar and actions */
+
 .main-top-card {
   margin-bottom: 32px;
 }
@@ -105,7 +105,7 @@
   color: currentColor;
 }
 
-/* Events sections */
+
 
 .events-section {
   margin-bottom: 32px;
@@ -147,7 +147,7 @@
   color: var(--color-gray-dark);
 }
 
-/* Events grid */
+
 .events-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -159,7 +159,7 @@
   min-height: 120px;
 }
 
-/* Custom scrollbar for events grid */
+
 .events-grid::-webkit-scrollbar {
   width: 6px;
 }
@@ -233,7 +233,7 @@
   height: 24px;
 }
 
-/* Loading, error and empty states */
+
 .loading-message,
 .empty-message {
   text-align: center;
@@ -250,7 +250,7 @@
   color: var(--color-gray-light);
 }
 
-/* Load More Button */
+
 .load-more-container {
   display: flex;
   justify-content: center;
@@ -291,7 +291,7 @@
   transform: translateY(2px);
 }
 
-/* Responsive design */
+
 @media (max-width: 1024px) {
   .main-top-section {
     gap: 30px;

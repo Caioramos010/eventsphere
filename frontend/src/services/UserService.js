@@ -1,21 +1,20 @@
-// Serviço de Usuários - EventSphere
-import { get, put, uploadFile } from '../fetchWithAuth';
+import { get, put, uploadFile, fetchWithAuth } from '../fetchWithAuth';
 import API_CONFIG from '../config/api';
 import AuthService from './AuthService';
 
-// Função utilitária para construir URL com ID
+
 const buildUrlWithId = (baseUrl, id) => {
   return `${baseUrl}/${id}`;
 };
 
-const UserService = {  // Atualizar email do usuário
+const UserService = {  
   async updateEmail(newEmail) {
     try {
       const response = await put(`${API_CONFIG.ENDPOINTS.USER_UPDATE_EMAIL}?newEmail=${encodeURIComponent(newEmail)}`);
       const data = await response.json();
       
       if (data.success || response.ok) {
-        // Atualizar email no localStorage usando AuthService
+        
         AuthService.updateCurrentUser({ email: newEmail });
         
         return { success: true, message: data.message || 'Email atualizado com sucesso' };
@@ -27,14 +26,14 @@ const UserService = {  // Atualizar email do usuário
       return { success: false, message: error.message || 'Erro de conexão' };
     }
   },
-  // Atualizar username do usuário
+  
   async updateUsername(newUsername) {
     try {
       const response = await put(`${API_CONFIG.ENDPOINTS.USER_UPDATE_USERNAME}?newUsername=${encodeURIComponent(newUsername)}`);
       const data = await response.json();
       
       if (data.success || response.ok) {
-        // Atualizar username no localStorage usando AuthService
+        
         AuthService.updateCurrentUser({ username: newUsername });
         
         return { success: true, message: data.message || 'Login atualizado com sucesso' };
@@ -47,7 +46,7 @@ const UserService = {  // Atualizar email do usuário
     }
   },
 
-  // Atualizar senha do usuário
+  
   async updatePassword(currentPassword, newPassword) {
     try {
       const response = await put(`${API_CONFIG.ENDPOINTS.USER_UPDATE_PASSWORD}?currentPassword=${encodeURIComponent(currentPassword)}&newPassword=${encodeURIComponent(newPassword)}`);
@@ -62,7 +61,7 @@ const UserService = {  // Atualizar email do usuário
       console.error('Error updating password:', error);
       return { success: false, message: error.message || 'Erro de conexão' };
     }
-  },  // Upload de foto do usuário
+  },  
   async uploadUserPhoto(imageFile) {
     try {
       const formData = new FormData();
@@ -71,15 +70,15 @@ const UserService = {  // Atualizar email do usuário
       const data = await response.json();
       
       if (data.success || response.ok) {
-        // A imagem agora é retornada em Base64
+        
         const photoBase64 = data.data?.photoBase64 || data.photoBase64;
         
-        // Atualizar foto no localStorage usando AuthService
+        
         AuthService.updateCurrentUser({ photo: photoBase64 });
         
         return { 
           success: true, 
-          photoUrl: photoBase64, // Para compatibilidade com código existente
+          photoUrl: photoBase64, 
           photoBase64: photoBase64 
         };
       } else {
@@ -91,7 +90,7 @@ const UserService = {  // Atualizar email do usuário
     }
   },
 
-  // Buscar usuário por ID
+  
   async getUserById(userId) {
     try {
       const url = buildUrlWithId(API_CONFIG.ENDPOINTS.USERS, userId);
@@ -109,7 +108,7 @@ const UserService = {  // Atualizar email do usuário
     }
   },
 
-  // Buscar usuários (para busca de participantes)
+  
   async searchUsers(query) {
     try {
       const response = await get(API_CONFIG.ENDPOINTS.USERS, { search: query });
@@ -121,7 +120,7 @@ const UserService = {  // Atualizar email do usuário
     }
   },
 
-  // Alterar senha do usuário
+  
   async changePassword(passwordData) {
     try {
       const response = await put(`${API_CONFIG.ENDPOINTS.USER_PROFILE}/password`, passwordData);
@@ -138,28 +137,57 @@ const UserService = {  // Atualizar email do usuário
     }
   },
 
-  // Deletar conta do usuário
-  async deleteAccount() {
+  
+  async deleteAccount(password) {
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.USER_PROFILE}`, {
+      const url = `${API_CONFIG.ENDPOINTS.USER_DELETE}?password=${encodeURIComponent(password)}`;
+      // Use fetchWithAuth to ensure Authorization header is included
+      const response = await fetchWithAuth(url, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
+        // No need to set credentials or headers, fetchWithAuth handles it
       });
-      
-      if (response.ok) {
-        // Limpar localStorage
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        return { success: true, message: 'Conta deletada com sucesso' };
+      let data = null;
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      }
+      if ((data && (data.success || response.ok)) || response.status === 204) {
+        AuthService.logout();
+        return { success: true, message: (data && data.message) || 'Conta deletada com sucesso' };
+      } else if (response.status === 401 || response.status === 403) {
+        return { success: false, message: (data && data.message) || 'Acesso negado. Faça login novamente.' };
       } else {
-        const data = await response.json();
-        return { success: false, message: data.message || 'Erro ao deletar conta' };
+        return { success: false, message: (data && data.message) || 'Erro ao deletar conta' };
       }
     } catch (error) {
       console.error('Error deleting account:', error);
+      return { success: false, message: error.message || 'Erro de conexão' };
+    }
+  },
+
+  /**
+   * Busca o perfil do usuário autenticado e atualiza o AuthService/localStorage,
+   * garantindo que o campo da foto seja persistido na sessão.
+   */
+  async fetchCurrentUserProfileAndSync() {
+    try {
+      const response = await get(API_CONFIG.ENDPOINTS.USER_PROFILE);
+      const data = await response.json();
+      const userData = data.data || data; // pega o objeto do usuário dentro de ApiResponse
+      if (userData && (data.success === undefined || data.success === true)) {
+        AuthService.updateCurrentUser({
+          username: userData.username,
+          email: userData.email,
+          photo: userData.photo || userData.photoBase64 || '',
+          id: userData.id,
+          name: userData.name,
+        });
+        return { success: true, user: userData };
+      } else {
+        return { success: false, message: data.message || 'Erro ao buscar perfil do usuário' };
+      }
+    } catch (error) {
+      console.error('Erro ao buscar perfil do usuário:', error);
       return { success: false, message: error.message || 'Erro de conexão' };
     }
   }

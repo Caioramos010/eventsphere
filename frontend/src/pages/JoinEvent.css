@@ -1,9 +1,4 @@
-/* JoinEvent.css - Modern Design Pattern */
 @import url('../styles/common.css');
-
-/* Usando o padrão global - sem inventar background */
-
-/* Token form section */
 
 .token-form-header {
   display: flex;
@@ -120,7 +115,7 @@
   font-weight: 600;
 }
 
-/* Event Header Join Styles */
+
 .event-header-join {
   position: relative;
   min-height: 250px;
@@ -188,12 +183,12 @@
   opacity: 0.9;
 }
 
-/* Fallback when no image */
+
 .event-header-join[style*="background-image: none"] {
   background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
 }
 
-/* Join Content */
+
 .join-content {
   padding: 0;
 }
@@ -220,7 +215,7 @@
   margin: 0;
 }
 
-/* Join Section */
+
 .join-section {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 16px;
@@ -243,7 +238,7 @@
   line-height: 1.5;
 }
 
-/* Join Button */
+
 .join-btn {
   display: flex;
   align-items: center;
@@ -282,7 +277,7 @@
   font-size: 1.3rem;
 }
 
-/* Join Info */
+
 .join-info {
   text-align: left;
   background: rgba(255, 255, 255, 0.03);
@@ -308,7 +303,7 @@
   margin-bottom: 8px;
 }
 
-/* Loading and Error States */
+
 .loading-message {
   display: flex;
   align-items: center;
@@ -328,7 +323,7 @@
   line-height: 1.5;
 }
 
-/* Token Form Styles */
+
 .token-form-section {
   display: flex;
   flex-direction: column;
@@ -386,7 +381,7 @@
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
-  color: var(--color-gray-dark); /* Texto dos inputs em cinza escuro */
+  color: var(--color-gray-dark);
   font-size: 1rem;
   font-family: 'Inter', sans-serif;
   transition: all 0.3s ease;
@@ -410,7 +405,7 @@
   cursor: not-allowed;
 }
 
-/* Help section */
+
 .token-help {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -484,7 +479,7 @@
   font-size: 14px;
 }
 
-/* Opções de entrada */
+
 .entry-options {
   text-align: center;
   padding: 20px 0;
@@ -536,7 +531,7 @@
   line-height: 1.3;
 }
 
-/* Formulários de entrada */
+
 .entry-form-section {
   padding: 20px 0;
 }
@@ -596,7 +591,7 @@
   margin: 0 auto;
 }
 
-/* Ajuda */
+
 .entry-help {
   margin-top: 32px;
   padding-top: 24px;
@@ -628,7 +623,7 @@
   font-weight: 700;
 }
 
-/* Responsividade */
+
 @media (max-width: 768px) {
   .event-header-join {
     min-height: 220px;

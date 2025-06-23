@@ -29,7 +29,7 @@ export default function EditEvent() {
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
 
-  // Carregar dados do evento
+  
   useEffect(() => {
     async function loadEvent() {
       try {        setTimeout(() => {
@@ -78,17 +78,17 @@ export default function EditEvent() {
     setSuccess('');
     
     try {
-      // TODO: enviar para backend
-      // const response = await fetch(`/api/events/${id}`, {
-      //   method: 'PUT',
-      //   body: formData
-      // });
+      
+      
+      
+      
+      
       
       setTimeout(() => {
         setLoading(false);
         setSuccess('Evento atualizado com sucesso!');
         setTimeout(() => {
-          navigate('/main'); // Redirecionar após sucesso
+          navigate('/main'); 
         }, 1500);
       }, 1200);
     } catch (err) {

@@ -61,7 +61,7 @@ function Home() {
             </button>
           </div>
         </div>
-      </header>      {/* Hero Section */}
+      </header>     
       <section className="hero-section">
         <div className="hero-overlay"></div>        <div className="hero-content">
           <h1 className="hero-title">Transforme Seus Eventos em Experiências Memoráveis</h1>
@@ -81,7 +81,6 @@ function Home() {
         </div>
       </section>
 
-      {/* Features Section */}
       <section className="features-section" ref={featuresRef}>
         <h2 className="section-title">Tudo o que você precisa para eventos incríveis</h2>
         
@@ -118,7 +117,6 @@ function Home() {
         </div>
       </section>
 
-      {/* Animation Section */}
       <section className="animation-section">
         <div className="animation-container">
           <CalendarAnimation />
@@ -138,7 +136,6 @@ function Home() {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="home-footer">
         <img src={logoFooter} alt="EventSphere" className="footer-logo" />
         <p className="footer-copyright">

@@ -1,19 +1,18 @@
-// Serviço de Eventos - EventSphere
 import { get, post, put, del, uploadFile } from '../fetchWithAuth';
 import API_CONFIG, { buildUrl } from '../config/api';
 import tempIdManager from '../utils/tempIdManager';
 
 const EventService = {
-  // Buscar todos os eventos públicos
+  
   async getPublicEvents() {
     try {
       const response = await get(API_CONFIG.ENDPOINTS.PUBLIC_EVENTS);
       const data = await response.json();
       console.log('Dados de eventos públicos recebidos:', data);
       
-      // Processar os eventos recebidos
+      
       const events = (data.data || data || []).map(event => {
-        // Se não tiver ID, geramos um log de aviso
+        
         if (!event.id) {
           console.warn('Evento sem ID encontrado:', event);
         }
@@ -27,16 +26,16 @@ const EventService = {
     }
   },
 
-  // Buscar meus eventos
+  
   async getMyEvents() {
     try {
       const response = await get(API_CONFIG.ENDPOINTS.MY_EVENTS);
       const data = await response.json();
       console.log('Dados de meus eventos recebidos:', data);
       
-      // Processar os eventos recebidos
+      
       const events = (data.data || data || []).map(event => {
-        // Se não tiver ID, geramos um log de aviso
+        
         if (!event.id) {
           console.warn('Evento sem ID encontrado:', event);
         }
@@ -50,10 +49,10 @@ const EventService = {
     }
   },
 
-  // Buscar detalhes de um evento específico
+  
   async getEventDetails(eventId) {
     try {
-      // Verificar se o ID é válido
+      
       if (!eventId) {
         console.error('ID do evento não fornecido');
         return { 
@@ -64,11 +63,11 @@ const EventService = {
       
       console.log('Fetching event details for ID:', eventId);
       
-      // Verificar se é um ID temporário
+      
       if (eventId.startsWith('temp_')) {
         console.log('ID temporário detectado. Buscando do cache local...');
         
-        // Buscar evento do cache local
+        
         try {
           const myEventsCache = localStorage.getItem('myEventsCache');
           const publicEventsCache = localStorage.getItem('publicEventsCache');
@@ -94,7 +93,7 @@ const EventService = {
         }
       }
       
-      // Construir a URL manualmente para evitar problemas
+      
       const endpoint = API_CONFIG.ENDPOINTS.EVENT_GET;
       let url = `${API_CONFIG.BASE_URL}${endpoint}?eventID=${eventId}`;
       console.log('Request URL:', url);
@@ -110,7 +109,7 @@ const EventService = {
       const data = await response.json();
       console.log('Response data:', data);
       
-      // Verificar se o evento tem ID, se não tiver, usar o ID da URL
+      
       if (data.success || response.ok) {
         const eventData = data.data || data.event || data;
         if (!eventData.id && eventId) {
@@ -127,7 +126,7 @@ const EventService = {
     }
   },
   
-  // Criar novo evento
+  
   async createEvent(eventData) {
     try {
       const response = await post(API_CONFIG.ENDPOINTS.EVENT_CREATE, eventData);
@@ -144,7 +143,7 @@ const EventService = {
     }
   },
 
-  // Atualizar evento
+  
   async updateEvent(eventId, eventData) {
     try {
       const url = buildUrl(API_CONFIG.ENDPOINTS.EVENT_EDIT, { eventID: eventId });
@@ -162,7 +161,7 @@ const EventService = {
     }
   },
 
-  // Deletar evento
+  
   async deleteEvent(eventId) {
     try {
       const url = buildUrl(API_CONFIG.ENDPOINTS.EVENT_DELETE, { eventID: eventId });
@@ -181,7 +180,7 @@ const EventService = {
     }
   },
 
-  // Gerar link de convite
+  
   async generateInviteLink(eventId) {
     try {
       const url = buildUrl(API_CONFIG.ENDPOINTS.INVITE_GENERATE, { eventID: eventId });
@@ -204,7 +203,7 @@ const EventService = {
     }
   },
 
-  // Validar token de convite
+  
   async validateInviteToken(token) {
     try {
       const url = buildUrl(API_CONFIG.ENDPOINTS.INVITE_VALIDATE, { token });
@@ -222,7 +221,7 @@ const EventService = {
     }
   },
 
-  // Participar de evento por convite
+  
   async joinEventByInvite(inviteToken, inviteCode) {
     try {
       const response = await post(API_CONFIG.ENDPOINTS.PARTICIPANT_ADD, {
@@ -242,7 +241,7 @@ const EventService = {
     }
   },
 
-  // Upload de imagem do evento
+  
   async uploadEventImage(eventId, imageFile) {
     try {
       const formData = new FormData();
@@ -268,7 +267,7 @@ const EventService = {
     }
   },
 
-  // Upload event photo
+  
   async uploadEventPhoto(eventId, photoFile) {
     try {
       if (!photoFile) {
@@ -276,8 +275,8 @@ const EventService = {
       }
 
       const formData = new FormData();
-      formData.append('image', photoFile); // Use 'image' to match backend expectation
-      formData.append('eventID', eventId);  // Use 'eventID' to match backend expectation
+      formData.append('image', photoFile); 
+      formData.append('eventID', eventId);  
 
       const response = await uploadFile(API_CONFIG.ENDPOINTS.EVENT_IMAGE, formData);
       const data = await response.json();
@@ -293,7 +292,7 @@ const EventService = {
     }
   },
 
-  // Buscar eventos por filtros
+  
   async searchEvents(filters = {}) {
     try {
       const url = buildUrl(API_CONFIG.ENDPOINTS.EVENT_GET, filters);
@@ -306,7 +305,7 @@ const EventService = {
     }
   },
 
-  // Iniciar um evento
+  
   async startEvent(eventId) {
     try {
       const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.EVENT_START}?eventID=${eventId}`;
@@ -333,7 +332,7 @@ const EventService = {
     }
   },
 
-  // Finalizar um evento
+  
   async finishEvent(eventId) {
     try {
       const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.EVENT_FINISH}?eventID=${eventId}`;
@@ -360,7 +359,7 @@ const EventService = {
     }
   },
 
-  // Cancelar um evento
+  
   async cancelEvent(eventId) {
     try {
       const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.EVENT_CANCEL}?eventID=${eventId}`;
@@ -387,7 +386,7 @@ const EventService = {
     }
   },
 
-  // Remover colaborador de um evento
+  
   async removeCollaborator(eventId, userId) {
     try {
       const url = buildUrl(`${API_CONFIG.ENDPOINTS.EVENTS}/${eventId}/collaborator/${userId}`);
@@ -405,7 +404,7 @@ const EventService = {
     }
   },
 
-  // Obter eventos onde o usuário é participante
+  
   async getParticipatingEvents() {
     try {
       const url = `${API_CONFIG.BASE_URL}/api/event/participating`;
@@ -427,10 +426,10 @@ const EventService = {
     }
   },
 
-  // Validar código de evento
+  
   async validateEventCode(eventCode) {
     try {
-      // Corrige a URL para o endpoint correto do backend
+      
       const url = buildUrl(API_CONFIG.ENDPOINTS.EVENT_CODE_VALIDATE, { eventCode });
       const response = await get(url);
       const data = await response.json();
@@ -446,7 +445,7 @@ const EventService = {
     }
   },
 
-  // Gerar código seguro para o evento
+  
   async generateEventCode(eventId) {
     try {
       const response = await post(API_CONFIG.ENDPOINTS.EVENT_CODE_GENERATE, { eventId });
@@ -464,6 +463,43 @@ const EventService = {
     } catch (error) {
       console.error('Error generating event code:', error);
       return { success: false, message: error.message || 'Erro de conexão' };
+    }
+  },
+
+  
+  async getNextEvents() {
+    try {
+      const response = await get(API_CONFIG.ENDPOINTS.NEXT_EVENTS);
+      const data = await response.json();
+      console.log('Dados de próximos eventos recebidos:', data);
+      const events = (data.data || data || []).map(event => {
+        if (!event.id) {
+          console.warn('Evento sem ID encontrado:', event);
+        }
+        return event;
+      });
+      return { success: true, events };
+    } catch (error) {
+      console.error('Error fetching next events:', error);
+      return { success: false, message: error.message, events: [] };
+    }
+  },
+
+  
+  async getNextPublicEvents() {
+    try {
+      const response = await get(API_CONFIG.ENDPOINTS.NEXT_PUBLIC_EVENTS);
+      const data = await response.json();
+      const events = (data.data || data || []).map(event => {
+        if (!event.id) {
+          console.warn('Evento público sem ID encontrado:', event);
+        }
+        return event;
+      });
+      return { success: true, events };
+    } catch (error) {
+      console.error('Error fetching next public events:', error);
+      return { success: false, message: error.message, events: [] };
     }
   },
 };

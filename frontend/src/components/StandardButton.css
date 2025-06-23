@@ -1,4 +1,4 @@
-/* StandardButton.css - Componente de botões padronizados */
+
 .standard-btn {
   display: inline-flex;
   align-items: center;
@@ -34,7 +34,7 @@
   transform: translateY(0);
 }
 
-/* Tamanhos */
+
 .standard-btn-small {
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
@@ -53,7 +53,7 @@
   min-height: 52px;
 }
 
-/* Variantes de cor */
+
 .standard-btn-primary {
   background: linear-gradient(135deg, #E82E9B, #4a9eff);
   color: white;
@@ -129,7 +129,7 @@
   background: linear-gradient(135deg, #1a252f, #2c3e50);
 }
 
-/* Estados especiais */
+
 .standard-btn-full-width {
   width: 100%;
 }
@@ -150,7 +150,7 @@
   opacity: 0.7;
 }
 
-/* Spinner de loading */
+
 .standard-btn-spinner {
   width: 16px;
   height: 16px;
@@ -165,7 +165,7 @@
   100% { transform: rotate(360deg); }
 }
 
-/* Ícones */
+
 .standard-btn-icon {
   font-size: 1.2em;
   flex-shrink: 0;
@@ -187,7 +187,7 @@
   font-size: 1.3em;
 }
 
-/* Responsividade */
+
 @media (max-width: 768px) {
   .standard-btn-large {
     padding: 0.875rem 1.75rem;
@@ -205,7 +205,7 @@
   }
 }
 
-/* Efeitos hover especiais para mobile */
+
 @media (hover: none) and (pointer: coarse) {
   .standard-btn:hover {
     transform: none;

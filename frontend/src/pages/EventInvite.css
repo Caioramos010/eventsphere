@@ -1,7 +1,5 @@
-/* EventInvite.css - Modern Design Pattern */
 @import url('../styles/common.css');
 
-/* Event Header Mini for Invite Page */
 .event-header-mini {
   position: relative;
   min-height: 200px;
@@ -69,12 +67,10 @@
   opacity: 0.8;
 }
 
-/* Fallback when no image */
 .event-header-mini[style*="background-image: none"] {
   background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
 }
 
-/* Invite Content */
 .invite-content {
   padding: 0;
 }
@@ -91,7 +87,6 @@
   text-align: center;
 }
 
-/* URL Container */
 .url-container {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 16px;
@@ -138,7 +133,6 @@
   transform: scale(1.05);
 }
 
-/* Action Buttons */
 .action-buttons {
   display: flex;
   gap: 12px;
@@ -193,7 +187,6 @@
   box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
 }
 
-/* Instructions */
 .invite-instructions {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 12px;
@@ -221,7 +214,6 @@
   margin-bottom: 8px;
 }
 
-/* Código do Evento */
 .code-container {
   display: flex;
   align-items: center;
@@ -252,7 +244,6 @@
   flex-shrink: 0;
 }
 
-/* Seções de convite */
 .invite-section {
   margin-bottom: 32px;
   padding: 24px;
@@ -347,14 +338,12 @@
   }
 
 
-/* Invite Content */
 .invite-content {
   display: flex;
   flex-direction: column;
   gap: 40px;
 }
 
-/* URL Section */
 .invite-url-section {
   display: flex;
   flex-direction: column;
@@ -409,7 +398,6 @@
   color: white;
 }
 
-/* Copy Button */
 .copy-btn {
   background: #8a8a8a;
   color: white;
@@ -449,7 +437,6 @@
   font-size: 18px;
 }
 
-/* Event Preview */
 .event-preview {
   background: white;
   border-radius: 20px;
@@ -514,7 +501,6 @@
   letter-spacing: 0.3px;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .main-bg.event-invite-container {
     padding: 20px 10px;

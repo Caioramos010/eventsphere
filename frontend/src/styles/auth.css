@@ -1,4 +1,4 @@
-/* Modern Login/Register styles */
+
 @import url('../styles/variables.css');
 
 .auth-container {
@@ -185,7 +185,7 @@
   text-decoration: underline;
 }
 
-/* Photo upload for register */
+
 .auth-photo-section {
   position: relative;
   width: 120px;
@@ -285,7 +285,7 @@
   to { transform: rotate(360deg); }
 }
 
-/* Background Shapes */
+
 .auth-shapes {
   position: absolute;
   top: 0;
@@ -345,7 +345,7 @@
   50% { transform: translate(-50%, -50%) scale(1.1); }
 }
 
-/* Responsive */
+
 @media (max-width: 480px) {
   .auth-card {
     padding: 30px 20px;

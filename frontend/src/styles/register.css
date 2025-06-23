@@ -1,4 +1,4 @@
-/* Register page styles - EventSphere */
+
 .register-bg {
   min-height: 100vh;
   width: 100vw;
@@ -318,7 +318,7 @@
 .register-login-link {  animation: slideInUp 0.8s ease-out;
 }
 
-/* Photo upload styles */
+
 .register-photo-section {
   position: relative;
   margin-bottom: var(--spacing-lg);

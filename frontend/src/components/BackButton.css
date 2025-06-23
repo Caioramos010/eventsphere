@@ -1,4 +1,4 @@
-/* BackButton.css - Componente de botão de voltar padronizado */
+
 .back-btn {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
@@ -35,7 +35,7 @@
   transform: translateY(0);
 }
 
-/* Responsividade */
+
 @media (max-width: 768px) {
   .back-btn {
     width: 45px;

@@ -1,4 +1,4 @@
-/* StandardCard.css - Componente de cards padronizados */
+
 .standard-card {
   border-radius: 16px;
   transition: all 0.3s ease;
@@ -19,7 +19,7 @@
   box-shadow: 0 0 0 3px rgba(232, 46, 155, 0.3);
 }
 
-/* Variantes */
+
 .standard-card-default {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -48,7 +48,7 @@
   backdrop-filter: blur(10px);
 }
 
-/* Padding */
+
 .standard-card-padding-small {
   padding: 1rem;
 }
@@ -61,7 +61,7 @@
   padding: 2rem;
 }
 
-/* Hover effects */
+
 .standard-card-hover:hover {
   transform: translateY(-4px);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
@@ -89,7 +89,7 @@
     rgba(232, 46, 155, 0.15) 100%);
 }
 
-/* Clickable effects */
+
 .standard-card-clickable:active {
   transform: scale(0.98);
 }
@@ -98,7 +98,7 @@
   transform: translateY(-2px) scale(0.98);
 }
 
-/* Responsividade */
+
 @media (max-width: 768px) {
   .standard-card-padding-large {
     padding: 1.5rem;
@@ -131,7 +131,7 @@
   }
 }
 
-/* Efeitos hover especiais para mobile */
+
 @media (hover: none) and (pointer: coarse) {
   .standard-card-hover:hover {
     transform: none;

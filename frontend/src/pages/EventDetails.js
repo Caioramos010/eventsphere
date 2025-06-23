@@ -27,24 +27,26 @@ import eventImg from '../images/event.png';
 import getUserStatusIcon from '../utils/getUserStatusIcon';
 import EventService from '../services/EventService';
 import ParticipantService from '../services/ParticipantService';
+import EventPrintPage from '../components/EventPrintPage';
+import EventAttendancePrintPage from '../components/EventAttendancePrintPage';
 
-// Função para formatar data
+
 const formatDate = (dateString) => {
   if (!dateString) return 'Data não definida';
   
-  // Se for uma string ISO ou objeto Date
+  
   let date;
   if (typeof dateString === 'string') {
-    // Verificar se é no formato ISO (2023-04-15) ou um timestamp
+    
     if (dateString.includes('T') || !isNaN(Date.parse(dateString))) {
       date = new Date(dateString);
     } else {
-      // Para datas no formato dd/mm/yyyy
+      
       const parts = dateString.split('/');
       if (parts.length === 3) {
         date = new Date(parts[2], parts[1] - 1, parts[0]);
       } else {
-        return dateString; // Retorna a string original se não conseguir parsear
+        return dateString; 
       }
     }
   } else if (dateString instanceof Date) {
@@ -60,11 +62,11 @@ const formatDate = (dateString) => {
   });
 };
 
-// Função para formatar hora
+
 const formatTime = (timeString) => {
   if (!timeString) return 'Horário não definido';
   
-  // Se for um objeto de hora Java (LocalTime)
+  
   if (typeof timeString === 'string' && timeString.includes(':')) {
     const parts = timeString.split(':');
     if (parts.length >= 2) {
@@ -72,7 +74,7 @@ const formatTime = (timeString) => {
     }
   }
   
-  // Se for um Date
+  
   if (timeString instanceof Date) {
     return timeString.toLocaleTimeString('pt-BR', {
       hour: '2-digit',
@@ -80,7 +82,7 @@ const formatTime = (timeString) => {
     });
   }
   
-  return timeString; // Retorna a string original se não conseguir parsear
+  return timeString; 
 };
 
 const EventDetails = () => {
@@ -99,6 +101,7 @@ const EventDetails = () => {
   const [showQrModal, setShowQrModal] = useState(false);
   const [attendanceReport, setAttendanceReport] = useState(null);
   const [showAttendanceReport, setShowAttendanceReport] = useState(false);
+  const [showPrintPage, setShowPrintPage] = useState(false);
 
   useEffect(() => {
     const fetchEventDetails = async () => {
@@ -112,10 +115,10 @@ const EventDetails = () => {
           return;
         }
         
-        // Tentativa com ID numérico
+        
         let result = await EventService.getEventDetails(id);
         
-        // Se falhar e o ID parecer ser uma string, tente removendo possíveis aspas
+        
         if (!result.success && typeof id === 'string' && (id.startsWith('"') || id.startsWith("'"))) {
           const cleanId = id.replace(/['"]/g, '');
           console.log('Tentando novamente com ID limpo:', cleanId);
@@ -125,18 +128,18 @@ const EventDetails = () => {
         if (result.success) {
           console.log('Evento carregado com sucesso:', result.event);
           
-          // Garantir que o evento tenha o ID da URL se não tiver ID próprio
+          
           if (!result.event.id) {
             result.event.id = id;
           }
           
           const eventData = result.event;
           
-          // O backend já fornece userStatus e userConfirmed
-          setUserConfirmed(eventData.userConfirmed);          // Verificar se o evento está ativo
+          
+          setUserConfirmed(eventData.userConfirmed);          
           setIsEventActive(eventData.state === 'ACTIVE');
           
-          // Extrair colaboradores dos participantes
+          
           const collaboratorsList = eventData.participants ? 
             eventData.participants
               .filter(participant => participant.isCollaborator)
@@ -148,7 +151,7 @@ const EventDetails = () => {
               }))
             : [];
           
-          // Definir o evento e as listas de participantes no estado
+          
           setEvent(eventData);
           setCollaborators(collaboratorsList);
           setConfirmationList(eventData.participants || []);
@@ -234,7 +237,7 @@ const EventDetails = () => {
       if (result.success) {
         alert('Confirmação de presença enviada!');
         setUserConfirmed(true);
-        // Atualizar a lista de participantes
+        
         const updatedEvent = await EventService.getEventDetails(id);
         if (updatedEvent.success) {
           setEvent(updatedEvent.event);
@@ -248,17 +251,17 @@ const EventDetails = () => {
     }
   };
   const handleGenerateQRCode = () => {
-    // Navegar para a página de QR Code do participante
+    
     navigate(`/event/${id}/my-qrcode`);
   };
 
   const handleJoinEvent = async () => {
     try {
-      // Supondo que temos um endpoint para participar diretamente de um evento público
+      
       const result = await ParticipantService.joinPublicEvent(id);
       if (result.success) {
         alert('Você agora é um participante deste evento!');
-        // Recarregar os dados do evento para atualizar o status do usuário
+        
         const updatedEvent = await EventService.getEventDetails(id);
         if (updatedEvent.success) {
           setEvent(updatedEvent.event);
@@ -273,7 +276,7 @@ const EventDetails = () => {
   };
 
   const handlePrintList = () => {
-    window.print();
+    setShowPrintPage(true);
   };
 
   const handleRemoveCollaborator = async (userId) => {
@@ -281,7 +284,7 @@ const EventDetails = () => {
       try {
         const result = await EventService.removeCollaborator(id, userId);
         if (result.success) {
-          // Update collaborators list
+          
           setCollaborators(prevCollaborators => 
             prevCollaborators.filter(c => c.id !== userId)
           );
@@ -296,7 +299,7 @@ const EventDetails = () => {
     }
   };
 
-  // Funções para gerenciar participantes
+  
   const openParticipantModal = (participant) => {
     setSelectedParticipant(participant);
     setShowParticipantModal(true);
@@ -310,7 +313,7 @@ const EventDetails = () => {
     try {
       const result = await ParticipantService.removeParticipant(id, participantId);
       if (result.success) {
-        // Atualizar a lista de participantes
+        
         setConfirmationList(prev => prev.filter(p => p.userId !== participantId));
         closeParticipantModal();
         alert('Participante removido com sucesso!');
@@ -327,7 +330,7 @@ const EventDetails = () => {
     try {
       const result = await ParticipantService.confirmParticipant(id, participantId);
       if (result.success) {
-        // Atualizar a lista de participantes
+        
         setConfirmationList(prev => 
           prev.map(p => p.userId === participantId ? { ...p, confirmed: true } : p)
         );
@@ -346,7 +349,7 @@ const EventDetails = () => {
     try {
       const result = await ParticipantService.promoteToCollaborator(id, participantId);
       if (result.success) {
-        // Atualizar a lista de participantes
+        
         setConfirmationList(prev => 
           prev.map(p => p.userId === participantId ? { ...p, isCollaborator: true } : p)
         );
@@ -365,7 +368,7 @@ const EventDetails = () => {
     try {
       const result = await ParticipantService.demoteCollaborator(id, participantId);
       if (result.success) {
-        // Atualizar a lista de participantes
+        
         setConfirmationList(prev => 
           prev.map(p => p.userId === participantId ? { ...p, isCollaborator: false } : p)
         );
@@ -380,7 +383,7 @@ const EventDetails = () => {
     }
   };
 
-  // Funções para QR Code e presença
+  
   const generateQrCode = async () => {
     try {
       const result = await ParticipantService.generateQrCode(id);
@@ -476,6 +479,12 @@ const EventDetails = () => {
   }
 
   const canEdit = event.userStatus === 'owner' || event.userStatus === 'collaborator';
+  if (showPrintPage && event && confirmationList) {
+    return <EventPrintPage event={event} participants={confirmationList} />;
+  }
+  if (showAttendanceReport && attendanceReport && showPrintPage) {
+    return <EventAttendancePrintPage event={event} attendanceReport={attendanceReport} />;
+  }
   return (
     <>
       <Header />
@@ -489,12 +498,12 @@ const EventDetails = () => {
               subtitle="Gerencie seu evento"
               description="Visualize informações e gerencie participantes"
             />
-          </div>          {/* Event Info Card */}          
+          </div>                    
           <StandardCard 
             variant="glass" 
             padding="large"
             className={`event-details-main ${isEventActive ? 'event-active' : ''}`}
-          >{/* Status Badge no topo direito */}
+          >
             <div className="event-status-container">
               {isEventActive ? (
                 <div className="event-active-badge">
@@ -512,7 +521,6 @@ const EventDetails = () => {
               ) : null}
             </div>
             
-            {/* Event Header with Background Image */}
             <div 
               className="event-header-with-image" 
               style={{
@@ -577,7 +585,6 @@ const EventDetails = () => {
                 )}
               </div>
                 <div className="event-actions">
-                {/* Botão para convidar pessoas (visível para todos) */}
                 <StandardButton
                   variant="primary"
                   size="medium"
@@ -587,7 +594,6 @@ const EventDetails = () => {
                 >
                   Convidar Pessoas
                 </StandardButton>
-                  {/* Botões para donos e colaboradores */}
                 {canEdit && (
                   <>                    {event.state === 'CREATED' ? (
                       <>                        
@@ -631,21 +637,18 @@ const EventDetails = () => {
                         </button>
                       </>
                     ) : (
-                      /* Para eventos FINISHED ou CANCELED, não mostrar botões de ação */
+                     
                       <div className="event-completed-message">
                         {event.state === 'FINISHED' ? 'Evento encerrado' : 'Evento cancelado'}
                       </div>
                     )}
                   </>                )}
-                  {/* Botão de QR Code para participantes durante evento ativo */}
                 {!canEdit && event.userStatus === 'participant' && event.state === 'ACTIVE' && (
                   <button className="modern-btn event-action-btn qr-btn" onClick={generateQrCode}>
                     <IoQrCodeOutline />
                     <span>Meu QR Code</span>
                   </button>
                 )}
-                
-                {/* Botão para ver relatório de presença (organizadores, eventos finalizados) */}
                 {canEdit && event.state === 'FINISHED' && (
                   <button className="modern-btn event-action-btn report-btn" onClick={loadAttendanceReport}>
                     <IoCheckmarkCircleOutline />
@@ -653,7 +656,6 @@ const EventDetails = () => {
                   </button>
                 )}
                 
-                  {/* Botão para participantes confirmarem presença */}
                 {!canEdit && event.userStatus === 'participant' && !userConfirmed && event.state !== 'FINISHED' && event.state !== 'CANCELED' && (
                   <button className="modern-btn event-action-btn confirm-btn" onClick={handleConfirmAttendance}>
                     <IoCheckmarkOutline />
@@ -661,14 +663,12 @@ const EventDetails = () => {
                   </button>
                 )}
                 
-                {/* Botão para visitantes participarem do evento */}
                 {event.userStatus === 'visitor' && event.state !== 'FINISHED' && event.state !== 'CANCELED' && (
                   <button className="modern-btn event-action-btn join-btn" onClick={handleJoinEvent}>
                     <IoPeopleOutline />
                     <span>Participar do Evento</span>
                   </button>
                 )}
-                  {/* Botão para gerar QR Code para participantes confirmados */}
                 {!canEdit && userConfirmed && isEventActive && (
                   <button className="modern-btn event-action-btn qrcode-btn" onClick={handleGenerateQRCode}>
                     <IoQrCodeOutline />
@@ -678,7 +678,6 @@ const EventDetails = () => {
               </div>
             </div>
           </StandardCard>
-            {/* Collaborators Section - Visível apenas para donos */}
           {event.userStatus === 'owner' && collaborators && collaborators.length > 0 && (
             <StandardCard variant="glass" padding="large">
               <div className="section-header">
@@ -710,7 +709,7 @@ const EventDetails = () => {
                 ))}
               </div>
             </StandardCard>
-          )}          {/* Participants List Section - Visible only to owners and collaborators */}
+          )}          
           {canEdit && confirmationList && confirmationList.length > 0 && (
             <StandardCard variant="glass" padding="large">
               <div className="section-header">
@@ -760,8 +759,6 @@ const EventDetails = () => {
             </StandardCard>
           )}</div>
       </div>
-      
-      {/* Image Modal */}
       {showImageModal && event.photo && (
         <div className="image-modal-overlay" onClick={() => setShowImageModal(false)}>
           <div className="image-modal-container" onClick={(e) => e.stopPropagation()}>
@@ -781,7 +778,6 @@ const EventDetails = () => {
         </div>
       )}
       
-      {/* Participant Modal - Para gerenciar participantes individualmente */}
       {showParticipantModal && selectedParticipant && (
         <div className="participant-modal-overlay" onClick={closeParticipantModal}>
           <div className="participant-modal-container" onClick={(e) => e.stopPropagation()}>
@@ -813,7 +809,6 @@ const EventDetails = () => {
                 </div>
               </div>
             </div>              <div className="participant-modal-actions">
-              {/* Mostrar aviso se evento não permite modificações */}
               {(event.state === 'CANCELED' || event.state === 'ACTIVE' || event.state === 'FINISHED') && (
                 <div className="modification-warning">
                   <IoInformationCircleOutline className="warning-icon" />
@@ -825,7 +820,6 @@ const EventDetails = () => {
                 </div>
               )}
               
-              {/* Botões disponíveis apenas para eventos CREATED */}
               {event.state === 'CREATED' && (
                 <>
                   {!selectedParticipant.confirmed && (
@@ -859,7 +853,6 @@ const EventDetails = () => {
           </div>
         </div>      )}
       
-      {/* QR Code Modal */}
       {showQrModal && qrCode && (
         <div className="qr-modal-overlay" onClick={() => setShowQrModal(false)}>
           <div className="qr-modal-container" onClick={(e) => e.stopPropagation()}>
@@ -895,7 +888,6 @@ const EventDetails = () => {
         </div>
       )}
       
-      {/* Attendance Report Modal */}
       {showAttendanceReport && attendanceReport && (
         <div className="attendance-modal-overlay" onClick={() => setShowAttendanceReport(false)}>
           <div className="attendance-modal-container" onClick={(e) => e.stopPropagation()}>
@@ -905,11 +897,10 @@ const EventDetails = () => {
                 <IoCloseOutline />
               </button>
             </div>
-            
             <div className="attendance-modal-content">
               <div className="attendance-summary">
                 <h4>{attendanceReport.eventName}</h4>
-                <div className="attendance-stats">
+                <div className="attendance-stats" style={{position: 'relative'}}>
                   <div className="stat-item">
                     <span className="stat-number">{attendanceReport.totalParticipants}</span>
                     <span className="stat-label">Total de Participantes</span>
@@ -923,6 +914,10 @@ const EventDetails = () => {
                     <span className="stat-label">Ausentes</span>
                   </div>
                 </div>
+                  <button className="modern-btn-secondary small-btn print-btn-stats" onClick={() => setShowPrintPage(true)}>
+                    <IoPrintOutline />
+                    <span>Imprimir Lista completa</span>
+                  </button>
               </div>
               
               <div className="attendance-lists">

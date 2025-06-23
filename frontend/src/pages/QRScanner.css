@@ -1,4 +1,4 @@
-/* QRScanner.css - QR Code Scanner Interface */
+
 .qr-scanner-container {
   min-height: calc(100vh - 140px);
   background: linear-gradient(135deg, #423742 0%, #a099a0 50%, #423742 100%);
@@ -28,7 +28,7 @@
   gap: 24px;
 }
 
-/* Scanner Header */
+
 .scanner-header {
   display: flex;
   align-items: center;  gap: 20px;
@@ -64,7 +64,7 @@
   margin-top: 4px;
 }
 
-/* Event Info Banner */
+
 .event-info-banner {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -92,7 +92,7 @@
   color: #e6e3e3;
 }
 
-/* Scanner Section */
+
 .scanner-section {
   display: flex;
   flex-direction: column;
@@ -176,7 +176,7 @@
   display: none !important;
 }
 
-/* Scan Overlay */
+
 .scan-overlay {
   position: absolute;
   top: 0;
@@ -259,7 +259,7 @@
   }
 }
 
-/* Camera Controls */
+
 .camera-controls {
   position: absolute;
   bottom: 20px;
@@ -304,7 +304,7 @@
   background: rgba(232, 46, 155, 1);
 }
 
-/* Manual Input Button */
+
 .manual-input-btn, .demo-scan-btn {
   background: rgba(255, 255, 255, 0.1);
   border: 2px solid rgba(255, 255, 255, 0.3);
@@ -336,7 +336,7 @@
   background: rgba(74, 158, 255, 0.3);
 }
 
-/* Error Message */
+
 .error-message {
   position: absolute;
   bottom: 20px;
@@ -355,7 +355,7 @@
   backdrop-filter: blur(10px);
 }
 
-/* Loading and Error States */
+
 .loading-container,
 .error-container {
   display: flex;
@@ -396,7 +396,7 @@
   font-style: italic;
 }
 
-/* Scan Result */
+
 .scan-result {
   background: rgba(255, 255, 255, 0.95);
   border-radius: 16px;
@@ -455,7 +455,7 @@
   color: #a099a0;
 }
 
-/* Scanned Participants */
+
 .scanned-participants {
   background: rgba(255, 255, 255, 0.95);
   border-radius: 16px;
@@ -540,7 +540,7 @@
   opacity: 0.8;
 }
 
-/* Responsive Design */
+
 @media (max-width: 768px) {
   .qr-scanner-container {
     padding: 15px;

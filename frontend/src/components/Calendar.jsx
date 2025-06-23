@@ -31,7 +31,7 @@ export default function Calendar({ events = [], onMonthChange }) {
   const daysInMonth = getDaysInMonth(selected.year, selected.month);
   const firstDay = getFirstDayOfWeek(selected.year, selected.month);
 
-  // Gera matriz de semanas
+  
   const weeks = [];
   let week = new Array(7).fill(null);
   let day = 1;
@@ -46,7 +46,7 @@ export default function Calendar({ events = [], onMonthChange }) {
     }
   }
 
-  // Eventos por dia
+  
   const eventMap = {};
   events.forEach(ev => {
     const dateStr = (ev.dateFixedStart || ev.dateStart || '').slice(0, 10);
@@ -71,7 +71,7 @@ export default function Calendar({ events = [], onMonthChange }) {
     e.stopPropagation();
     e.preventDefault();
     
-    // Verifica se realmente foi clicado no elemento correto
+    
     const isCalendarMonthElement = e.target.classList.contains('calendar-month') || 
                                    e.target.closest('.calendar-month');
     
@@ -86,7 +86,7 @@ export default function Calendar({ events = [], onMonthChange }) {
   }
 
   function handleMonthMouseLeave(e) {
-    // Pequeno delay para evitar problemas de hover rápido
+    
     setTimeout(() => setIsMonthClickArea(false), 100);
   }  function handleCloseExpanded() {
     setSelected(s => ({ ...s, open: false }));
@@ -98,14 +98,14 @@ export default function Calendar({ events = [], onMonthChange }) {
     if (onMonthChange) onMonthChange(y, m);
   }
 
-  // Função para formatar data
+  
   const formatDate = (dateString) => {
     if (!dateString) return 'Data não definida';
     const date = new Date(dateString);
     return date.toLocaleDateString('pt-BR');
   };
 
-  // Função para abrir modal de eventos do dia
+  
   function handleDayClick(day) {
     if (day && eventMap[day] && eventMap[day].length > 0) {
       setDayEvents(eventMap[day]);
@@ -113,11 +113,11 @@ export default function Calendar({ events = [], onMonthChange }) {
     }
   }
 
-  // Função para navegar para a página do evento
+  
   function handleEventClick(event, e) {
     e.stopPropagation();
     
-    // Navega para edit_event se for meu evento, senão para event
+    
     if (event.userStatus === 'owner' || event.userStatus === 'collaborator') {
       navigate(`/edit_event/${event.id}`);
     } else {
@@ -125,11 +125,11 @@ export default function Calendar({ events = [], onMonthChange }) {
     }
   }
 
-  // Função para fechar modal de eventos
+  
   function handleCloseEventModal() {
     setSelectedDay(null);
     setDayEvents([]);
-  }  // Renderização do modal de eventos do dia
+  }  
   function renderDayEventsModal() {
     const modalContent = (
       <div className="calendar-events-modal" onClick={handleCloseEventModal}>
@@ -157,13 +157,13 @@ export default function Calendar({ events = [], onMonthChange }) {
       </div>
     );
 
-    // Renderiza o modal usando portal para escapar do contexto do card
+    
     return createPortal(modalContent, document.body);
-  }// Renderização do calendário expandido
+  }
   function renderExpanded() {
-    // Geração de anos para o dropdown (apenas anos a partir do ano atual)
+    
     const currentYear = today.getFullYear();
-    const years = Array.from({ length: 11 }, (_, i) => currentYear + i); // 11 anos a partir do atual
+    const years = Array.from({ length: 11 }, (_, i) => currentYear + i); 
     
     const modalContent = (
       <div className="calendar-expanded-modal" onClick={handleCloseExpanded}>
@@ -200,22 +200,22 @@ export default function Calendar({ events = [], onMonthChange }) {
       </div>
     );
 
-    // Renderiza o modal usando portal para escapar do contexto do card
+    
     return createPortal(modalContent, document.body);
   }return (
     <div 
       className="calendar-container glass-card" 
       onClick={(e) => {
         e.stopPropagation();
-        // Se clicou fora do calendar-month, não faz nada
+        
         const isCalendarMonth = e.target.classList.contains('calendar-month') || 
                                e.target.closest('.calendar-month');
         if (!isCalendarMonth) {
-          // Ignora cliques fora da área do mês
+          
         }
       }}
       onMouseLeave={() => {
-        // Se sair do calendário completamente, reseta o estado
+        
         setIsMonthClickArea(false);
       }}
       style={{ isolation: 'isolate' }}

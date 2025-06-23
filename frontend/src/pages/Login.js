@@ -14,10 +14,10 @@ const Login = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // Verificar se usuário já está logado
+  
   useEffect(() => {
     if (AuthService.isAuthenticated()) {
-      // Se há token de convite, redirecionar para a página de participação
+      
       const inviteToken = searchParams.get('token');
       if (inviteToken) {
         navigate(`/join-event/${inviteToken}`);
@@ -40,7 +40,7 @@ const Login = () => {
       const result = await AuthService.login(credentials);
       
       if (result.success) {
-        // Verificar se há token de convite para redirecionar
+        
         const inviteToken = searchParams.get('token');
         if (inviteToken) {
           navigate(`/join-event/${inviteToken}`);

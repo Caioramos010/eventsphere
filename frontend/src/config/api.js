@@ -1,17 +1,15 @@
-// Configurações da API - EventSphere
 const API_CONFIG = {
   BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:8080',
   
   ENDPOINTS: {
-    // Auth endpoints
     LOGIN: '/login/accept',
     REGISTER: '/register/accept',
-      // User endpoints
     USER_UPDATE_EMAIL: '/api/user/update-email',
     USER_UPDATE_USERNAME: '/api/user/update-username',
     USER_UPDATE_PASSWORD: '/api/user/update-passowrd',
+    USER_DELETE: '/api/user/delete',
+    USER_PROFILE: '/api/user/get',
     
-    // Event endpoints
     EVENT_CREATE: '/api/event/register',
     EVENT_EDIT: '/api/event/edit',
     EVENT_GET: '/api/event/get',
@@ -20,40 +18,36 @@ const API_CONFIG = {
     MY_EVENTS: '/api/event/get-myevents',
     PUBLIC_EVENTS: '/api/event/get-public',
     EVENT_START: '/api/event/start',
-    EVENT_FINISH: '/api/event/finish',      EVENT_CANCEL: '/api/event/cancel',    INVITE_GENERATE: '/api/event/invite/generate',
+    EVENT_FINISH: '/api/event/finish',      
+    EVENT_CANCEL: '/api/event/cancel',    
+    INVITE_GENERATE: '/api/event/invite/generate',
     INVITE_VALIDATE: '/api/event/invite/validate',
     EVENT_CODE_GENERATE: '/api/event/code/generate',
-    EVENT_CODE_VALIDATE: '/api/event/code/validate',// Upload endpoints
+    EVENT_CODE_VALIDATE: '/api/event/code/validate',
     USER_PHOTO: '/api/upload/user-photo',
     FILE_DOWNLOAD: '/api/files',
     
-    // Participant endpoints
     PARTICIPANT_ADD: '/api/participant/add',
     PARTICIPANT_REMOVE: '/api/participant/remove',
     
-    // Admin endpoints
-    ADMIN: '/admin'
+    ADMIN: '/admin',
+    NEXT_EVENTS: '/api/event/next-events',
+    NEXT_PUBLIC_EVENTS: '/api/event/next-public-events'
   },
   
-  // Headers padrão
   DEFAULT_HEADERS: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
   },
   
-  // Timeout padrão (30 segundos)
   TIMEOUT: 30000
 };
 
 export default API_CONFIG;
 
-// Função utilitária para construir URLs completas
 export const buildUrl = (endpoint, params = {}) => {
-  // Verifica se o endpoint já é uma URL completa
   if (endpoint.startsWith('http')) {
     console.log('URL já completa detectada:', endpoint);
-    
-    // Se já for uma URL completa, adicionar apenas os parâmetros
     if (Object.keys(params).length > 0) {
       const url = new URL(endpoint);
       Object.keys(params).forEach(key => {
@@ -87,7 +81,6 @@ export const buildUrl = (endpoint, params = {}) => {
   return url;
 };
 
-// Função para construir URL com path parameters
 export const buildUrlWithId = (endpoint, id) => {
   return `${API_CONFIG.BASE_URL}${endpoint}/${id}`;
 };

@@ -7,7 +7,7 @@ const PageTitle = ({
   subtitle, 
   description,
   className = '',
-  size = 'large' // 'small', 'medium', 'large'
+  size = 'large' 
 }) => {
   return (
     <div className={`page-title ${size} ${className}`}>

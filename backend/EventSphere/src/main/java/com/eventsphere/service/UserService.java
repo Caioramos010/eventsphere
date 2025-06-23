@@ -1,6 +1,7 @@
 package com.eventsphere.service;
 
 import com.eventsphere.dto.UserDTO;
+import com.eventsphere.dto.UserProfileDTO;
 import com.eventsphere.entity.event.Event;
 import com.eventsphere.entity.event.EventParticipant;
 import com.eventsphere.entity.event.ParticipantStatus;
@@ -8,6 +9,7 @@ import com.eventsphere.entity.user.Role;
 import com.eventsphere.entity.user.User;
 import com.eventsphere.repository.UserRepository;
 import com.eventsphere.repository.EventRepository;
+import com.eventsphere.repository.ParticipantRepository;
 import com.eventsphere.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -42,6 +44,9 @@ public class UserService {
 
     @Autowired
     private ImageService imageService;
+
+    @Autowired
+    private ParticipantRepository participantRepository;
 
     public UserService(PasswordEncoder passwordEncoder) {
         this.passwordEncoder = passwordEncoder;
@@ -134,10 +139,25 @@ public class UserService {
     public User getUser(Long userID){
         return userRepository.findById(userID).orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado!"));
     }
-    public User getUserDisplay(Long userID) {
+    public UserProfileDTO getUserDisplay(Long userID) {
         User user = userRepository.findById(userID).orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado!"));
-        user.setPassword(null); // Remove a senha da resposta
-        return user;
+        UserDTO userDTO = new UserDTO(
+            user.getUsername(),
+            user.getName(),
+            user.getRoles(),
+            user.getEmail(),
+            user.getRegisterDate(),
+            null, // não expor senha
+            user.getPhoto()
+        );
+        // Usa o DTO para garantir consistência, mas retorna UserProfileDTO para o frontend
+        return new UserProfileDTO(
+            user.getId(),
+            userDTO.getUsername(),
+            userDTO.getName(),
+            userDTO.getEmail(),
+            userDTO.getPhoto()
+        );
     }
     public List<User> getAllUsers() {
         List<User> users = userRepository.findAll();
@@ -189,7 +209,16 @@ public class UserService {
         if (user == null || !validatePassword(password, user.getPassword())){
             throw new IllegalArgumentException("Senha inválida");
         }
-        deleteUser(userId);
+        // Block user
+        user.setBlocked(true);
+        userRepository.save(user);
+        // Remove user from all event participations
+        List<EventParticipant> participations = participantRepository.findAll();
+        for (EventParticipant ep : participations) {
+            if (ep.getUser().getId().equals(userId)) {
+                participantRepository.delete(ep);
+            }
+        }
     }
 
     public boolean validatePassword(String rawPassword, String encodedPassword) {
@@ -225,6 +254,9 @@ public class UserService {
         User user = userRepository.findByUsername(username);
         if (user == null || !validatePassword(password, user.getPassword())) {
             throw new IllegalArgumentException("Usuário ou senha inválidos");
+        }
+        if (user.isBlocked()) {
+            throw new IllegalArgumentException("Usuário bloqueado. Entre em contato com o suporte.");
         }
         authenticationManager.authenticate(
                 new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(username, password));

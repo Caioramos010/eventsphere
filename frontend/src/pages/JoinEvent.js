@@ -18,17 +18,17 @@ export default function JoinEvent() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Verificar se usuário está autenticado
+    
     if (!AuthService.isAuthenticated()) {
       navigate('/login');
       return;
     }
 
-    // Se há token na URL, validar automaticamente
+    
     if (token) {
       setValidating(true);
       validateInviteToken(token);    } else {
-      // Se não há token, mostrar formulário para código do evento
+      
       setShowCodeForm(true);
     }
   }, [navigate, token]);  const validateEventCode = useCallback(async (code) => {
@@ -85,7 +85,7 @@ export default function JoinEvent() {
     }
   }, [token]);
 
-  // Função para formatar data
+  
   const formatDate = (dateString) => {
     if (!dateString) return 'Data não definida';
     const date = new Date(dateString);
@@ -96,7 +96,7 @@ export default function JoinEvent() {
     });
   };
 
-  // Função para formatar hora
+  
   const formatTime = (timeString) => {
     if (!timeString) return 'Horário não definido';
     
@@ -116,11 +116,11 @@ export default function JoinEvent() {
     try {
       let result;
       
-      // Se há token, usar o método de convite, senão usar o método com código
+      
       if (token) {
         result = await ParticipantService.joinEventWithInvite(event.id, token);
       } else {
-        // Usar código do evento para participar
+        
         result = await ParticipantService.joinEventWithCode(event.id, eventCode);
       }
 
@@ -195,7 +195,7 @@ export default function JoinEvent() {
         <Footer />
       </>
     );
-  }  // Show code form when no token in URL
+  }  
   if (showCodeForm && !event) {
     return (
       <>
@@ -286,7 +286,6 @@ export default function JoinEvent() {
 
           {event && (
             <StandardCard variant="glass" padding="large" className="event-details-card">
-              {/* Event Header with Background Image */}
               <div 
                 className="event-header-join" 
                 style={{
@@ -322,7 +321,6 @@ export default function JoinEvent() {
                 )}                <div className="join-section">
                   <h3>Participar do Evento</h3>
                   
-                  {/* Verificar se o evento está ativo */}
                   {event.isActive ? (
                     <div className="event-active-warning">
                       <IoCloseCircleOutline className="warning-icon" />

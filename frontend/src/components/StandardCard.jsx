@@ -3,8 +3,8 @@ import './StandardCard.css';
 
 const StandardCard = ({
   children,
-  variant = 'default', // 'default', 'glass', 'solid', 'gradient'
-  padding = 'medium', // 'small', 'medium', 'large'
+  variant = 'default', 
+  padding = 'medium', 
   className = '',
   hover = false,
   onClick,

@@ -5,6 +5,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import UserService from '../services/UserService';
 import AuthService from '../services/AuthService';
+import getUserPhotoUrl from '../utils/getUserPhotoUrl';
 import './UserProfile.css';
 
 export default function UserProfile() {
@@ -32,20 +33,46 @@ export default function UserProfile() {
       return;
     }
 
-    const userData = AuthService.getCurrentUser();
-    if (userData) {
-      setUser(userData);
-      setForm((prevForm) => ({
-        ...prevForm,
-        name: userData.name || '',
-        email: userData.email || '',
-        username: userData.username || '',
-      }));
-      if (userData.photo) {
-        setPhotoPreview(userData.photo);
+    // Busca sempre os dados mais recentes do usuário (incluindo foto)
+    async function syncUser() {
+      const result = await UserService.fetchCurrentUserProfileAndSync();
+      if (result.success && result.user) {
+        setUser(result.user);
+        setForm((prevForm) => ({
+          ...prevForm,
+          name: result.user.name || '',
+          email: result.user.email || '',
+          username: result.user.username || '',
+        }));
+        setPhotoPreview(getUserPhotoUrl(result.user.photo));
+      } else {
+        // fallback para localStorage
+        const userData = AuthService.getCurrentUser();
+        if (userData) {
+          setUser(userData);
+          setForm((prevForm) => ({
+            ...prevForm,
+            name: userData.name || '',
+            email: userData.email || '',
+            username: userData.username || '',
+          }));
+          setPhotoPreview(getUserPhotoUrl(userData.photo));
+        }
       }
     }
+    syncUser();
   }, [navigate]);
+
+  useEffect(() => {
+    // Garante que o form.email e form.username estejam sempre sincronizados com user
+    if (user) {
+      setForm((prevForm) => ({
+        ...prevForm,
+        email: user.email || '',
+        username: user.username || '',
+      }));
+    }
+  }, [user]);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -473,6 +500,33 @@ export default function UserProfile() {
                 </form>
               </div>
             )}
+            <div style={{ marginTop: 32, textAlign: 'center' }}>
+              <button
+                className="modern-btn danger-btn"
+                style={{ background: 'var(--color-danger)', color: '#fff', marginTop: 16, border: '2px solid #b00020', boxShadow: '0 2px 8px #b0002022' }}
+                onClick={async () => {
+                  const password = window.prompt('Digite sua senha para confirmar a exclusão da conta:');
+                  if (!password) return;
+                  if (window.confirm('Tem certeza que deseja deletar sua conta? Esta ação é irreversível.')) {
+                    setLoading(true);
+                    setError('');
+                    setSuccess('');
+                    const result = await UserService.deleteAccount(password);
+                    setLoading(false);
+                    if (result.success) {
+                      alert('Conta deletada com sucesso!');
+                      AuthService.logout();
+                      navigate('/login');
+                    } else {
+                      setError(result.message || 'Erro ao deletar conta');
+                    }
+                  }
+                }}
+                disabled={loading}
+              >
+                Deletar Conta
+              </button>
+            </div>
             {error && <div className="status-message status-error">{error}</div>}
             {success && <div className="status-message status-success">{success}</div>}
           </div>

@@ -19,7 +19,7 @@ const QRScanner = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [hasCamera, setHasCamera] = useState(false);
   const [flashEnabled, setFlashEnabled] = useState(false);
-  const [facingMode, setFacingMode] = useState('environment'); // 'user' for front, 'environment' for back
+  const [facingMode, setFacingMode] = useState('environment'); 
   const [scanResult, setScanResult] = useState(null);
   const [error, setError] = useState(null);
   const [event, setEvent] = useState(null);
@@ -36,25 +36,25 @@ const QRScanner = () => {
     };
   }, [id]);
 
-  // Inicializar câmera quando componente monta
+  
   useEffect(() => {
     initializeCamera();
   }, []);
 
   const cleanup = useCallback(() => {
-    // Parar scanning
+    
     if (scanIntervalRef.current) {
       clearInterval(scanIntervalRef.current);
       scanIntervalRef.current = null;
     }
 
-    // Parar stream
+    
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
 
-    // Limpar reader
+    
     if (readerRef.current) {
       readerRef.current.reset();
       readerRef.current = null;
@@ -67,14 +67,14 @@ const QRScanner = () => {
     try {
       console.log('Inicializando câmera...');
       
-      // Verificar suporte a getUserMedia
+      
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         setError('Seu navegador não suporta acesso à câmera');
         return;
       }
 
-      // Verificar protocolo
-      const isSecure = window.location.protocol === 'https:' || 
+      
+      const isSecure = window.location.protocol === 'http:' || 
                       window.location.hostname === 'localhost' || 
                       window.location.hostname === '127.0.0.1';
       
@@ -82,7 +82,7 @@ const QRScanner = () => {
         console.warn('Protocolo não seguro detectado - pode causar problemas em mobile');
       }
 
-      // Listar câmeras disponíveis
+      
       const devices = await navigator.mediaDevices.enumerateDevices();
       const videoDevices = devices.filter(device => device.kind === 'videoinput');
       
@@ -96,7 +96,7 @@ const QRScanner = () => {
       setAvailableCameras(videoDevices);
       setHasCamera(true);
 
-      // Inicializar reader ZXing
+      
       readerRef.current = new BrowserQRCodeReader();
       console.log('BrowserQRCodeReader inicializado');
 
@@ -158,13 +158,13 @@ const QRScanner = () => {
         return;
       }
 
-      // Parar stream anterior se existir
+      
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
         streamRef.current = null;
       }
 
-      // Configurar constraints básicas primeiro
+      
       let constraints = {
         video: {
           width: { ideal: 1280, min: 640 },
@@ -173,24 +173,24 @@ const QRScanner = () => {
         }
       };
 
-      // Adicionar facingMode se necessário
+      
       if (facingMode) {
         constraints.video.facingMode = facingMode;
       }
 
-      // Se temos câmeras específicas e um índice válido
+      
       if (availableCameras.length > 0 && currentCameraIndex >= 0 && availableCameras[currentCameraIndex]) {
         constraints.video.deviceId = { exact: availableCameras[currentCameraIndex].deviceId };
-        // Manter facingMode para melhor compatibilidade
+        
       }
 
       console.log('Tentando obter câmera com constraints:', constraints);
 
-      // Obter stream da câmera
+      
       streamRef.current = await navigator.mediaDevices.getUserMedia(constraints);
       console.log('Stream obtido com sucesso:', streamRef.current);
 
-      // Verificar se o stream tem tracks de vídeo
+      
       const videoTracks = streamRef.current.getVideoTracks();
       if (videoTracks.length === 0) {
         throw new Error('Nenhuma track de vídeo encontrada no stream');
@@ -198,16 +198,16 @@ const QRScanner = () => {
 
       console.log('Video track info:', videoTracks[0].getSettings());
 
-      // Configurar vídeo
+      
       videoRef.current.srcObject = streamRef.current;
       
-      // Garantir que o vídeo seja exibido
+      
       videoRef.current.style.display = 'block';
       videoRef.current.muted = true;
       videoRef.current.playsInline = true;
       videoRef.current.autoplay = true;
 
-      // Aguardar vídeo carregar e iniciar
+      
       const playPromise = new Promise((resolve, reject) => {
         const onLoadedMetadata = () => {
           console.log('Video metadata carregada:', {
@@ -232,7 +232,7 @@ const QRScanner = () => {
         videoRef.current.addEventListener('loadedmetadata', onLoadedMetadata, { once: true });
         videoRef.current.addEventListener('error', onError, { once: true });
 
-        // Timeout de segurança
+        
         setTimeout(() => {
           reject(new Error('Timeout ao carregar vídeo'));
         }, 10000);
@@ -243,13 +243,13 @@ const QRScanner = () => {
       console.log('Vídeo carregado e reproduzindo, iniciando scanner...');
       setIsScanning(true);
 
-      // Inicializar ZXing reader se necessário
+      
       if (!readerRef.current) {
         readerRef.current = new BrowserQRCodeReader();
         console.log('BrowserQRCodeReader inicializado');
       }
 
-      // Iniciar scanning contínuo
+      
       startContinuousScanning();
 
     } catch (err) {
@@ -266,7 +266,7 @@ const QRScanner = () => {
       } else if (err.name === 'OverconstrainedError') {
         errorMessage = 'Configurações de câmera não suportadas. Tentando configuração básica...';
         
-        // Tentar novamente com configuração mais simples
+        
         try {
           streamRef.current = await navigator.mediaDevices.getUserMedia({ video: true });
           videoRef.current.srcObject = streamRef.current;
@@ -284,7 +284,7 @@ const QRScanner = () => {
       setError(errorMessage);
       setIsScanning(false);
       
-      // Limpar stream em caso de erro
+      
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
         streamRef.current = null;
@@ -301,7 +301,7 @@ const QRScanner = () => {
       if (!isScanning || !videoRef.current || !readerRef.current) return;
 
       try {
-        // Criar canvas para capturar frame
+        
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
         
@@ -310,7 +310,7 @@ const QRScanner = () => {
         
         context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
         
-        // Tentar decodificar QR code
+        
         const result = await readerRef.current.decodeFromImageElement(canvas);
         
         if (result && result.text) {
@@ -318,21 +318,21 @@ const QRScanner = () => {
           handleScanSuccess(result.text);
         }
       } catch (err) {
-        // Ignorar erros de decodificação (normal quando não há QR code)
+        
         if (err.name !== 'NotFoundException') {
           console.debug('Erro de scan:', err.message);
         }
       }
     };
 
-    // Escanear a cada 500ms
+    
     scanIntervalRef.current = setInterval(scanFrame, 500);
   };
   const stopScanner = () => {
     console.log('Parando scanner...');
     setIsScanning(false);
     
-    // Parar stream
+    
     if (streamRef.current) {
       console.log('Parando stream de vídeo...');
       streamRef.current.getTracks().forEach(track => {
@@ -342,12 +342,12 @@ const QRScanner = () => {
       streamRef.current = null;
     }
 
-    // Limpar vídeo
+    
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
 
-    // Limpar reader
+    
     if (readerRef.current) {
       try {
         readerRef.current.reset();
@@ -363,14 +363,14 @@ const QRScanner = () => {
     try {
       console.log('QR Code detectado:', qrCodeData);
       
-      // Limpar espaços e quebras de linha
+      
       const cleanData = qrCodeData.trim();
       
-      // Verificar diferentes formatos de QR code
+      
       let participantId;
       let eventId;
       
-      // Formato 1: URL completa (ex: https://app.com/event/123/participant/456)
+      
       if (cleanData.includes('http') && cleanData.includes('/participant/')) {
         const urlParts = cleanData.split('/');
         const participantIndex = urlParts.findIndex(part => part === 'participant');
@@ -383,7 +383,7 @@ const QRScanner = () => {
           }
         }
       }
-      // Formato 2: JSON string
+      
       else if (cleanData.startsWith('{') && cleanData.endsWith('}')) {
         try {
           const data = JSON.parse(cleanData);
@@ -393,21 +393,21 @@ const QRScanner = () => {
           console.warn('Erro ao parsear JSON do QR code:', e);
         }
       }
-      // Formato 3: "participantId:eventId"
+      
       else if (cleanData.includes(':')) {
         const parts = cleanData.split(':');
         participantId = parts[0];
         eventId = parts[1];
       }
-      // Formato 4: Apenas o ID do participante
+      
       else if (/^\d+$/.test(cleanData)) {
         participantId = cleanData;
-        eventId = id; // Usar o ID do evento atual
+        eventId = id; 
       }
-      // Formato 5: Verificar se contém palavras-chave do sistema
+      
       else if (cleanData.toLowerCase().includes('eventsphere') || 
                cleanData.toLowerCase().includes('participant')) {
-        // Tentar extrair números do texto
+        
         const numbers = cleanData.match(/\d+/g);
         if (numbers && numbers.length > 0) {
           participantId = numbers[0];
@@ -415,7 +415,7 @@ const QRScanner = () => {
         }
       }
       
-      // Validar se conseguimos extrair o participantId
+      
       if (!participantId) {
         setScanResult({ 
           success: false, 
@@ -425,7 +425,7 @@ const QRScanner = () => {
         return;
       }
 
-      // Validar se o evento confere (se fornecido no QR code)
+      
       if (eventId && eventId !== id) {
         setScanResult({ 
           success: false, 
@@ -435,7 +435,7 @@ const QRScanner = () => {
         return;
       }
 
-      // Marcar presença
+      
       await markPresence(participantId);
       
     } catch (err) {
@@ -464,7 +464,7 @@ const QRScanner = () => {
         const data = await response.json();
         const participant = data.data;
         
-        // Adicionar à lista de presentes
+        
         const newParticipant = {
           id: participant.id,
           name: participant.user?.name || 'Participante',
@@ -474,7 +474,7 @@ const QRScanner = () => {
         };
         
         setScannedParticipants(prev => {
-          // Verificar se já não está na lista
+          
           if (prev.find(p => p.id === newParticipant.id)) {
             setScanResult({ 
               success: false, 
@@ -562,14 +562,14 @@ const QRScanner = () => {
     try {
       console.log('Trocando câmera...');
       
-      // Parar scanner atual
+      
       stopScanner();
       
-      // Próxima câmera
+      
       const nextIndex = (currentCameraIndex + 1) % availableCameras.length;
       setCurrentCameraIndex(nextIndex);
       
-      // Atualizar facing mode baseado na câmera
+      
       const nextCamera = availableCameras[nextIndex];
       const newFacingMode = nextCamera.label.toLowerCase().includes('front') || 
                            nextCamera.label.toLowerCase().includes('user') ? 'user' : 'environment';
@@ -577,7 +577,7 @@ const QRScanner = () => {
       
       console.log(`Trocando para câmera ${nextIndex}: ${nextCamera.label}`);
       
-      // Aguardar um pouco antes de reiniciar
+      
       setTimeout(() => {
         startScanner();
       }, 500);
@@ -633,7 +633,7 @@ const QRScanner = () => {
     <>
       <Header />
       <div className="qr-scanner-container">
-        <div className="qr-scanner-main">          {/* Header */}
+        <div className="qr-scanner-main">          {}
           <div className="scanner-header">
             <BackButton onClick={handleBack} />
             <div className="scanner-title">
@@ -645,16 +645,16 @@ const QRScanner = () => {
             </div>
           </div>
 
-          {/* Event Info */}
+          {}
           <div className="event-info-banner">
             <h2>{event.title || event.name}</h2>
             <p>{event.location} • {new Date(event.date).toLocaleDateString('pt-BR')}</p>
           </div>
 
-          {/* Scanner Section */}
+          {}
           <div className="scanner-section">            <div className="camera-container">
               <div className="camera-view">
-                {/* Elemento de vídeo */}
+                {}
                 <video
                   ref={videoRef}
                   autoPlay
@@ -693,7 +693,7 @@ const QRScanner = () => {
                 
                 {isScanning && (
                   <>
-                    {/* Scan Overlay */}
+                    {}
                     <div className="scan-overlay">
                       <div className="scan-frame">
                         <div className="scan-corner top-left"></div>
@@ -702,7 +702,7 @@ const QRScanner = () => {
                         <div className="scan-corner bottom-right"></div>
                         <div className="scan-line"></div>
                       </div>
-                    </div>                    {/* Camera Controls */}
+                    </div>                    {}
                     <div className="camera-controls">
                       <button 
                         className="control-btn" 
@@ -740,13 +740,13 @@ const QRScanner = () => {
               )}
             </div>
 
-            {/* Manual Input Button */}
+            {}
             <button className="manual-input-btn" onClick={handleManualInput}>
               OU DIGITE O CÓDIGO
             </button>
           </div>
 
-          {/* Scan Result */}
+          {}
           {scanResult && (
             <div className={`scan-result ${scanResult.success ? 'success' : 'error'}`}>
               <div className="result-icon">
@@ -768,7 +768,7 @@ const QRScanner = () => {
             </div>
           )}
 
-          {/* Scanned Participants */}
+          {}
           <div className="scanned-participants">
             <h3>PARTICIPANTES ESCANEADOS - {scannedParticipants.length}</h3>
             <div className="participants-list">

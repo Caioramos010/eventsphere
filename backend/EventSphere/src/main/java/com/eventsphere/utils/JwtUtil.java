@@ -13,7 +13,7 @@ import java.util.Map;
 @Service
 public class JwtUtil {
     private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-    private static final long TOKEN_VALIDITY = 1000 * 60 * 60 * 12; //12 Horas de token
+    private static final long TOKEN_VALIDITY = 1000 * 60 * 60 * 12;
 
     private String createToken(Map<String, Object> claims, String subject) {
         return Jwts.builder()

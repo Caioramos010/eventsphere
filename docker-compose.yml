@@ -1,0 +1,49 @@
+version: '3.8'
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: eventsphere-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: eventsphere
+      MYSQL_USER: eventsphere
+      MYSQL_PASSWORD: eventspherepass
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend/EventSphere
+    container_name: eventsphere-backend
+    restart: always
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/eventsphere?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: eventsphere
+      SPRING_DATASOURCE_PASSWORD: eventspherepass
+      JWT_SECRET: your_jwt_secret
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ./backend/EventSphere/uploads:/app/uploads
+
+  frontend:
+    build: ./frontend
+    container_name: eventsphere-frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  db_data:
