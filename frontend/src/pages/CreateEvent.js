@@ -6,10 +6,19 @@ import EventService from '../services/EventService';
 import AuthService from '../services/AuthService';
 import './CreateEvent.css';
 
+// Função auxiliar para obter data no formato YYYY-MM-DD no timezone local
+const getTodayDateString = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function CreateEvent() {
   const [form, setForm] = useState({
     name: '',
-    dateFixedStart: '',
+    dateFixedStart: getTodayDateString(), // Definir data padrão como hoje
     dateFixedEnd: '',
     timeFixedStart: '',
     timeFixedEnd: '',
@@ -49,6 +58,7 @@ export default function CreateEvent() {
       setForm(f => ({ ...f, [name]: value }));
     }
   }
+// ...existing code...
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
@@ -62,13 +72,28 @@ export default function CreateEvent() {
         return;
       }
 
-      
       const startDate = form.dateFixedStart;
       const endDate = form.dateFixedEnd || form.dateFixedStart;
-      const startDateTime = new Date(`${startDate}T${form.timeFixedStart}`);
-      const endDateTime = new Date(`${endDate}T${form.timeFixedEnd}`);
 
-      
+      // Corrigido: monta a data/hora no fuso local (sem conversão para UTC)
+      const [startYear, startMonth, startDay] = startDate.split('-').map(Number);
+      const [startHour, startMinute] = form.timeFixedStart.split(':').map(Number);
+      const startDateTime = new Date(startYear, startMonth - 1, startDay, startHour, startMinute);
+
+      const [endYear, endMonth, endDay] = endDate.split('-').map(Number);
+      const [endHour, endMinute] = form.timeFixedEnd.split(':').map(Number);
+      const endDateTime = new Date(endYear, endMonth - 1, endDay, endHour, endMinute);
+
+      console.log('Debug - Datas do evento:', {
+        startDate,
+        endDate,
+        timeFixedStart: form.timeFixedStart,
+        timeFixedEnd: form.timeFixedEnd,
+        startDateTime: startDateTime.toString(),
+        endDateTime: endDateTime.toString(),
+        now: new Date().toString()
+      });
+
       if (startDate === endDate && endDateTime <= startDateTime) {
         setError('O horário de término deve ser posterior ao horário de início para eventos no mesmo dia');
         setLoading(false);
@@ -81,24 +106,33 @@ export default function CreateEvent() {
         return;
       }
 
-      
-      const selectedDate = new Date(form.dateFixedStart + 'T00:00:00');
+      const selectedDate = new Date(startYear, startMonth - 1, startDay, 0, 0, 0, 0);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
+
+      console.log('Debug - Validação de data:', {
+        formDateFixedStart: form.dateFixedStart,
+        selectedDate: selectedDate.toISOString(),
+        selectedDateLocal: selectedDate.toLocaleDateString('pt-BR'),
+        today: today.toISOString(),
+        todayLocal: today.toLocaleDateString('pt-BR'),
+        selectedTime: selectedDate.getTime(),
+        todayTime: today.getTime(),
+        isInPast: selectedDate.getTime() < today.getTime()
+      });
+
       if (selectedDate.getTime() < today.getTime()) {
         setError('A data do evento não pode ser no passado');
         setLoading(false);
         return;
       }
-      
+
       const now = new Date();
       if (
         selectedDate.getTime() === today.getTime() &&
         form.timeFixedStart
       ) {
-        const [h, m] = form.timeFixedStart.split(':');
-        const eventStart = new Date(selectedDate);
-        eventStart.setHours(Number(h), Number(m), 0, 0);
+        const eventStart = new Date(startYear, startMonth - 1, startDay, Number(startHour), Number(startMinute), 0, 0);
         if (eventStart < now) {
           setError('O horário de início deve ser igual ou posterior ao horário atual');
           setLoading(false);
@@ -106,7 +140,6 @@ export default function CreateEvent() {
         }
       }
 
-      
       const eventData = {
         name: form.name,
         dateFixedStart: form.dateFixedStart,
@@ -121,17 +154,16 @@ export default function CreateEvent() {
         photo: null 
       };
 
-      
+      console.log('Debug - Dados sendo enviados para o backend:', eventData);
+
       const result = await EventService.createEvent(eventData);
 
       if (result.success && form.photoFile) {
-        
         try {
           await EventService.uploadEventPhoto(result.event.id, form.photoFile);
           console.log('Photo uploaded successfully');
         } catch (photoError) {
           console.error('Error uploading photo:', photoError);
-          
         }
       }
 
@@ -150,6 +182,7 @@ export default function CreateEvent() {
       setLoading(false);
     }
   }
+  
     return (
     <>      <Header />
       <div className="page-container">
@@ -241,27 +274,25 @@ export default function CreateEvent() {
                 
                 <div className="form-row">
                   <div className="form-group">
-                    <label className="modern-label">Data de Início *</label>
-                    <input
+                    <label className="modern-label">Data de Início *</label>                    <input
                       type="date"
                       name="dateFixedStart"
                       value={form.dateFixedStart}
                       onChange={handleChange}
                       className="modern-input"
-                      min={new Date().toISOString().split('T')[0]}
+                      min={getTodayDateString()}
                       required
                     />
                   </div>
                   
                   <div className="form-group">
-                    <label className="modern-label">Data de Fim</label>
-                    <input
+                    <label className="modern-label">Data de Fim</label>                    <input
                       type="date"
                       name="dateFixedEnd"
                       value={form.dateFixedEnd}
                       onChange={handleChange}
                       className="modern-input"
-                      min={form.dateFixedStart || new Date().toISOString().split('T')[0]}
+                      min={form.dateFixedStart || getTodayDateString()}
                     />
                   </div>
                 </div>

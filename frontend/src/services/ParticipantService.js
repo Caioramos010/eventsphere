@@ -47,11 +47,9 @@ const ParticipantService = {
     }
   },
   
-  
-  async confirmAttendance(eventId) {
+    async confirmAttendance(eventId) {
     try {
-      const url = `${API_CONFIG.BASE_URL}/api/participant/confirm`;
-      const response = await post(url, { eventId });
+      const response = await post(API_CONFIG.ENDPOINTS.PARTICIPANT_CONFIRM, { eventId });
       const data = await response.json();
       
       if (data.success || response.ok) {

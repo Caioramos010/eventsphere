@@ -18,6 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.ZoneId;
+
 import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -48,9 +50,16 @@ public class EventService {
     private ParticipantRepository participantRepository;
 
     @Autowired
-    private ImageService imageService;
-
-    public Event registerEvent(EventDTO eventDTO) {
+    private ImageService imageService;    public Event registerEvent(EventDTO eventDTO) {
+        System.out.println("=== DEBUG CRIAÇÃO DE EVENTO ===");
+        System.out.println("Data recebida no DTO - dateFixedStart: " + eventDTO.getDateFixedStart());
+        System.out.println("Data recebida no DTO - dateFixedEnd: " + eventDTO.getDateFixedEnd());
+        System.out.println("Hora recebida no DTO - timeFixedStart: " + eventDTO.getTimeFixedStart());
+        System.out.println("Hora recebida no DTO - timeFixedEnd: " + eventDTO.getTimeFixedEnd());
+        System.out.println("Timezone atual do sistema: " + java.util.TimeZone.getDefault().getID());
+        System.out.println("Data/hora atual do sistema: " + java.time.LocalDateTime.now());
+        System.out.println("Data/hora atual em SP: " + java.time.LocalDateTime.now(java.time.ZoneId.of("America/Sao_Paulo")));
+        
         eventDTO.setState(State.CREATED);
         User owner = null;
         if (eventDTO.getOwnerId() != null) {
@@ -74,7 +83,12 @@ public class EventService {
                 eventDTO.getState(),
                 owner);
                 
+        System.out.println("Evento criado - dateFixedStart: " + event.getDateFixedStart());
+        System.out.println("Evento criado - dateFixedEnd: " + event.getDateFixedEnd());
+        System.out.println("Evento criado - timeFixedStart: " + event.getTimeFixedStart());
+        System.out.println("Evento criado - timeFixedEnd: " + event.getTimeFixedEnd());
         
+        // Salvar evento
         event = eventRepository.save(event);
           
         if (event.getParticipants() == null) {
@@ -176,16 +190,27 @@ public class EventService {
         Event event = getEvent(eventID);
         eventRepository.delete(event);
         return event;
-    }
-
-    @Scheduled(fixedRate = 60000) 
+    }    @Scheduled(fixedRate = 60000) 
     public void autoStartEvents() {
         List<Event> events = eventRepository.findAll();
-        LocalDateTime now = LocalDateTime.now();
+        // Usar timezone do Brasil para comparação
+        LocalDateTime now = LocalDateTime.now(java.time.ZoneId.of("America/Sao_Paulo"));
+        
+        System.out.println("=== DEBUG AUTO START EVENTS ===");
+        System.out.println("Data/hora atual em SP: " + now);
+        System.out.println("Total de eventos para verificar: " + events.size());
+        
         for (Event event : events) {
             if (event.getState() == State.CREATED) {
                 LocalDateTime fixedStart = LocalDateTime.of(event.getDateFixedStart(), event.getTimeFixedStart());
+                
+                System.out.println("Evento: " + event.getName());
+                System.out.println("  - Data/hora programada: " + fixedStart);
+                System.out.println("  - Data/hora atual: " + now);
+                System.out.println("  - Deve iniciar? " + (now.isAfter(fixedStart) || now.isEqual(fixedStart)));
+                
                 if (now.isAfter(fixedStart) || now.isEqual(fixedStart)) {
+                    System.out.println("  - INICIANDO EVENTO AUTOMATICAMENTE!");
                     event.setState(State.ACTIVE);
                     if (event.getDateStart() == null) {
                         event.setDateStart(now.toLocalDate());
@@ -195,12 +220,12 @@ public class EventService {
                 }
             }
         }
-    }
-
-    @Scheduled(fixedRate = 60000) 
+    }@Scheduled(fixedRate = 60000) 
     public void autoFinishEvents() {
         List<Event> events = eventRepository.findAll();
-        LocalDateTime now = LocalDateTime.now();
+        // Usar timezone do Brasil para comparação
+        LocalDateTime now = LocalDateTime.now(java.time.ZoneId.of("America/Sao_Paulo"));
+        
         for (Event event : events) {
             if (event.getState() == State.ACTIVE) {
                 LocalDateTime fixedEnd = LocalDateTime.of(event.getDateFixedEnd(), event.getTimeFixedEnd());
@@ -282,14 +307,13 @@ public class EventService {
      * @param eventId ID do evento
      * @param userId ID do usuário (deve ser dono ou colaborador)
      * @return Token de convite
-     */
-    public String generateInviteLink(Long eventId, Long userId) {
+     */    public String generateInviteLink(Long eventId, Long userId) {
         Event event = getEvent(eventId);
         
+        // Autorizar criação de convites (donos, colaboradores, ou participantes de eventos públicos)
+        authorizeInviteCreation(eventId, userId);
         
-        authorizeEditEvent(eventId, userId);
-        
-        
+        // Se já existe um token de convite válido, retornar ele
         if (event.getInviteToken() != null && !event.getInviteToken().isEmpty()) {
             return event.getInviteToken();
         }
@@ -485,26 +509,37 @@ public class EventService {
         dto.setOwnerId(event.getOwner().getId());        
         List<Long> collaboratorIds = new ArrayList<>();
         List<Long> participantIds = new ArrayList<>();
-        List<ParticipantDTO> participants = new ArrayList<>();
-        
-        
-        for (EventParticipant participant : event.getParticipants()) {
-            ParticipantDTO participantDTO = new ParticipantDTO();
-            participantDTO.setId(participant.getId());
-            participantDTO.setUserId(participant.getUser().getId());
-            participantDTO.setUserName(participant.getUser().getName());
-            participantDTO.setUserUsername(participant.getUser().getUsername());
-            participantDTO.setUserEmail(participant.getUser().getEmail());
-            participantDTO.setUserPhoto(participant.getUser().getPhoto());
-            participantDTO.setIsCollaborator(participant.isCollaborator());
-            participantDTO.setStatus(participant.getCurrentStatus().toString());
-            participantDTO.setConfirmed(participant.getCurrentStatus() == ParticipantStatus.CONFIRMED);
-            
-            participants.add(participantDTO);
-            participantIds.add(participant.getUser().getId());
-            
-            if (participant.isCollaborator()) {
-                collaboratorIds.add(participant.getUser().getId());
+        List<ParticipantDTO> participants = new ArrayList<>();        // Processar participantes com verificações de segurança
+        if (event.getParticipants() != null) {
+            for (EventParticipant participant : event.getParticipants()) {
+                try {
+                    ParticipantDTO participantDTO = new ParticipantDTO();
+                    participantDTO.setId(participant.getId());
+                    
+                    // Verificar se o usuário não é nulo
+                    if (participant.getUser() != null) {
+                        participantDTO.setUserId(participant.getUser().getId());
+                        participantDTO.setUserName(participant.getUser().getName());
+                        participantDTO.setUserUsername(participant.getUser().getUsername());
+                        participantDTO.setUserEmail(participant.getUser().getEmail());
+                        participantDTO.setUserPhoto(participant.getUser().getPhoto());
+                        participantIds.add(participant.getUser().getId());
+                        
+                        if (participant.isCollaborator()) {
+                            collaboratorIds.add(participant.getUser().getId());
+                        }
+                    }
+                    
+                    participantDTO.setIsCollaborator(participant.isCollaborator());
+                    participantDTO.setStatus(participant.getCurrentStatus() != null ? 
+                        participant.getCurrentStatus().toString() : "PENDING");
+                    participantDTO.setConfirmed(participant.getCurrentStatus() == ParticipantStatus.CONFIRMED);
+                    
+                    participants.add(participantDTO);
+                } catch (Exception e) {
+                    // Log do erro e continuar com outros participantes
+                    System.err.println("Erro ao processar participante: " + e.getMessage());
+                }
             }
         }
         
@@ -643,28 +678,33 @@ public class EventService {
      * 
      * @param eventCode Código do evento (8 caracteres)
      * @return EventDTO do evento
-     */
-    public EventDTO validateEventCode(String eventCode) {
-        
-        if (!EventCodeGenerator.isValidCodeFormat(eventCode)) {
-            throw new IllegalArgumentException("Código de evento inválido. Deve conter 8 caracteres (letras e números).");
+     */    public EventDTO validateEventCode(String eventCode) {
+        try {
+            // Validar formato do código
+            if (!EventCodeGenerator.isValidCodeFormat(eventCode)) {
+                throw new IllegalArgumentException("Código de evento inválido. Deve conter 8 caracteres (letras e números).");
+            }
+            
+            Event event = eventRepository.findByInviteCode(eventCode);
+            if (event == null) {
+                throw new EntityNotFoundException("Evento não encontrado com o código fornecido.");
+            }
+            
+            // Verificar estado do evento
+            if (event.getState() == State.CANCELED) {
+                throw new IllegalStateException("Este evento foi cancelado.");
+            }
+            
+            if (event.getState() == State.FINISHED) {
+                throw new IllegalStateException("Este evento já foi finalizado.");
+            }
+            
+            return convertToDTO(event);
+        } catch (Exception e) {
+            System.err.println("Erro ao validar código do evento: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
         }
-        
-        Event event = eventRepository.findByInviteCode(eventCode);
-          if (event == null) {
-            throw new EntityNotFoundException("Evento não encontrado com o código fornecido.");
-        }
-        
-        
-        if (event.getState() == State.CANCELED) {
-            throw new IllegalStateException("Este evento foi cancelado.");
-        }
-        
-        if (event.getState() == State.FINISHED) {
-            throw new IllegalStateException("Este evento já foi finalizado.");
-        }
-        
-        return convertToDTO(event);
     }
     
     /**
@@ -729,5 +769,133 @@ public class EventService {
             result.add(getEventWithUserInfo(event.getId(), userId));
         }
         return result;
+    }
+    
+    /**
+     * Autoriza a criação de convites para um evento
+     * Permite: donos, colaboradores e participantes de eventos públicos
+     */
+    public void authorizeInviteCreation(Long eventID, Long userId) {
+        Event event = eventRepository.findById(eventID)
+                .orElseThrow(() -> new IllegalArgumentException("Evento não encontrado!"));
+        
+        // Dono sempre pode criar convites
+        boolean isOwner = event.getOwner().getId().equals(userId);
+        if (isOwner) {
+            return; 
+        }
+        
+        // Colaborador sempre pode criar convites
+        boolean isCollaborator = false;
+        if (event.getCollaborators() != null) {
+            isCollaborator = event.getCollaborators().stream().anyMatch(u -> u.getId().equals(userId));
+        }
+        if (isCollaborator) {
+            return;
+        }
+        
+        // Para eventos públicos, qualquer participante pode criar convites
+        if ("PUBLIC".equals(event.getAcess())) {
+            boolean isParticipant = false;
+            if (event.getParticipants() != null) {
+                isParticipant = event.getParticipants().stream().anyMatch(p -> p.getUser().getId().equals(userId));
+            }
+            if (isParticipant) {
+                return;
+            }
+        }
+        
+        throw new SecurityException("Apenas donos, colaboradores ou participantes de eventos públicos podem criar convites.");
+    }
+    
+    /**
+     * Versão simplificada de validação que não carrega participantes
+     * Para uso apenas em validação de código
+     */    public EventDTO validateEventCodeSimple(String eventCode) {
+        try {
+            System.out.println("Validando código: " + eventCode);
+            
+            // Validar formato do código
+            if (!EventCodeGenerator.isValidCodeFormat(eventCode)) {
+                System.out.println("Formato de código inválido: " + eventCode);
+                throw new IllegalArgumentException("Código de evento inválido. Deve conter 8 caracteres (letras e números).");
+            }
+            
+            System.out.println("Formato válido, buscando no banco...");
+            Event event = eventRepository.findByInviteCode(eventCode);
+            
+            if (event == null) {
+                System.out.println("Evento não encontrado para código: " + eventCode);
+                // Listar alguns códigos existentes para debug
+                List<Event> allEvents = eventRepository.findAll();
+                System.out.println("Códigos existentes no banco:");
+                for (Event e : allEvents) {
+                    System.out.println("- Evento ID " + e.getId() + ": " + e.getInviteCode());
+                }
+                throw new EntityNotFoundException("Evento não encontrado com o código fornecido.");
+            }
+            
+            System.out.println("Evento encontrado: " + event.getName() + " (ID: " + event.getId() + ")");
+            
+            // Verificar estado do evento
+            if (event.getState() == State.CANCELED) {
+                throw new IllegalStateException("Este evento foi cancelado.");
+            }
+            
+            if (event.getState() == State.FINISHED) {
+                throw new IllegalStateException("Este evento já foi finalizado.");
+            }
+            
+            // Criar DTO simplificado sem participantes
+            EventDTO dto = new EventDTO();
+            dto.setId(event.getId());
+            dto.setName(event.getName());
+            dto.setDateFixedStart(event.getDateFixedStart());
+            dto.setDateStart(event.getDateStart());
+            dto.setDateFixedEnd(event.getDateFixedEnd());
+            dto.setDateEnd(event.getDateEnd());
+            dto.setTimeFixedStart(event.getTimeFixedStart());
+            dto.setTimeStart(event.getTimeStart());
+            dto.setTimeFixedEnd(event.getTimeFixedEnd());
+            dto.setTimeEnd(event.getTimeEnd());
+            dto.setLocalization(event.getLocalization());
+            dto.setDescription(event.getDescription());
+            dto.setMaxParticipants(event.getMaxParticipants());
+            dto.setClassification(event.getClassification());
+            dto.setAcess(event.getAcess());
+            dto.setPhoto(event.getPhoto());
+            dto.setState(event.getState());
+            if (event.getOwner() != null) {
+                dto.setOwnerId(event.getOwner().getId());
+            }
+            
+            // Não carregar participantes para evitar problemas de lazy loading
+            dto.setCollaboratorIds(new ArrayList<>());
+            dto.setParticipantIds(new ArrayList<>());
+            dto.setParticipants(new ArrayList<>());
+            
+            return dto;
+        } catch (Exception e) {
+            System.err.println("Erro ao validar código do evento: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
+    }
+    
+    /**
+     * Garante que um evento tenha um código de convite gerado
+     * Usado para eventos que podem ter sido criados sem código
+     */
+    public String ensureEventHasInviteCode(Long eventId) {
+        Event event = getEvent(eventId);
+        
+        if (event.getInviteCode() == null || event.getInviteCode().isEmpty()) {
+            String inviteCode = generateSecureInviteCode();
+            event.setInviteCode(inviteCode);
+            eventRepository.save(event);
+            System.out.println("Código gerado para evento " + eventId + ": " + inviteCode);
+        }
+        
+        return event.getInviteCode();
     }
 }

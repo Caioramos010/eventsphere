@@ -27,11 +27,18 @@ const AuthService = {
     } catch (error) {
       console.error('Login error:', error);
       
-      
+      // Verificar mensagens de erro específicas
       if (error.message.includes('404')) {
         return { success: false, message: 'Serviço de autenticação não encontrado' };
       } else if (error.message.includes('401')) {
         return { success: false, message: 'Username ou senha incorretos' };
+      } else if (error.message.toLowerCase().includes('blocked') || 
+                 error.message.toLowerCase().includes('bloqueada') || 
+                 error.message.toLowerCase().includes('usuário bloqueado') ||
+                 error.message.toLowerCase().includes('conta bloqueada')) {
+        return { success: false, message: 'Sua conta foi bloqueada. Entre em contato com o suporte para mais informações.' };
+      } else if (error.message.includes('403')) {
+        return { success: false, message: 'Sua conta foi bloqueada. Entre em contato com o suporte para mais informações.' };
       } else if (error.message.includes('500')) {
         return { success: false, message: 'Erro interno do servidor. Tente novamente.' };
       } else if (error.message.includes('Failed to fetch')) {

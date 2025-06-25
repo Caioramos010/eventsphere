@@ -6,9 +6,11 @@ import Footer from '../components/Footer';
 import UserService from '../services/UserService';
 import AuthService from '../services/AuthService';
 import getUserPhotoUrl from '../utils/getUserPhotoUrl';
+import { useUser } from '../contexts/UserContext';
 import './UserProfile.css';
 
 export default function UserProfile() {
+  const { user: contextUser, updateUser, clearUser } = useUser();
   const [user, setUser] = useState(null);
   const [form, setForm] = useState({
     name: '',
@@ -26,6 +28,21 @@ export default function UserProfile() {
   const [photoPreview, setPhotoPreview] = useState('');
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+
+  // Usar dados do contexto se disponíveis
+  useEffect(() => {
+    if (contextUser) {
+      setUser(contextUser);
+      setForm({
+        name: contextUser.name || '',
+        email: contextUser.email || '',
+        username: contextUser.username || '',
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
+    }
+  }, [contextUser]);
 
   useEffect(() => {
     if (!AuthService.isAuthenticated()) {
@@ -122,12 +139,11 @@ export default function UserProfile() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
       const result = await UserService.uploadUserPhoto(photoFile, { signal: controller.signal });
-      clearTimeout(timeoutId);
-      if (result.success) {
+      clearTimeout(timeoutId);      if (result.success) {
         setSuccess('Foto atualizada com sucesso!');
         const updatedUser = { ...user, photo: result.photoUrl };
         setUser(updatedUser);
-        AuthService.updateCurrentUser(updatedUser);
+        updateUser(updatedUser); // Atualiza o contexto global (e o AuthService automaticamente)
         setPhotoFile(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
       } else {
@@ -156,12 +172,11 @@ export default function UserProfile() {
         setError('Formato de email inválido');
         return;
       }
-      const result = await UserService.updateEmail(form.email);
-      if (result.success) {
+      const result = await UserService.updateEmail(form.email);      if (result.success) {
         setSuccess(result.message || 'Email atualizado com sucesso!');
         const updatedUser = { ...user, email: form.email };
         setUser(updatedUser);
-        AuthService.updateCurrentUser(updatedUser);
+        updateUser(updatedUser); // Atualiza o contexto global (e o AuthService automaticamente)
       } else {
         setError(result.message || 'Erro ao atualizar email');
       }
@@ -183,12 +198,11 @@ export default function UserProfile() {
         setError('Digite um novo login válido');
         return;
       }
-      const result = await UserService.updateUsername(form.username);
-      if (result.success) {
+      const result = await UserService.updateUsername(form.username);      if (result.success) {
         setSuccess(result.message || 'Login atualizado com sucesso!');
         const updatedUser = { ...user, username: form.username };
         setUser(updatedUser);
-        AuthService.updateCurrentUser(updatedUser);
+        updateUser(updatedUser); // Atualiza o contexto global (e o AuthService automaticamente)
       } else {
         setError(result.message || 'Erro ao atualizar login');
       }

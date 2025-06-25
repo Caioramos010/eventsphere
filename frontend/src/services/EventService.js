@@ -1,6 +1,5 @@
 import { get, post, put, del, uploadFile } from '../fetchWithAuth';
 import API_CONFIG, { buildUrl } from '../config/api';
-import tempIdManager from '../utils/tempIdManager';
 
 const EventService = {
   
@@ -443,25 +442,38 @@ const EventService = {
       console.error('Error validating event code:', error);
       return { success: false, message: error.message || 'Erro de conexão' };
     }
-  },
-
-  
+  },  // Obtém o código do evento (já gerado automaticamente)
+  // O código é retornado junto com a geração do invite
   async generateEventCode(eventId) {
     try {
-      const response = await post(API_CONFIG.ENDPOINTS.EVENT_CODE_GENERATE, { eventId });
-      const data = await response.json();
+      // Primeiro tentar garantir que o evento tenha um código
+      const ensureUrl = `${API_CONFIG.BASE_URL}/api/event/${eventId}/ensure-code`;
+      const ensureResponse = await post(ensureUrl);
+      const ensureData = await ensureResponse.json();
       
-      if (data.success || response.ok) {
+      if (ensureData.success || ensureResponse.ok) {
         return { 
           success: true, 
-          eventCode: data.eventCode || data.data?.eventCode,
-          message: data.message || 'Código gerado com sucesso' 
+          eventCode: ensureData.data?.inviteCode || ensureData.inviteCode,
+          message: ensureData.message || 'Código obtido com sucesso' 
         };
       } else {
-        return { success: false, message: data.message || 'Erro ao gerar código' };
+        // Fallback para o método original
+        const response = await post(API_CONFIG.ENDPOINTS.INVITE_GENERATE, { eventId });
+        const data = await response.json();
+        
+        if (data.success || response.ok) {
+          return { 
+            success: true, 
+            eventCode: data.data?.inviteCode || data.inviteCode,
+            message: data.message || 'Código obtido com sucesso' 
+          };
+        } else {
+          return { success: false, message: data.message || 'Erro ao obter código' };
+        }
       }
     } catch (error) {
-      console.error('Error generating event code:', error);
+      console.error('Error getting event code:', error);
       return { success: false, message: error.message || 'Erro de conexão' };
     }
   },

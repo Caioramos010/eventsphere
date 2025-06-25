@@ -94,6 +94,7 @@ const EventDetails = () => {
   const [collaborators, setCollaborators] = useState([]);
   const [confirmationList, setConfirmationList] = useState([]);
   const [isEventActive, setIsEventActive] = useState(false);  const [userConfirmed, setUserConfirmed] = useState(false);
+  const [isConfirmingAttendance, setIsConfirmingAttendance] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
   const [showParticipantModal, setShowParticipantModal] = useState(false);
   const [selectedParticipant, setSelectedParticipant] = useState(null);
@@ -230,24 +231,27 @@ const EventDetails = () => {
         alert('Erro ao cancelar o evento');
       }
     }
-  };
-  const handleConfirmAttendance = async () => {
+  };  const handleConfirmAttendance = async () => {
+    setIsConfirmingAttendance(true);
     try {
       const result = await ParticipantService.confirmAttendance(id);
       if (result.success) {
-        alert('Confirmação de presença enviada!');
+        alert('Sua presença foi confirmada com sucesso!');
         setUserConfirmed(true);
         
+        // Recarregar dados do evento
         const updatedEvent = await EventService.getEventDetails(id);
         if (updatedEvent.success) {
           setEvent(updatedEvent.event);
         }
       } else {
-        alert(result.message || 'Erro ao confirmar presença');
+        alert(result.message || 'Erro ao confirmar sua presença');
       }
     } catch (error) {
       console.error('Error confirming attendance:', error);
-      alert('Erro ao confirmar presença');
+      alert('Erro de conexão ao confirmar presença');
+    } finally {
+      setIsConfirmingAttendance(false);
     }
   };
   const handleGenerateQRCode = () => {
@@ -582,18 +586,19 @@ const EventDetails = () => {
                       </div>
                     )}
                   </div>
-                )}
-              </div>
+                )}              </div>
                 <div className="event-actions">
-                <StandardButton
-                  variant="primary"
-                  size="medium"
-                  icon={IoPeopleOutline}
-                  onClick={handleInviteClick}
-                  className="event-action-btn"
-                >
-                  Convidar Pessoas
-                </StandardButton>
+                {(canEdit || event.access === 'PUBLIC') && event.state !== 'CANCELED' && event.state !== 'FINISHED' && (
+                  <StandardButton
+                    variant="primary"
+                    size="medium"
+                    icon={IoPeopleOutline}
+                    onClick={handleInviteClick}
+                    className="event-action-btn"
+                  >
+                    Convidar Pessoas
+                  </StandardButton>
+                )}
                 {canEdit && (
                   <>                    {event.state === 'CREATED' ? (
                       <>                        
@@ -643,10 +648,19 @@ const EventDetails = () => {
                       </div>
                     )}
                   </>                )}
-                {!canEdit && event.userStatus === 'participant' && event.state === 'ACTIVE' && (
-                  <button className="modern-btn event-action-btn qr-btn" onClick={generateQrCode}>
-                    <IoQrCodeOutline />
-                    <span>Meu QR Code</span>
+                {!canEdit && event.userStatus === 'participant' && event.state !== 'FINISHED' && event.state !== 'CANCELED' && (
+                  <button
+                    className={`modern-btn event-action-btn confirm-btn${userConfirmed ? ' confirmed-disabled' : ''}`}
+                    onClick={handleConfirmAttendance}
+                    disabled={isConfirmingAttendance || userConfirmed}
+                    style={userConfirmed ? { opacity: 0.5, pointerEvents: 'none', cursor: 'default' } : {}}
+                  >
+                    <IoCheckmarkOutline />
+                    <span>
+                      {userConfirmed
+                        ? 'Presença Confirmada'
+                        : (isConfirmingAttendance ? 'Confirmando...' : 'Confirmar Presença')}
+                    </span>
                   </button>
                 )}
                 {canEdit && event.state === 'FINISHED' && (
@@ -654,15 +668,7 @@ const EventDetails = () => {
                     <IoCheckmarkCircleOutline />
                     <span>Relatório de Presença</span>
                   </button>
-                )}
-                
-                {!canEdit && event.userStatus === 'participant' && !userConfirmed && event.state !== 'FINISHED' && event.state !== 'CANCELED' && (
-                  <button className="modern-btn event-action-btn confirm-btn" onClick={handleConfirmAttendance}>
-                    <IoCheckmarkOutline />
-                    <span>Confirmar Presença</span>
-                  </button>
-                )}
-                
+                )}                
                 {event.userStatus === 'visitor' && event.state !== 'FINISHED' && event.state !== 'CANCELED' && (
                   <button className="modern-btn event-action-btn join-btn" onClick={handleJoinEvent}>
                     <IoPeopleOutline />

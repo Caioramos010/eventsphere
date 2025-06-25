@@ -4,6 +4,7 @@ import { IoEyeOutline, IoEyeOffOutline } from 'react-icons/io5';
 import '../styles/auth.css';
 import logo from '../images/logo-login.png';
 import AuthService from '../services/AuthService';
+import { useUser } from '../contexts/UserContext';
 
 const Login = () => {
   const [login, setLogin] = useState('');
@@ -13,6 +14,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { loadUserProfile } = useUser();
 
   
   useEffect(() => {
@@ -36,10 +38,11 @@ const Login = () => {
         username: login,
         password: senha
       };
-      
-      const result = await AuthService.login(credentials);
+        const result = await AuthService.login(credentials);
       
       if (result.success) {
+        // Carregar perfil do usuário automaticamente após login
+        await loadUserProfile();
         
         const inviteToken = searchParams.get('token');
         if (inviteToken) {

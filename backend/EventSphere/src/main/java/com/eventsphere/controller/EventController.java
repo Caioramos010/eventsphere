@@ -202,11 +202,10 @@ public class EventController {
      * 
      * @param eventCode Código do evento
      * @return Dados do evento
-     */
-    @GetMapping("/validate-code")
+     */    @GetMapping("/validate-code")
     public ResponseEntity<ApiResponse<?>> validateEventCode(@RequestParam String eventCode) {
         try {
-            EventDTO eventDTO = eventService.validateEventCode(eventCode);
+            EventDTO eventDTO = eventService.validateEventCodeSimple(eventCode);
             return ResponseEntity.ok(ApiResponse.success("Código válido", eventDTO));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
@@ -265,4 +264,19 @@ public class EventController {
         User user = securityUtils.getAuthenticatedUser();
         return ResponseEntity.ok(ApiResponse.success(eventService.getNextPublicEventsWithUserInfo(user.getId())));
     }
+
+
+    @PostMapping("/{eventId}/ensure-code")
+    public ResponseEntity<ApiResponse<?>> ensureEventCode(@PathVariable Long eventId) {
+        try {
+            String inviteCode = eventService.ensureEventHasInviteCode(eventId);
+            var data = Map.of("inviteCode", inviteCode);
+            return ResponseEntity.ok(ApiResponse.success("Código de convite disponível", data));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(ApiResponse.error("Erro interno do servidor"));
+        }
+    }
+
 }

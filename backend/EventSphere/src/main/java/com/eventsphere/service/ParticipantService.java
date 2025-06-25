@@ -179,27 +179,21 @@ public class ParticipantService {    @Autowired
         return joinPublicEvent(eventId, userId);
     }
 
-    /**
-     * Confirma a participação de um participante
-     */    public void confirmParticipant(Long eventId, Long userId, Long authUserId) {
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new IllegalArgumentException("Evento não encontrado"));
-        
-        // Verificar se o evento permite modificações
-        validateEventForModification(event);
-        
-        // Verificar se o usuário autenticado tem permissão (owner ou colaborador)
+    public void confirmParticipant(Long eventId, Long userId, Long authUserId) {
+    Event event = eventRepository.findById(eventId)
+            .orElseThrow(() -> new IllegalArgumentException("Evento não encontrado"));
+    validateEventForModification(event);
+    if (!userId.equals(authUserId)) {
         authorizeEventManagement(event, authUserId);
-        
-        EventParticipant participant = event.getParticipants().stream()
-                .filter(p -> p.getUser().getId().equals(userId))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Participante não encontrado no evento"));
-        
-        // Atualizar status para confirmado
-        participant.setCurrentStatus(ParticipantStatus.CONFIRMED);
-        participantRepository.save(participant);
     }
+    EventParticipant participant = event.getParticipants().stream()
+            .filter(p -> p.getUser().getId().equals(userId))
+            .findFirst()
+            .orElseThrow(() -> new IllegalArgumentException("Participante não encontrado no evento"));
+    // Atualizar status para confirmado
+    participant.setCurrentStatus(ParticipantStatus.CONFIRMED);
+    participantRepository.save(participant);
+}
 
     /**
      * Promove um participante a colaborador

@@ -51,4 +51,16 @@ public class AuthController {
             return ResponseEntity.status(500).body(ApiResponse.error("Erro interno do servidor. Tente novamente."));
         }
     }
+
+    @GetMapping("/auth/validate")
+    public ResponseEntity<ApiResponse<?>> validateToken(Authentication authentication) {
+        try {
+            Map<String, Object> userData = userService.validateToken(authentication);
+            return ResponseEntity.ok(ApiResponse.success("Token válido", userData));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(401).body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(ApiResponse.error("Erro interno do servidor. Tente novamente."));
+        }
+    }
 }

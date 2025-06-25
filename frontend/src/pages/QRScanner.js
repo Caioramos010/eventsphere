@@ -6,6 +6,7 @@ import { BackButton } from '../components';
 import { IoArrowBack, IoQrCodeOutline, IoCheckmarkCircleOutline, IoCloseCircleOutline, IoFlashOutline, IoFlashOffOutline, IoCameraReverseOutline } from 'react-icons/io5';
 import { BrowserQRCodeReader } from '@zxing/library';
 import API_CONFIG, { buildUrl } from '../config/api';
+import ParticipantService from '../services/ParticipantService';
 import './QRScanner.css';
 
 const QRScanner = () => {
@@ -15,8 +16,7 @@ const QRScanner = () => {
   const streamRef = useRef(null);
   const readerRef = useRef(null);
   const scanIntervalRef = useRef(null);
-  
-  const [isScanning, setIsScanning] = useState(false);
+    const [isScanning, setIsScanning] = useState(false);
   const [hasCamera, setHasCamera] = useState(false);
   const [flashEnabled, setFlashEnabled] = useState(false);
   const [facingMode, setFacingMode] = useState('environment'); 
@@ -27,6 +27,7 @@ const QRScanner = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [availableCameras, setAvailableCameras] = useState([]);
   const [currentCameraIndex, setCurrentCameraIndex] = useState(0);
+  const [isConfirmingMyAttendance, setIsConfirmingMyAttendance] = useState(false);
   useEffect(() => {
     loadEventData();
     loadScannedParticipants();
@@ -600,6 +601,36 @@ const QRScanner = () => {
     navigate(`/event/${id}`);
   };
 
+  // Função para confirmar a própria presença do usuário
+  const confirmMyAttendance = async () => {
+    setIsConfirmingMyAttendance(true);
+    
+    try {
+      const result = await ParticipantService.confirmAttendance(id);
+      
+      if (result.success) {
+        setScanResult({
+          success: true,
+          message: result.message || 'Sua presença foi confirmada com sucesso!'
+        });
+      } else {
+        setScanResult({
+          success: false,
+          message: result.message || 'Erro ao confirmar sua presença'
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao confirmar presença:', error);
+      setScanResult({
+        success: false,
+        message: 'Erro de conexão ao confirmar presença'
+      });
+    } finally {
+      setIsConfirmingMyAttendance(false);
+      setTimeout(() => setScanResult(null), 3000);
+    }
+  };
+
   if (isLoading) {
     return (
       <>
@@ -771,8 +802,7 @@ const QRScanner = () => {
           {}
           <div className="scanned-participants">
             <h3>PARTICIPANTES ESCANEADOS - {scannedParticipants.length}</h3>
-            <div className="participants-list">
-              {scannedParticipants.length === 0 ? (
+            <div className="participants-list">              {scannedParticipants.length === 0 ? (
                 <p className="no-participants">Nenhum participante escaneado ainda</p>
               ) : (
                 scannedParticipants.map(participant => (

@@ -202,24 +202,56 @@ public class UserService {
     }
     public void deleteUser(Long userID) {
         userRepository.deleteById(userID);
-    }
-
-    public void deleteUserWithPasswordCheck(Long userId, String password) {
+    }    public void deleteUserWithPasswordCheck(Long userId, String password) {
         User user = getUser(userId);
         if (user == null || !validatePassword(password, user.getPassword())){
             throw new IllegalArgumentException("Senha inválida");
         }
-        // Block user
-        user.setBlocked(true);
-        userRepository.save(user);
-        // Remove user from all event participations
-        List<EventParticipant> participations = participantRepository.findAll();
-        for (EventParticipant ep : participations) {
-            if (ep.getUser().getId().equals(userId)) {
-                participantRepository.delete(ep);
+        
+        try {
+            // Remove user from all event participations - optimized query
+            List<EventParticipant> userParticipations = participantRepository.findByUserId(userId);
+            if (!userParticipations.isEmpty()) {
+                participantRepository.deleteAll(userParticipations);
+                System.out.println("Removed " + userParticipations.size() + " participations for user " + userId);
             }
+            
+            // Block the user instead of deleting
+            user.setBlocked(true);
+            userRepository.save(user);
+            
+            System.out.println("User " + userId + " has been blocked successfully");
+        } catch (Exception e) {
+            System.err.println("Error blocking user " + userId + ": " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Erro ao bloquear usuário: " + e.getMessage(), e);
         }
     }
+
+    public Map<String, Object> validateToken(Authentication authentication) {
+    if (authentication == null || !authentication.isAuthenticated()) {
+        throw new IllegalArgumentException("Token inválido ou expirado");
+    }
+    
+    String username = authentication.getName();
+    User user = findUserByUsername(username);
+    
+    if (user == null) {
+        throw new IllegalArgumentException("Usuário não encontrado");
+    }
+    
+    if (user.getIsBlocked()) {
+        throw new IllegalArgumentException("Conta bloqueada");
+    }
+    
+    // Retorna informações básicas do usuário
+    Map<String, Object> userData = new HashMap<>();
+    userData.put("username", user.getUsername());
+    userData.put("name", user.getName());
+    userData.put("email", user.getEmail());
+    
+    return userData;
+}
 
     public boolean validatePassword(String rawPassword, String encodedPassword) {
         return passwordEncoder.matches(rawPassword, encodedPassword);

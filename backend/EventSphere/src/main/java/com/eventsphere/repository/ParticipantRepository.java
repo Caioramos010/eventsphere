@@ -30,12 +30,12 @@ public interface ParticipantRepository extends JpaRepository<EventParticipant, L
 
     // Buscar participantes por status atual
     @Query("SELECT p FROM EventParticipant p WHERE p.event.id = :eventId AND p.currentStatus = :status")
-    List<EventParticipant> findByEventIdAndCurrentStatus(@Param("eventId") Long eventId, @Param("status") ParticipantStatus status);
-
-    // Buscar todos os participantes de um evento
+    List<EventParticipant> findByEventIdAndCurrentStatus(@Param("eventId") Long eventId, @Param("status") ParticipantStatus status);    // Buscar todos os participantes de um evento
     @Query("SELECT p FROM EventParticipant p WHERE p.event.id = :eventId")
     List<EventParticipant> findAllByEventIdList(@Param("eventId") Long eventId);
 
-
+    // Buscar todas as participações de um usuário
+    @Query("SELECT p FROM EventParticipant p WHERE p.user.id = :userId")
+    List<EventParticipant> findByUserId(@Param("userId") Long userId);
 
 }

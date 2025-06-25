@@ -1,10 +1,108 @@
-
 import API_CONFIG, { buildUrl } from './config/api';
 
+// Verifica token na inicialização e força limpeza e redirecionamento se inválido
+(function checkTokenOnLoad() {
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('token');
+    // Não fazer nada se estiver na página de login/register
+    const isPublicPage = window.location.pathname === '/login' || 
+                         window.location.pathname === '/register' ||
+                         window.location.pathname === '/';
+
+    if (token && !isPublicPage) {
+      // Verificar token diretamente com o backend
+      console.log('Verificando token na inicialização...');
+      fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.VALIDATE_TOKEN || '/auth/validate'}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => {
+        if (!response.ok) {
+          console.warn('Token inválido detectado. Limpando sessão...');
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          window.location.replace('/login');
+        }
+      })
+      .catch(error => {
+        // Qualquer erro na validação é tratado como token inválido
+        console.error('Erro ao validar token:', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.replace('/login');
+      });
+    }
+  }
+})();
+
+// Função para forçar verificação de token a qualquer momento
+export function forceTokenValidation() {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    if (window.location.pathname !== '/login' && 
+        window.location.pathname !== '/register' && 
+        window.location.pathname !== '/') {
+      window.location.replace('/login');
+    }
+    return Promise.resolve(false);
+  }
+  
+  return fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.VALIDATE_TOKEN || '/api/auth/validate'}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => {
+    if (!response.ok) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      if (window.location.pathname !== '/login' && 
+          window.location.pathname !== '/register' && 
+          window.location.pathname !== '/') {
+        window.location.replace('/login');
+      }
+      return false;
+    }
+    return true;
+  })
+  .catch(error => {
+    console.error('Erro ao validar token:', error);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    
+    if (window.location.pathname !== '/login' && 
+        window.location.pathname !== '/register' && 
+        window.location.pathname !== '/') {
+      window.location.replace('/login');
+    }
+    return false;
+  });
+}
 
 export async function fetchWithAuth(url, options = {}) {
   const token = localStorage.getItem('token');
   
+  // Verificar se o URL não é de login/registro
+  const isAuthenticationEndpoint = url.includes('/login') || url.includes('/register');
+  
+  // Se não for login/registro e tivermos um token, verificar token antes de fazer a requisição
+  if (token && !isAuthenticationEndpoint) {
+    try {
+      const isValid = await forceTokenValidation();
+      if (!isValid) {
+        throw new Error('Token inválido ou expirado');
+      }
+    } catch (error) {
+      // Token inválido, já tratado na função forceTokenValidation
+      return Promise.reject(error);
+    }
+  }
   
   const headers = {
     ...API_CONFIG.DEFAULT_HEADERS,
@@ -12,7 +110,6 @@ export async function fetchWithAuth(url, options = {}) {
     ...(token ? { Authorization: `Bearer ${token}` } : {})
   };
 
-  
   const config = {
     ...options,
     headers,
@@ -20,27 +117,27 @@ export async function fetchWithAuth(url, options = {}) {
   };
 
   try {
-    
     const response = await fetch(url, config);
     
-    
     if (!response.ok) {
-      
       if (response.status === 401) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        
-        if (window.location.pathname !== '/login') {
-          window.location.href = '/login';
+        // Não limpar token nas tentativas de login
+        if (!isAuthenticationEndpoint) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          
+          if (window.location.pathname !== '/login') {
+            window.location.replace('/login');
+            return Promise.reject(new Error('Sessão expirada. Redirecionando...'));
+          }
         }
       }
       
-      
-      let errorMessage = `HTTP error! status: ${response.status}`;      try {
+      let errorMessage = `HTTP error! status: ${response.status}`;
+      try {
         const errorData = await response.clone().json();
         errorMessage = errorData.message || errorData.error || errorMessage;
       } catch (e) {
-        
         switch (response.status) {
           case 400:
             errorMessage = 'Dados inválidos enviados para o servidor';
@@ -87,7 +184,25 @@ export async function fetchWithAuth(url, options = {}) {
   } catch (error) {
     console.error('Request failed:', error);
 
+    // Se for erro relacionado a JWT, tratar como sessão expirada
+    if (error.message && (
+        error.message.includes('JWT') || 
+        error.message.includes('token') || 
+        error.message.includes('Token') ||
+        error.message.includes('signature')
+    )) {
+      if (!isAuthenticationEndpoint) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        
+        if (window.location.pathname !== '/login') {
+          window.location.replace('/login');
+        }
+      }
+      return Promise.reject(new Error('Sessão expirada. Redirecionando...'));
+    }
     
+    // Erros de rede
     if (
       (error.name === 'TypeError' && error.message.includes('Failed to fetch')) ||
       error.message.includes('Erro de conexão') ||
@@ -110,7 +225,6 @@ export async function fetchWithAuth(url, options = {}) {
   }
 }
 
-
 export async function get(endpoint, params = {}) {
   let url;
   
@@ -118,14 +232,12 @@ export async function get(endpoint, params = {}) {
     url = endpoint;
     console.log('GET: URL completa fornecida:', url);
   } else {
-    
     url = buildUrl(endpoint, params);
     console.log('GET: URL construída:', url, 'de endpoint:', endpoint, 'e params:', params);
   }
   
   return fetchWithAuth(url, { method: 'GET' });
 }
-
 
 export async function post(endpoint, data = {}) {
   const url = buildUrl(endpoint);
@@ -138,7 +250,6 @@ export async function post(endpoint, data = {}) {
   });
 }
 
-
 export async function put(endpoint, data = {}) {
   const url = buildUrl(endpoint);
   return fetchWithAuth(url, {
@@ -147,26 +258,61 @@ export async function put(endpoint, data = {}) {
   });
 }
 
-
 export async function del(endpoint) {
   const url = buildUrl(endpoint);
   return fetchWithAuth(url, { method: 'DELETE' });
 }
 
-
 export async function uploadFile(endpoint, formData) {
   const token = localStorage.getItem('token');
   const headers = {
     ...(token ? { Authorization: `Bearer ${token}` } : {})
-    
   };
 
   const url = buildUrl(endpoint);
   
-  
-  return fetch(url, {
-    method: 'POST',
-    headers,
-    body: formData
-  });
+  try {
+    // Verificar token antes do upload
+    if (token) {
+      await forceTokenValidation();
+    }
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: formData
+    });
+    
+    if (response.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      if (window.location.pathname !== '/login') {
+        window.location.replace('/login');
+        return Promise.reject(new Error('Sessão expirada. Redirecionando...'));
+      }
+    }
+    
+    return response;
+  } catch (error) {
+    console.error('Upload failed:', error);
+    
+    // Se for erro de JWT, tratar como sessão expirada
+    if (error.message && (
+        error.message.includes('JWT') || 
+        error.message.includes('token') || 
+        error.message.includes('Token') ||
+        error.message.includes('signature')
+    )) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      if (window.location.pathname !== '/login') {
+        window.location.replace('/login');
+      }
+      return Promise.reject(new Error('Sessão expirada. Redirecionando...'));
+    }
+    
+    throw error;
+  }
 }

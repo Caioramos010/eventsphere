@@ -190,6 +190,26 @@ const UserService = {
       console.error('Erro ao buscar perfil do usuário:', error);
       return { success: false, message: error.message || 'Erro de conexão' };
     }
+  },
+
+  /**
+   * Busca o perfil do usuário atual de forma simples
+   */
+  async getUserProfile() {
+    try {
+      const response = await get(API_CONFIG.ENDPOINTS.USER_PROFILE);
+      const data = await response.json();
+      const userData = data.data || data;
+      
+      if (userData && (data.success === undefined || data.success === true)) {
+        return userData;
+      } else {
+        throw new Error(data.message || 'Erro ao buscar perfil do usuário');
+      }
+    } catch (error) {
+      console.error('Erro ao buscar perfil do usuário:', error);
+      throw error;
+    }
   }
 };
 

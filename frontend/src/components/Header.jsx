@@ -1,19 +1,25 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Header.css';
 import logo from '../images/logo.png';
 import userIcon from '../images/user.png';
 import { Link } from './Link';
 import AuthService from '../services/AuthService';
 import getUserPhotoUrl from '../utils/getUserPhotoUrl';
+import { useUser } from '../contexts/UserContext';
 
-const Header = () => {
-  const currentUser = AuthService.getCurrentUser();  const [dropdownOpen, setDropdownOpen] = useState(false);
+const Header = () => {  const navigate = useNavigate();
+  const { user, clearUser } = useUser();
+  const currentUser = AuthService.getCurrentUser();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
   const dropdownRef = useRef(null);
   const iconRef = useRef(null);
   
   const handleLogout = () => {
     AuthService.logout();
+    clearUser();
+    navigate('/login');
   };
   
   const toggleDropdown = (e) => {
@@ -46,9 +52,9 @@ const Header = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [dropdownOpen]);
-
   // Garante que a foto do usuário tenha o prefixo correto
-  const userPhoto = getUserPhotoUrl(currentUser?.photo) || userIcon;
+  // Usa o contexto do usuário se disponível, senão fallback para currentUser
+  const userPhoto = getUserPhotoUrl(user?.photo || currentUser?.photo) || userIcon;
 
   return (
     <header className="main-header">

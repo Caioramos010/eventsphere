@@ -196,5 +196,26 @@ public class ParticipantController {
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(ApiResponse.error("Erro interno do servidor"));
         }
+    }/**
+     * Permite que um usuário confirme sua própria presença em um evento
+     *
+     * @param request Dados da requisição contendo eventId
+     * @return Resposta de sucesso
+     */
+    @PostMapping("/confirm")
+    public ResponseEntity<ApiResponse<?>> confirmOwnAttendance(@RequestBody Map<String, Object> request) {
+        try {
+            User authUser = securityUtils.getAuthenticatedUser();
+            Long eventId = Long.valueOf(request.get("eventId").toString());
+            
+            participantService.confirmParticipant(eventId, authUser.getId(), authUser.getId());
+            return ResponseEntity.ok(ApiResponse.success("Presença confirmada com sucesso", null));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(ApiResponse.error("Erro interno do servidor"));
+        }
     }
 }
