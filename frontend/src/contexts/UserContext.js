@@ -32,7 +32,7 @@ export const UserProvider = ({ children }) => {
     } catch (err) {
       console.error('Erro ao carregar perfil do usuário:', err);
       setError(err.message);
-      // Se erro de autenticação, limpar dados
+
       if (err.message.includes('Não autorizado')) {
         AuthService.logout();
         setUser(null);
@@ -43,7 +43,7 @@ export const UserProvider = ({ children }) => {
   };
   const updateUser = (userData) => {
     setUser(userData);
-    // Também atualizar o AuthService para manter sincronizado
+
     if (userData) {
       AuthService.updateCurrentUser(userData);
     }
@@ -53,14 +53,14 @@ export const UserProvider = ({ children }) => {
     setError(null);
   };
 
-  // Monitorar mudanças de autenticação
+
   useEffect(() => {
     const handleStorageChange = (e) => {
       if (e.key === 'token' && !e.newValue) {
-        // Token removido - fazer logout
+
         clearUser();
       } else if (e.key === 'token' && e.newValue && !user) {
-        // Token adicionado - carregar perfil
+
         loadUserProfile();
       }
     };
@@ -70,7 +70,7 @@ export const UserProvider = ({ children }) => {
   }, [user]);
 
   useEffect(() => {
-    // Carregar perfil automaticamente se estiver logado
+
     if (AuthService.getCurrentUser()) {
       loadUserProfile();
     }

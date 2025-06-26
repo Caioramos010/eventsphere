@@ -6,7 +6,7 @@ import EventService from '../services/EventService';
 import AuthService from '../services/AuthService';
 import './CreateEvent.css';
 
-// Função auxiliar para obter data no formato YYYY-MM-DD no timezone local
+
 const getTodayDateString = () => {
   const today = new Date();
   const year = today.getFullYear();
@@ -18,7 +18,7 @@ const getTodayDateString = () => {
 export default function CreateEvent() {
   const [form, setForm] = useState({
     name: '',
-    dateFixedStart: getTodayDateString(), // Definir data padrão como hoje
+    dateFixedStart: getTodayDateString(),
     dateFixedEnd: '',
     timeFixedStart: '',
     timeFixedEnd: '',
@@ -58,7 +58,6 @@ export default function CreateEvent() {
       setForm(f => ({ ...f, [name]: value }));
     }
   }
-// ...existing code...
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
@@ -74,25 +73,8 @@ export default function CreateEvent() {
 
       const startDate = form.dateFixedStart;
       const endDate = form.dateFixedEnd || form.dateFixedStart;
-
-      // Corrigido: monta a data/hora no fuso local (sem conversão para UTC)
-      const [startYear, startMonth, startDay] = startDate.split('-').map(Number);
-      const [startHour, startMinute] = form.timeFixedStart.split(':').map(Number);
-      const startDateTime = new Date(startYear, startMonth - 1, startDay, startHour, startMinute);
-
-      const [endYear, endMonth, endDay] = endDate.split('-').map(Number);
-      const [endHour, endMinute] = form.timeFixedEnd.split(':').map(Number);
-      const endDateTime = new Date(endYear, endMonth - 1, endDay, endHour, endMinute);
-
-      console.log('Debug - Datas do evento:', {
-        startDate,
-        endDate,
-        timeFixedStart: form.timeFixedStart,
-        timeFixedEnd: form.timeFixedEnd,
-        startDateTime: startDateTime.toString(),
-        endDateTime: endDateTime.toString(),
-        now: new Date().toString()
-      });
+      const startDateTime = new Date(`${startDate}T${form.timeFixedStart}`);
+      const endDateTime = new Date(`${endDate}T${form.timeFixedEnd}`);
 
       if (startDate === endDate && endDateTime <= startDateTime) {
         setError('O horário de término deve ser posterior ao horário de início para eventos no mesmo dia');
@@ -106,33 +88,24 @@ export default function CreateEvent() {
         return;
       }
 
-      const selectedDate = new Date(startYear, startMonth - 1, startDay, 0, 0, 0, 0);
+      const selectedDate = new Date(form.dateFixedStart + 'T00:00:00');
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-
-      console.log('Debug - Validação de data:', {
-        formDateFixedStart: form.dateFixedStart,
-        selectedDate: selectedDate.toISOString(),
-        selectedDateLocal: selectedDate.toLocaleDateString('pt-BR'),
-        today: today.toISOString(),
-        todayLocal: today.toLocaleDateString('pt-BR'),
-        selectedTime: selectedDate.getTime(),
-        todayTime: today.getTime(),
-        isInPast: selectedDate.getTime() < today.getTime()
-      });
-
+      
       if (selectedDate.getTime() < today.getTime()) {
         setError('A data do evento não pode ser no passado');
         setLoading(false);
         return;
       }
-
+      
       const now = new Date();
       if (
         selectedDate.getTime() === today.getTime() &&
         form.timeFixedStart
       ) {
-        const eventStart = new Date(startYear, startMonth - 1, startDay, Number(startHour), Number(startMinute), 0, 0);
+        const [h, m] = form.timeFixedStart.split(':');
+        const eventStart = new Date(selectedDate);
+        eventStart.setHours(Number(h), Number(m), 0, 0);
         if (eventStart < now) {
           setError('O horário de início deve ser igual ou posterior ao horário atual');
           setLoading(false);
@@ -140,7 +113,7 @@ export default function CreateEvent() {
         }
       }
 
-      const eventData = {
+        const eventData = {
         name: form.name,
         dateFixedStart: form.dateFixedStart,
         dateFixedEnd: form.dateFixedEnd || form.dateFixedStart,
@@ -154,16 +127,14 @@ export default function CreateEvent() {
         photo: null 
       };
 
-      console.log('Debug - Dados sendo enviados para o backend:', eventData);
-
       const result = await EventService.createEvent(eventData);
 
       if (result.success && form.photoFile) {
         try {
           await EventService.uploadEventPhoto(result.event.id, form.photoFile);
-          console.log('Photo uploaded successfully');
         } catch (photoError) {
           console.error('Error uploading photo:', photoError);
+          
         }
       }
 
@@ -182,12 +153,12 @@ export default function CreateEvent() {
       setLoading(false);
     }
   }
-  
     return (
     <>      <Header />
       <div className="page-container">
         <div className="page-main">
-          {/* Page Header */}          <div className="page-header">            <BackButton 
+          <div className="page-header">
+            <BackButton 
               onClick={() => navigate('/main')}
               icon={IoArrowBackOutline}
             />
@@ -203,7 +174,6 @@ export default function CreateEvent() {
           <div className="content-wrapper">
             <form className="modern-form" onSubmit={handleSubmit}>
               
-              {/* Photo Upload Section */}
               <StandardCard variant="glass" padding="large">
                 <label className="upload-area" htmlFor="photo-input">
                   {photoPreview ? (
@@ -223,10 +193,8 @@ export default function CreateEvent() {
                     accept="image/*"
                     onChange={handleChange}
                     className="hidden-input"
-                  />                </label>
-              </StandardCard>
-
-              {/* Basic Information */}
+                  />                </label>              </StandardCard>
+              
               <StandardCard variant="glass" padding="large">
                 <h3 className="card-title">Informações Básicas</h3>
                 
@@ -265,10 +233,8 @@ export default function CreateEvent() {
                     className="modern-textarea"
                     placeholder="Descreva seu evento..."                    maxLength={1000}
                   />
-                </div>
-              </StandardCard>
-
-              {/* Date and Time */}
+                </div>              </StandardCard>
+              
               <StandardCard variant="glass" padding="large">
                 <h3 className="card-title">Data e Horário</h3>
                 
@@ -320,10 +286,8 @@ export default function CreateEvent() {
                       required
                     />
                   </div>
-                </div>
-              </StandardCard>
-
-              {/* Settings */}
+                </div>              </StandardCard>
+              
               <StandardCard variant="glass" padding="large">
                 <h3 className="card-title">Configurações</h3>
                 
@@ -372,11 +336,12 @@ export default function CreateEvent() {
                 </div>
               </StandardCard>
               
-              {/* Status Messages */}
+
               {error && <div className="status-message status-error">{error}</div>}
               {success && <div className="status-message status-success">{success}</div>}
 
-              {/* Submit Button */}              <StandardButton
+              
+              <StandardButton
                 type="submit"
                 variant="primary"
                 size="large"

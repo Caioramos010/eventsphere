@@ -10,7 +10,7 @@ import { useUser } from '../contexts/UserContext';
 import './UserProfile.css';
 
 export default function UserProfile() {
-  const { user: contextUser, updateUser, clearUser } = useUser();
+  const { user: contextUser, updateUser } = useUser();
   const [user, setUser] = useState(null);
   const [form, setForm] = useState({
     name: '',
@@ -29,7 +29,7 @@ export default function UserProfile() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
-  // Usar dados do contexto se disponíveis
+
   useEffect(() => {
     if (contextUser) {
       setUser(contextUser);
@@ -50,7 +50,7 @@ export default function UserProfile() {
       return;
     }
 
-    // Busca sempre os dados mais recentes do usuário (incluindo foto)
+
     async function syncUser() {
       const result = await UserService.fetchCurrentUserProfileAndSync();
       if (result.success && result.user) {
@@ -63,7 +63,7 @@ export default function UserProfile() {
         }));
         setPhotoPreview(getUserPhotoUrl(result.user.photo));
       } else {
-        // fallback para localStorage
+
         const userData = AuthService.getCurrentUser();
         if (userData) {
           setUser(userData);
@@ -81,7 +81,7 @@ export default function UserProfile() {
   }, [navigate]);
 
   useEffect(() => {
-    // Garante que o form.email e form.username estejam sempre sincronizados com user
+
     if (user) {
       setForm((prevForm) => ({
         ...prevForm,
@@ -143,7 +143,7 @@ export default function UserProfile() {
         setSuccess('Foto atualizada com sucesso!');
         const updatedUser = { ...user, photo: result.photoUrl };
         setUser(updatedUser);
-        updateUser(updatedUser); // Atualiza o contexto global (e o AuthService automaticamente)
+        updateUser(updatedUser);
         setPhotoFile(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
       } else {
@@ -176,7 +176,7 @@ export default function UserProfile() {
         setSuccess(result.message || 'Email atualizado com sucesso!');
         const updatedUser = { ...user, email: form.email };
         setUser(updatedUser);
-        updateUser(updatedUser); // Atualiza o contexto global (e o AuthService automaticamente)
+        updateUser(updatedUser);
       } else {
         setError(result.message || 'Erro ao atualizar email');
       }
@@ -202,7 +202,7 @@ export default function UserProfile() {
         setSuccess(result.message || 'Login atualizado com sucesso!');
         const updatedUser = { ...user, username: form.username };
         setUser(updatedUser);
-        updateUser(updatedUser); // Atualiza o contexto global (e o AuthService automaticamente)
+        updateUser(updatedUser);
       } else {
         setError(result.message || 'Erro ao atualizar login');
       }

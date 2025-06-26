@@ -7,11 +7,8 @@ const EventService = {
     try {
       const response = await get(API_CONFIG.ENDPOINTS.PUBLIC_EVENTS);
       const data = await response.json();
-      console.log('Dados de eventos públicos recebidos:', data);
-      
       
       const events = (data.data || data || []).map(event => {
-        
         if (!event.id) {
           console.warn('Evento sem ID encontrado:', event);
         }
@@ -30,11 +27,8 @@ const EventService = {
     try {
       const response = await get(API_CONFIG.ENDPOINTS.MY_EVENTS);
       const data = await response.json();
-      console.log('Dados de meus eventos recebidos:', data);
-      
       
       const events = (data.data || data || []).map(event => {
-        
         if (!event.id) {
           console.warn('Evento sem ID encontrado:', event);
         }
@@ -60,12 +54,7 @@ const EventService = {
         };
       }
       
-      console.log('Fetching event details for ID:', eventId);
-      
-      
       if (eventId.startsWith('temp_')) {
-        console.log('ID temporário detectado. Buscando do cache local...');
-        
         
         try {
           const myEventsCache = localStorage.getItem('myEventsCache');
@@ -82,7 +71,6 @@ const EventService = {
           const event = events.find(e => e.id === eventId);
           
           if (event) {
-            console.log('Evento encontrado no cache:', event);
             return { success: true, event };
           } else {
             console.warn('Evento com ID temporário não encontrado no cache');
@@ -92,10 +80,8 @@ const EventService = {
         }
       }
       
-      
       const endpoint = API_CONFIG.ENDPOINTS.EVENT_GET;
       let url = `${API_CONFIG.BASE_URL}${endpoint}?eventID=${eventId}`;
-      console.log('Request URL:', url);
       
       const response = await fetch(url, {
         method: 'GET',
@@ -106,13 +92,10 @@ const EventService = {
       });
       
       const data = await response.json();
-      console.log('Response data:', data);
-      
       
       if (data.success || response.ok) {
         const eventData = data.data || data.event || data;
         if (!eventData.id && eventId) {
-          console.log('Evento sem ID recebido do servidor. Usando ID da URL:', eventId);
           eventData.id = eventId;
         }
         return { success: true, event: eventData };
@@ -442,11 +425,11 @@ const EventService = {
       console.error('Error validating event code:', error);
       return { success: false, message: error.message || 'Erro de conexão' };
     }
-  },  // Obtém o código do evento (já gerado automaticamente)
-  // O código é retornado junto com a geração do invite
+  },
+
   async generateEventCode(eventId) {
     try {
-      // Primeiro tentar garantir que o evento tenha um código
+
       const ensureUrl = `${API_CONFIG.BASE_URL}/api/event/${eventId}/ensure-code`;
       const ensureResponse = await post(ensureUrl);
       const ensureData = await ensureResponse.json();
@@ -458,7 +441,7 @@ const EventService = {
           message: ensureData.message || 'Código obtido com sucesso' 
         };
       } else {
-        // Fallback para o método original
+
         const response = await post(API_CONFIG.ENDPOINTS.INVITE_GENERATE, { eventId });
         const data = await response.json();
         
@@ -483,7 +466,6 @@ const EventService = {
     try {
       const response = await get(API_CONFIG.ENDPOINTS.NEXT_EVENTS);
       const data = await response.json();
-      console.log('Dados de próximos eventos recebidos:', data);
       const events = (data.data || data || []).map(event => {
         if (!event.id) {
           console.warn('Evento sem ID encontrado:', event);

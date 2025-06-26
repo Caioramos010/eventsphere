@@ -26,7 +26,6 @@ export default function Calendar({ events = [], onMonthChange }) {
   const [selectedDay, setSelectedDay] = useState(null);
   const [dayEvents, setDayEvents] = useState([]);
   const [isMonthClickArea, setIsMonthClickArea] = useState(false);
-  const [lastClickTarget, setLastClickTarget] = useState(null);
 
   const daysInMonth = getDaysInMonth(selected.year, selected.month);
   const firstDay = getFirstDayOfWeek(selected.year, selected.month);
@@ -79,12 +78,10 @@ export default function Calendar({ events = [], onMonthChange }) {
     e.stopPropagation();
     e.preventDefault();
     
-    
     const isCalendarMonthElement = e.target.classList.contains('calendar-month') || 
                                    e.target.closest('.calendar-month');
     
     if (isCalendarMonthElement && isMonthClickArea) {
-      setLastClickTarget(e.target);
       setSelected(s => ({ ...s, open: !s.open }));
     }
   }
@@ -99,7 +96,6 @@ export default function Calendar({ events = [], onMonthChange }) {
   }  function handleCloseExpanded() {
     setSelected(s => ({ ...s, open: false }));
     setIsMonthClickArea(false);
-    setLastClickTarget(null);
   }
   function handleSelectMonth(y, m) {
     setSelected(s => ({ ...s, year: y, month: m, open: false }));

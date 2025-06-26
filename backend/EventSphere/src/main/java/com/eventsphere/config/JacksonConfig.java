@@ -25,11 +25,11 @@ public class JacksonConfig {
         
         JavaTimeModule javaTimeModule = new JavaTimeModule();
         
-        // Configurar formatadores de data e hora
+
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
         
-        // Adicionar serializadores e deserializadores personalizados
+
         javaTimeModule.addSerializer(LocalDate.class, new LocalDateSerializer(dateFormatter));
         javaTimeModule.addDeserializer(LocalDate.class, new LocalDateDeserializer(dateFormatter));
         javaTimeModule.addSerializer(LocalTime.class, new LocalTimeSerializer(timeFormatter));
@@ -37,13 +37,8 @@ public class JacksonConfig {
         
         mapper.registerModule(javaTimeModule);
         
-        // Desabilitar escrita de datas como timestamps
+
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        
-        System.out.println("=== JACKSON CONFIG ===");
-        System.out.println("Timezone padrão: " + java.util.TimeZone.getDefault().getID());
-        System.out.println("Data atual: " + LocalDate.now());
-        System.out.println("Hora atual: " + LocalTime.now());
         
         return mapper;
     }

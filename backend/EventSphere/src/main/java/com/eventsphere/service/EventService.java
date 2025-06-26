@@ -9,6 +9,8 @@ import com.eventsphere.entity.event.ParticipantHistory;
 import com.eventsphere.entity.event.ParticipantStatus;
 import com.eventsphere.entity.event.State;
 import com.eventsphere.entity.user.User;
+import com.eventsphere.mapper.EventMapper;
+import com.eventsphere.mapper.ParticipantMapper;
 import com.eventsphere.repository.EventRepository;
 import com.eventsphere.repository.ParticipantRepository;
 import com.eventsphere.repository.UserRepository;
@@ -18,28 +20,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.time.ZoneId;
-
 import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.*;
-import java.util.Random;
-import java.util.UUID;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.Random;
 import java.util.stream.Collectors;
+import java.util.logging.Logger;
 
 @Service
 public class EventService {
+    
+    private static final Logger logger = Logger.getLogger(EventService.class.getName());
     @Autowired
     private EventRepository eventRepository;
 
@@ -50,16 +43,13 @@ public class EventService {
     private ParticipantRepository participantRepository;
 
     @Autowired
+    private EventMapper eventMapper;
+
+    @Autowired
+    private ParticipantMapper participantMapper;
+
+    @Autowired
     private ImageService imageService;    public Event registerEvent(EventDTO eventDTO) {
-        System.out.println("=== DEBUG CRIAÇÃO DE EVENTO ===");
-        System.out.println("Data recebida no DTO - dateFixedStart: " + eventDTO.getDateFixedStart());
-        System.out.println("Data recebida no DTO - dateFixedEnd: " + eventDTO.getDateFixedEnd());
-        System.out.println("Hora recebida no DTO - timeFixedStart: " + eventDTO.getTimeFixedStart());
-        System.out.println("Hora recebida no DTO - timeFixedEnd: " + eventDTO.getTimeFixedEnd());
-        System.out.println("Timezone atual do sistema: " + java.util.TimeZone.getDefault().getID());
-        System.out.println("Data/hora atual do sistema: " + java.time.LocalDateTime.now());
-        System.out.println("Data/hora atual em SP: " + java.time.LocalDateTime.now(java.time.ZoneId.of("America/Sao_Paulo")));
-        
         eventDTO.setState(State.CREATED);
         User owner = null;
         if (eventDTO.getOwnerId() != null) {
@@ -68,27 +58,10 @@ public class EventService {
         } else {
             throw new IllegalArgumentException("OwnerId é obrigatório no DTO");
         }
-        Event event = new Event(
-                eventDTO.getName(),
-                eventDTO.getDateFixedStart(),
-                eventDTO.getDateFixedEnd(),
-                eventDTO.getTimeFixedStart(),
-                eventDTO.getTimeFixedEnd(),
-                eventDTO.getLocalization(),
-                eventDTO.getDescription(),
-                eventDTO.getMaxParticipants(),
-                eventDTO.getClassification(),
-                eventDTO.getAcess(),
-                eventDTO.getPhoto(),
-                eventDTO.getState(),
-                owner);
-                
-        System.out.println("Evento criado - dateFixedStart: " + event.getDateFixedStart());
-        System.out.println("Evento criado - dateFixedEnd: " + event.getDateFixedEnd());
-        System.out.println("Evento criado - timeFixedStart: " + event.getTimeFixedStart());
-        System.out.println("Evento criado - timeFixedEnd: " + event.getTimeFixedEnd());
         
-        // Salvar evento
+        Event event = eventMapper.toBasicEntity(eventDTO);
+        event.setOwner(owner);
+        
         event = eventRepository.save(event);
           
         if (event.getParticipants() == null) {
@@ -190,27 +163,23 @@ public class EventService {
         Event event = getEvent(eventID);
         eventRepository.delete(event);
         return event;
-    }    @Scheduled(fixedRate = 60000) 
+    }
+    
+    @Scheduled(fixedRate = 60000) 
     public void autoStartEvents() {
         List<Event> events = eventRepository.findAll();
-        // Usar timezone do Brasil para comparação
         LocalDateTime now = LocalDateTime.now(java.time.ZoneId.of("America/Sao_Paulo"));
         
-        System.out.println("=== DEBUG AUTO START EVENTS ===");
-        System.out.println("Data/hora atual em SP: " + now);
-        System.out.println("Total de eventos para verificar: " + events.size());
+        logger.info("Auto-starting events check - Current time: " + now + ", events to check: " + events.size());
         
         for (Event event : events) {
             if (event.getState() == State.CREATED) {
                 LocalDateTime fixedStart = LocalDateTime.of(event.getDateFixedStart(), event.getTimeFixedStart());
                 
-                System.out.println("Evento: " + event.getName());
-                System.out.println("  - Data/hora programada: " + fixedStart);
-                System.out.println("  - Data/hora atual: " + now);
-                System.out.println("  - Deve iniciar? " + (now.isAfter(fixedStart) || now.isEqual(fixedStart)));
+                logger.fine("Event: " + event.getName() + " - Scheduled: " + fixedStart + " - Current: " + now + " - Should start: " + (now.isAfter(fixedStart) || now.isEqual(fixedStart)));
                 
                 if (now.isAfter(fixedStart) || now.isEqual(fixedStart)) {
-                    System.out.println("  - INICIANDO EVENTO AUTOMATICAMENTE!");
+                    logger.info("Auto-starting event: " + event.getName());
                     event.setState(State.ACTIVE);
                     if (event.getDateStart() == null) {
                         event.setDateStart(now.toLocalDate());
@@ -220,10 +189,11 @@ public class EventService {
                 }
             }
         }
-    }@Scheduled(fixedRate = 60000) 
+    }
+    
+    @Scheduled(fixedRate = 60000) 
     public void autoFinishEvents() {
         List<Event> events = eventRepository.findAll();
-        // Usar timezone do Brasil para comparação
         LocalDateTime now = LocalDateTime.now(java.time.ZoneId.of("America/Sao_Paulo"));
         
         for (Event event : events) {
@@ -301,19 +271,11 @@ public class EventService {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
     }
 
-    /**
-     * Gera ou obtém o link de convite para um evento
-     * 
-     * @param eventId ID do evento
-     * @param userId ID do usuário (deve ser dono ou colaborador)
-     * @return Token de convite
-     */    public String generateInviteLink(Long eventId, Long userId) {
+    public String generateInviteLink(Long eventId, Long userId) {
         Event event = getEvent(eventId);
         
-        // Autorizar criação de convites (donos, colaboradores, ou participantes de eventos públicos)
         authorizeInviteCreation(eventId, userId);
         
-        // Se já existe um token de convite válido, retornar ele
         if (event.getInviteToken() != null && !event.getInviteToken().isEmpty()) {
             return event.getInviteToken();
         }
@@ -330,10 +292,6 @@ public class EventService {
         return inviteToken;
     }
     
-    /**
-     * Gera um código de convite seguro de 8 caracteres usando EventCodeGenerator
-     * Garante unicidade verificando códigos existentes no banco
-     */
     private String generateSecureInviteCode() {
         
         Set<String> existingCodes = eventRepository.findAll()
@@ -344,13 +302,7 @@ public class EventService {
         
         return EventCodeGenerator.generateEventCode(existingCodes);
     }
-    
-    /**
-     * Valida um token de convite e retorna o evento
-     * 
-     * @param inviteToken Token de convite
-     * @return EventDTO do evento
-     */
+
     public EventDTO validateInviteToken(String inviteToken) {
         Event event = eventRepository.findByInviteToken(inviteToken)
                 .orElseThrow(() -> new IllegalArgumentException("Token de convite inválido ou expirado"));
@@ -360,7 +312,7 @@ public class EventService {
             throw new IllegalArgumentException("Este evento foi cancelado");
         }
         
-        return convertToDTO(event);
+        return eventMapper.toDTO(event);
     }
 
     public Event validateInviteTokenAndGetEvent(String inviteToken) {
@@ -405,12 +357,8 @@ public class EventService {
 
     public User getAuthenticatedUser(String username) {
         return userRepository.findByUsername(username);
-    }    /**
-     * Obter eventos do usuário (Método mantido para compatibilidade, usar getMyEventsWithUserInfo em vez disso)
-     * @param userId ID do usuário
-     * @return Lista de DTOs dos eventos
-     * @deprecated Use {@link #getMyEventsWithUserInfo(Long)} em vez disso
-     */
+    }   
+
     @Deprecated
     public List<EventDTO> getMyEvents(Long userId) {
         List<Event> ownedEvents = eventRepository.findByOwnerId(userId);
@@ -421,250 +369,54 @@ public class EventService {
         allEvents.addAll(ownedEvents);
         allEvents.addAll(participantEvents);
         
-        return allEvents.stream().map(this::convertToDTO).toList();
+        return eventMapper.toDTOList(new ArrayList<>(allEvents));
     }
 
-    /**
-     * Obter eventos públicos (Método mantido para compatibilidade, usar getPublicEventsWithUserInfo em vez disso)
-     * @return Lista de DTOs dos eventos públicos
-     * @deprecated Use {@link #getPublicEventsWithUserInfo(Long)} em vez disso
-     */
     @Deprecated
     public List<EventDTO> getPublicEvents() {
         List<Event> events = eventRepository.findAllpublicEvents();
-        return events.stream().map(this::convertToDTO).toList();
-    }    /**
-     * Obter detalhes do evento incluindo a relação do usuário atual com o evento
-     * @param eventID ID do evento
-     * @param userId ID do usuário atual
-     * @return DTO do evento com informações de status do usuário
-     */
+        return eventMapper.toDTOList(events);
+    }   
+
     public EventDTO getEventWithUserInfo(Long eventID, Long userId) {
         Event event = getEvent(eventID);
-        EventDTO eventDTO = convertToDTO(event);
-        
-        
-        boolean isOwner = event.getOwner().getId().equals(userId);
-        boolean isCollaborator = false;
-        boolean isParticipant = false;
-        boolean isConfirmed = false;
-        
-        
-        if (isOwner) {
-            eventDTO.setUserStatus("owner");
-            eventDTO.setUserConfirmed(true); 
-            return eventDTO;
-        }
-        
-        
-        if (event.getCollaborators() != null) {
-            isCollaborator = event.getCollaborators().stream()
-                .anyMatch(u -> u.getId().equals(userId));
-        }
-        
-        
-        if (event.getParticipants() != null) {
-            for (EventParticipant participant : event.getParticipants()) {
-                if (participant.getUser().getId().equals(userId)) {
-                    isParticipant = true;
-                    isCollaborator = participant.isCollaborator() || isCollaborator; 
-                    isConfirmed = participant.getCurrentStatus() == ParticipantStatus.CONFIRMED;
-                    break;
-                }
-            }
-        }
-        
-        
-        if (isCollaborator) {
-            eventDTO.setUserStatus("collaborator");
-        } else if (isParticipant) {
-            eventDTO.setUserStatus("participant");
-        } else {
-            eventDTO.setUserStatus("visitor");
-        }
-        
-        eventDTO.setUserConfirmed(isConfirmed);
-        
-        return eventDTO;
+        return eventMapper.toDTOWithUserContext(event, userId);
     }
-    public EventDTO convertToDTO(Event event) {
-        EventDTO dto = new EventDTO();
-        dto.setId(event.getId());
-        dto.setName(event.getName());
-        dto.setDateFixedStart(event.getDateFixedStart());
-        dto.setDateStart(event.getDateStart());
-        dto.setDateFixedEnd(event.getDateFixedEnd());
-        dto.setDateEnd(event.getDateEnd());
-        dto.setTimeFixedStart(event.getTimeFixedStart());
-        dto.setTimeStart(event.getTimeStart());
-        dto.setTimeFixedEnd(event.getTimeFixedEnd());
-        dto.setTimeEnd(event.getTimeEnd());
-        dto.setLocalization(event.getLocalization());
-        dto.setDescription(event.getDescription());
-        dto.setMaxParticipants(event.getMaxParticipants());
-        dto.setClassification(event.getClassification());
-        dto.setAcess(event.getAcess());
-        dto.setPhoto(event.getPhoto());
-        dto.setState(event.getState());
-        dto.setOwnerId(event.getOwner().getId());        
-        List<Long> collaboratorIds = new ArrayList<>();
-        List<Long> participantIds = new ArrayList<>();
-        List<ParticipantDTO> participants = new ArrayList<>();        // Processar participantes com verificações de segurança
-        if (event.getParticipants() != null) {
-            for (EventParticipant participant : event.getParticipants()) {
-                try {
-                    ParticipantDTO participantDTO = new ParticipantDTO();
-                    participantDTO.setId(participant.getId());
-                    
-                    // Verificar se o usuário não é nulo
-                    if (participant.getUser() != null) {
-                        participantDTO.setUserId(participant.getUser().getId());
-                        participantDTO.setUserName(participant.getUser().getName());
-                        participantDTO.setUserUsername(participant.getUser().getUsername());
-                        participantDTO.setUserEmail(participant.getUser().getEmail());
-                        participantDTO.setUserPhoto(participant.getUser().getPhoto());
-                        participantIds.add(participant.getUser().getId());
-                        
-                        if (participant.isCollaborator()) {
-                            collaboratorIds.add(participant.getUser().getId());
-                        }
-                    }
-                    
-                    participantDTO.setIsCollaborator(participant.isCollaborator());
-                    participantDTO.setStatus(participant.getCurrentStatus() != null ? 
-                        participant.getCurrentStatus().toString() : "PENDING");
-                    participantDTO.setConfirmed(participant.getCurrentStatus() == ParticipantStatus.CONFIRMED);
-                    
-                    participants.add(participantDTO);
-                } catch (Exception e) {
-                    // Log do erro e continuar com outros participantes
-                    System.err.println("Erro ao processar participante: " + e.getMessage());
-                }
-            }
-        }
-        
-        dto.setCollaboratorIds(collaboratorIds);
-        dto.setParticipantIds(participantIds);
-        dto.setParticipants(participants);
-        
-        return dto;
-    }    /**
-     * Obter todos os eventos relacionados ao usuário com informações de status
-     * Inclui eventos onde o usuário é dono ou participante, excluindo eventos cancelados
-     * 
-     * @param userId ID do usuário
-     * @return Lista de DTOs dos eventos com informações de status do usuário
-     */    public List<EventDTO> getMyEventsWithUserInfo(Long userId) {
-        
+
+    public List<EventDTO> getMyEventsWithUserInfo(Long userId) {
         List<Event> ownedEvents = eventRepository.findByOwnerId(userId);
-        
         List<Event> participantEvents = eventRepository.findEventsByParticipantUserId(userId);
-        
         Set<Event> allEvents = new HashSet<>();
         allEvents.addAll(ownedEvents);
         allEvents.addAll(participantEvents);
         
-        List<EventDTO> result = new ArrayList<>();
-        for (Event event : allEvents) {
-            result.add(getEventWithUserInfo(event.getId(), userId));
-        }
-        return result;
+        return eventMapper.toDTOListWithUserContext(new ArrayList<>(allEvents), userId);
     }
     
-    /**
-     * Obter todos os eventos públicos com informações de status do usuário
-     * Inclui informações sobre a relação do usuário com cada evento
-     * 
-     * @param userId ID do usuário atual
-     * @return Lista de DTOs dos eventos com informações de status do usuário
-     */    public List<EventDTO> getPublicEventsWithUserInfo(Long userId) {
-        
+    public List<EventDTO> getPublicEventsWithUserInfo(Long userId) {
         List<Event> events = eventRepository.findByAcess(Acess.PUBLIC);
-        
         if (events.isEmpty()) {
             return new ArrayList<>();
         }
         
-        
-        List<EventDTO> result = new ArrayList<>();
-        for (Event event : events) {
-            
-            result.add(getEventWithUserInfo(event.getId(), userId));
-        }
-        
-        return result;
-    }/**
-     * Atualiza a foto de um evento com Base64
-     * 
-     * @param eventId ID do evento
-     * @param base64Image Imagem em formato Base64
-     * @return Evento atualizado
-     */
+        return eventMapper.toDTOListWithUserContext(events, userId);
+    }
+
     public Event updateEventPhoto(Long eventId, String base64Image) {
         Event event = getEvent(eventId);
         event.setPhoto(base64Image);
         return eventRepository.save(event);
     }
     
-    /**
-     * Obter eventos onde o usuário é participante
-     */
     public List<EventDTO> getParticipatingEventsForUser(Long userId) {
         List<Event> events = eventRepository.findEventsByParticipantUserId(userId);
-        
-        return events.stream()
-                .map(event -> {
-                    EventDTO dto = convertToDTO(event);
-                    String userStatus = determineUserStatus(event, userId);
-                    dto.setUserStatus(userStatus);
-                    boolean userConfirmed = event.getParticipants() != null && 
-                            event.getParticipants().stream()
-                                    .anyMatch(p -> p.getUser().getId().equals(userId) && 
-                                               p.getCurrentStatus() == ParticipantStatus.CONFIRMED);
-                    dto.setUserConfirmed(userConfirmed);
-                    return dto;
-                })
-                .collect(Collectors.toList());
+        return eventMapper.toDTOListWithUserContext(events, userId);
     }
 
-    private String determineUserStatus(Event event, Long userId) {
-        
-        if (event.getOwner().getId().equals(userId)) {
-            return "owner";
-        }
-        
-        if (event.getCollaborators() != null) {
-            for (User collaborator : event.getCollaborators()) {
-                if (collaborator.getId().equals(userId)) {
-                    return "collaborator";
-                }
-            }
-        }
-        
-        if (event.getParticipants() != null) {
-            for (EventParticipant participant : event.getParticipants()) {
-                if (participant.getUser().getId().equals(userId)) {
-                    return "participant";
-                }
-            }
-        }
-        
-        return "visitor";
-    }
-
-    /**
-     * Upload de imagem para evento
-     */
     public Map<String, Object> uploadEventImage(Long eventId, org.springframework.web.multipart.MultipartFile file, Long userId) {
-        
         authorizeEditEvent(eventId, userId);
-        
-        
         String base64Image = imageService.convertToBase64(file);
-        
-        
         Event updatedEvent = updateEventPhoto(eventId, base64Image);
-        
         Map<String, Object> response = new HashMap<>();
         response.put("imageBase64", base64Image);
         response.put("eventId", eventId);
@@ -673,119 +425,72 @@ public class EventService {
         return response;
     }
     
-    /**
-     * Valida um código de evento e retorna o evento
-     * 
-     * @param eventCode Código do evento (8 caracteres)
-     * @return EventDTO do evento
-     */    public EventDTO validateEventCode(String eventCode) {
+
+    public EventDTO validateEventCode(String eventCode) {
         try {
-            // Validar formato do código
             if (!EventCodeGenerator.isValidCodeFormat(eventCode)) {
                 throw new IllegalArgumentException("Código de evento inválido. Deve conter 8 caracteres (letras e números).");
             }
-            
             Event event = eventRepository.findByInviteCode(eventCode);
             if (event == null) {
                 throw new EntityNotFoundException("Evento não encontrado com o código fornecido.");
             }
-            
-            // Verificar estado do evento
             if (event.getState() == State.CANCELED) {
                 throw new IllegalStateException("Este evento foi cancelado.");
             }
-            
             if (event.getState() == State.FINISHED) {
                 throw new IllegalStateException("Este evento já foi finalizado.");
             }
-            
-            return convertToDTO(event);
+            return eventMapper.toDTO(event);
         } catch (Exception e) {
-            System.err.println("Erro ao validar código do evento: " + e.getMessage());
-            e.printStackTrace();
+            logger.severe("Erro ao validar código do evento: " + e.getMessage());
             throw e;
         }
     }
     
-    /**
-     * Valida um código de evento e retorna a entidade Event
-     * 
-     * @param eventCode Código do evento (8 caracteres)
-     * @return Event entity
-     */
     public Event validateEventCodeAndGetEvent(String eventCode) {
-        
         if (!EventCodeGenerator.isValidCodeFormat(eventCode)) {
             throw new IllegalArgumentException("Código de evento inválido. Deve conter 8 caracteres (letras e números).");
         }
-        
         Event event = eventRepository.findByInviteCode(eventCode);
-        
         if (event == null) {
             throw new IllegalArgumentException("Evento não encontrado com o código fornecido.");
         }
-        
-        
         if (event.getState() == State.CANCELED) {
             throw new IllegalStateException("Este evento foi cancelado.");
         }
-        
         if (event.getState() == State.FINISHED) {
             throw new IllegalStateException("Este evento já foi finalizado.");
         }
-        
         return event;
     }
     
-    /**
-     * Retorna eventos que não estão finalizados nem cancelados (próximos eventos)
-     */
     public List<EventDTO> getNextEventsWithUserInfo(Long userId) {
         List<State> excludedStates = Arrays.asList(State.FINISHED, State.CANCELED);
         List<Event> ownedEvents = eventRepository.findByOwnerIdAndStateNotIn(userId, excludedStates);
         List<Event> participantEvents = eventRepository.findByParticipantsUserIdAndStateNot(userId, State.FINISHED);
-        // Remove eventos cancelados manualmente (caso algum participante esteja em evento cancelado)
         participantEvents = participantEvents.stream()
             .filter(e -> !excludedStates.contains(e.getState()))
             .collect(Collectors.toList());
         Set<Event> allEvents = new HashSet<>();
         allEvents.addAll(ownedEvents);
         allEvents.addAll(participantEvents);
-        List<EventDTO> result = new ArrayList<>();
-        for (Event event : allEvents) {
-            result.add(getEventWithUserInfo(event.getId(), userId));
-        }
-        return result;
+        return eventMapper.toDTOListWithUserContext(new ArrayList<>(allEvents), userId);
     }
     
-    /**
-     * Retorna próximos eventos públicos (não finalizados nem cancelados)
-     */
     public List<EventDTO> getNextPublicEventsWithUserInfo(Long userId) {
         List<State> excludedStates = Arrays.asList(State.FINISHED, State.CANCELED);
-        List<Event> publicEvents = eventRepository.findByAcessAndStateNotIn(com.eventsphere.entity.event.Acess.PUBLIC, excludedStates);
-        List<EventDTO> result = new ArrayList<>();
-        for (Event event : publicEvents) {
-            result.add(getEventWithUserInfo(event.getId(), userId));
-        }
-        return result;
+        List<Event> publicEvents = eventRepository.findByAcessAndStateNotIn(com.eventsphere.entity.event.Acess.PUBLIC, excludedStates);  
+        return eventMapper.toDTOListWithUserContext(publicEvents, userId);
     }
     
-    /**
-     * Autoriza a criação de convites para um evento
-     * Permite: donos, colaboradores e participantes de eventos públicos
-     */
     public void authorizeInviteCreation(Long eventID, Long userId) {
         Event event = eventRepository.findById(eventID)
                 .orElseThrow(() -> new IllegalArgumentException("Evento não encontrado!"));
-        
-        // Dono sempre pode criar convites
         boolean isOwner = event.getOwner().getId().equals(userId);
         if (isOwner) {
             return; 
         }
-        
-        // Colaborador sempre pode criar convites
         boolean isCollaborator = false;
         if (event.getCollaborators() != null) {
             isCollaborator = event.getCollaborators().stream().anyMatch(u -> u.getId().equals(userId));
@@ -794,7 +499,7 @@ public class EventService {
             return;
         }
         
-        // Para eventos públicos, qualquer participante pode criar convites
+
         if ("PUBLIC".equals(event.getAcess())) {
             boolean isParticipant = false;
             if (event.getParticipants() != null) {
@@ -804,98 +509,48 @@ public class EventService {
                 return;
             }
         }
-        
         throw new SecurityException("Apenas donos, colaboradores ou participantes de eventos públicos podem criar convites.");
     }
     
-    /**
-     * Versão simplificada de validação que não carrega participantes
-     * Para uso apenas em validação de código
-     */    public EventDTO validateEventCodeSimple(String eventCode) {
+    public EventDTO validateEventCodeSimple(String eventCode) {
         try {
-            System.out.println("Validando código: " + eventCode);
-            
-            // Validar formato do código
+
             if (!EventCodeGenerator.isValidCodeFormat(eventCode)) {
-                System.out.println("Formato de código inválido: " + eventCode);
                 throw new IllegalArgumentException("Código de evento inválido. Deve conter 8 caracteres (letras e números).");
             }
             
-            System.out.println("Formato válido, buscando no banco...");
             Event event = eventRepository.findByInviteCode(eventCode);
             
             if (event == null) {
-                System.out.println("Evento não encontrado para código: " + eventCode);
-                // Listar alguns códigos existentes para debug
-                List<Event> allEvents = eventRepository.findAll();
-                System.out.println("Códigos existentes no banco:");
-                for (Event e : allEvents) {
-                    System.out.println("- Evento ID " + e.getId() + ": " + e.getInviteCode());
-                }
                 throw new EntityNotFoundException("Evento não encontrado com o código fornecido.");
             }
-            
-            System.out.println("Evento encontrado: " + event.getName() + " (ID: " + event.getId() + ")");
-            
-            // Verificar estado do evento
             if (event.getState() == State.CANCELED) {
                 throw new IllegalStateException("Este evento foi cancelado.");
             }
-            
             if (event.getState() == State.FINISHED) {
                 throw new IllegalStateException("Este evento já foi finalizado.");
             }
-            
-            // Criar DTO simplificado sem participantes
-            EventDTO dto = new EventDTO();
-            dto.setId(event.getId());
-            dto.setName(event.getName());
-            dto.setDateFixedStart(event.getDateFixedStart());
-            dto.setDateStart(event.getDateStart());
-            dto.setDateFixedEnd(event.getDateFixedEnd());
-            dto.setDateEnd(event.getDateEnd());
-            dto.setTimeFixedStart(event.getTimeFixedStart());
-            dto.setTimeStart(event.getTimeStart());
-            dto.setTimeFixedEnd(event.getTimeFixedEnd());
-            dto.setTimeEnd(event.getTimeEnd());
-            dto.setLocalization(event.getLocalization());
-            dto.setDescription(event.getDescription());
-            dto.setMaxParticipants(event.getMaxParticipants());
-            dto.setClassification(event.getClassification());
-            dto.setAcess(event.getAcess());
-            dto.setPhoto(event.getPhoto());
-            dto.setState(event.getState());
-            if (event.getOwner() != null) {
-                dto.setOwnerId(event.getOwner().getId());
+            EventDTO dto = eventMapper.toDTO(event);
+            if (dto.getParticipants() == null) {
+                dto.setCollaboratorIds(new ArrayList<>());
+                dto.setParticipantIds(new ArrayList<>());
+                dto.setParticipants(new ArrayList<>());
             }
-            
-            // Não carregar participantes para evitar problemas de lazy loading
-            dto.setCollaboratorIds(new ArrayList<>());
-            dto.setParticipantIds(new ArrayList<>());
-            dto.setParticipants(new ArrayList<>());
-            
             return dto;
         } catch (Exception e) {
-            System.err.println("Erro ao validar código do evento: " + e.getMessage());
-            e.printStackTrace();
+            logger.severe("Erro ao validar código do evento: " + e.getMessage());
             throw e;
         }
     }
     
-    /**
-     * Garante que um evento tenha um código de convite gerado
-     * Usado para eventos que podem ter sido criados sem código
-     */
     public String ensureEventHasInviteCode(Long eventId) {
         Event event = getEvent(eventId);
-        
         if (event.getInviteCode() == null || event.getInviteCode().isEmpty()) {
             String inviteCode = generateSecureInviteCode();
             event.setInviteCode(inviteCode);
             eventRepository.save(event);
-            System.out.println("Código gerado para evento " + eventId + ": " + inviteCode);
+            logger.info("Generated invite code for event " + eventId + ": " + inviteCode);
         }
-        
         return event.getInviteCode();
     }
 }

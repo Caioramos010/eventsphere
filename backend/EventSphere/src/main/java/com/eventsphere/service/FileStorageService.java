@@ -15,9 +15,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
-/**
- * Serviço responsável pelo armazenamento e gerenciamento de arquivos no sistema
- */
+
 @Service
 public class FileStorageService {
     private Path fileStorageLocation;
@@ -25,11 +23,6 @@ public class FileStorageService {
     private EventRepository eventRepository;
     private EventService eventService;
 
-    /**
-     * Inicializa o serviço de armazenamento de arquivos
-     * 
-     * @param uploadDir Diretório de upload configurado na aplicação
-     */
     public FileStorageService(@Value("${file.upload-dir:uploads}") String uploadDir, UserRepository userRepository, EventRepository eventRepository, EventService eventService) {
         this.fileStorageLocation = Paths.get(uploadDir).toAbsolutePath().normalize();
         this.userRepository = userRepository;
@@ -42,13 +35,6 @@ public class FileStorageService {
         }
     }
 
-    /**
-     * Armazena um arquivo carregado em uma localização acessível ao aplicativo
-     * 
-     * @param file O arquivo MultipartFile a ser armazenado
-     * @return Nome do arquivo gerado
-     * @throws RuntimeException Se ocorrer um erro ao armazenar o arquivo
-     */
     public String storeFile(MultipartFile file) {
         String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
         try {
@@ -60,22 +46,10 @@ public class FileStorageService {
         }
     }
 
-    /**
-     * Verifica se um arquivo existe
-     * 
-     * @param fileName Nome do arquivo a verificar
-     * @return true se o arquivo existir, false caso contrário
-     */
     public boolean fileExists(String fileName) {
         return Files.exists(this.fileStorageLocation.resolve(fileName));
     }
 
-    /**
-     * Exclui um arquivo do sistema de arquivos
-     * 
-     * @param fileName Nome do arquivo a ser excluído
-     * @throws RuntimeException Se ocorrer um erro ao excluir o arquivo
-     */
     public void deleteFile(String fileName) {
         try {
             Files.deleteIfExists(this.fileStorageLocation.resolve(fileName));
@@ -84,15 +58,6 @@ public class FileStorageService {
         }
     }
 
-    /**
-     * Armazena uma foto de perfil de usuário, lidando com validações e 
-     * remoção da foto antiga, se necessário
-     * 
-     * @param file Arquivo de imagem
-     * @param user Usuário para o qual a foto está sendo armazenada
-     * @return Nome do arquivo armazenado
-     * @throws RuntimeException Se houver problemas com o arquivo
-     */
     public String storeUserPhoto(MultipartFile file, User user) {
         String fileName = storeFile(file);
         user.setPhoto(fileName);
@@ -100,16 +65,6 @@ public class FileStorageService {
         return fileName;
     }
 
-    /**
-     * Armazena uma imagem de evento, realizando validações e verificações de permissão
-     * 
-     * @param file Arquivo de imagem
-     * @param eventId ID do evento
-     * @param userId ID do usuário que está enviando a imagem
-     * @return Nome do arquivo armazenado
-     * @throws RuntimeException Se houver problemas com o arquivo
-     * @throws SecurityException Se o usuário não tiver permissão para modificar o evento
-     */
     public String storeEventImage(MultipartFile file, Long eventId, Long userId) {
         Event event = eventRepository.findById(eventId).orElseThrow(() -> new IllegalArgumentException("Evento não encontrado!"));
         eventService.checkPermission(eventId, userId);
@@ -119,13 +74,6 @@ public class FileStorageService {
         return fileName;
     }
 
-    /**
-     * Carrega um arquivo como um recurso, permitindo o download via controller
-     * 
-     * @param fileName Nome do arquivo a ser carregado
-     * @return O recurso do arquivo
-     * @throws RuntimeException Se o arquivo não for encontrado
-     */
     public org.springframework.core.io.Resource loadFileAsResource(String fileName) {
         try {
             java.nio.file.Path filePath = this.fileStorageLocation.resolve(fileName).normalize();

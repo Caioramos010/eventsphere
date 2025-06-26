@@ -79,4 +79,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.error("Erro no processamento do upload: " + ex.getMessage()));
     }
+
+    @ExceptionHandler(com.eventsphere.exception.AuthenticationException.class)
+    @ResponseBody
+    public ResponseEntity<ApiResponse<?>> handleAuthenticationException(com.eventsphere.exception.AuthenticationException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error(ex.getMessage()));
+    }
 }

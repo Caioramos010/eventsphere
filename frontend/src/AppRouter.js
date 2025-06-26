@@ -19,13 +19,13 @@ import { Forbidden, ServerOff, NotFound } from './pages/ErrorPages';
 
 function AppRouter() {
   return (
-    <Router>      
-      <Routes>        
+    <Router>
+      <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         
-        {}        <Route path='/main' element={
+        <Route path='/main' element={
           <ProtectedRoute>
             <Main />
           </ProtectedRoute>
@@ -34,20 +34,22 @@ function AppRouter() {
           <ProtectedRoute>
             <AllEvents />
           </ProtectedRoute>
-        } /><Route path='/create-event' element={
+        } />
+        <Route path='/create-event' element={
           <ProtectedRoute>
             <CreateEvent />
           </ProtectedRoute>
-        } />        <Route path='/event/enter' element={
-          <ProtectedRoute>
-            <JoinEvent />
-          </ProtectedRoute>
-        } />        <Route path='/join-event/:token' element={
+        } />
+        <Route path='/event/enter' element={
           <ProtectedRoute>
             <JoinEvent />
           </ProtectedRoute>
         } />
-        {}
+        <Route path='/join-event/:token' element={
+          <ProtectedRoute>
+            <JoinEvent />
+          </ProtectedRoute>
+        } />
         <Route path='/invite/:token' element={<InviteRedirect />} />
         <Route path='/profile' element={
           <ProtectedRoute>
@@ -63,16 +65,17 @@ function AppRouter() {
           <ProtectedRoute>
             <EventInvite />
           </ProtectedRoute>
-        } />        <Route path='/event/:id/qr-scanner' element={
+        } />
+        <Route path='/event/:id/qr-scanner' element={
           <ProtectedRoute>
             <QRScanner />
           </ProtectedRoute>
-        } />        <Route path='/edit-event/:id' element={
+        } />
+        <Route path='/edit-event/:id' element={
           <ProtectedRoute>
             <EditEvent />
           </ProtectedRoute>
         } />
-        {}
         <Route path='/camera-debug' element={<CameraDebugger />} />
         <Route path="/forbidden" element={<Forbidden />} />
         <Route path="/server-off" element={<ServerOff />} />

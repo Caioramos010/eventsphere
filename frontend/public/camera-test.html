@@ -154,7 +154,7 @@
     </div>
 
     <script>
-        // Mostrar informações do protocolo
+
         document.getElementById('protocol').textContent = window.location.protocol;
         document.getElementById('hostname').textContent = window.location.hostname;
         document.getElementById('useragent').textContent = navigator.userAgent;
@@ -178,14 +178,14 @@
             addDebugInfo('Iniciando teste de câmera...');
             
             try {
-                // Verificar se getUserMedia está disponível
+
                 if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                     throw new Error('getUserMedia não está disponível neste navegador');
                 }
                 
                 addDebugInfo('getUserMedia está disponível');
                 
-                // Verificar protocolo
+
                 const isSecure = window.location.protocol === 'https:' || 
                                window.location.hostname === 'localhost' || 
                                window.location.hostname === '127.0.0.1';
@@ -195,7 +195,7 @@
                     addDebugInfo('Protocolo não é HTTPS - pode causar problemas em mobile');
                 }
                 
-                // Tentar acessar câmera traseira primeiro
+
                 addDebugInfo('Tentando acessar câmera traseira...');
                 const constraints = {
                     video: {
@@ -208,18 +208,18 @@
                 currentStream = await navigator.mediaDevices.getUserMedia(constraints);
                 addDebugInfo('Câmera acessada com sucesso!');
                 
-                // Mostrar vídeo
+
                 const video = document.getElementById('video');
                 video.srcObject = currentStream;
                 video.style.display = 'block';
                 
                 updateStatus('✅ Câmera funcionando perfeitamente!', 'success');
                 
-                // Habilitar outros botões
+
                 document.getElementById('listCameras').disabled = false;
                 document.getElementById('testConstraints').disabled = false;
                 
-                // Mostrar informações do stream
+
                 const tracks = currentStream.getVideoTracks();
                 if (tracks.length > 0) {
                     const settings = tracks[0].getSettings();
@@ -303,14 +303,14 @@
             constraintsDiv.innerHTML += '</div>';
         }
         
-        // Limpeza ao sair da página
+
         window.addEventListener('beforeunload', () => {
             if (currentStream) {
                 currentStream.getTracks().forEach(track => track.stop());
             }
         });
         
-        // Verificação inicial
+
         window.addEventListener('load', () => {
             addDebugInfo('Página carregada');
             

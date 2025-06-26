@@ -52,8 +52,8 @@ const Header = () => {  const navigate = useNavigate();
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [dropdownOpen]);
-  // Garante que a foto do usuário tenha o prefixo correto
-  // Usa o contexto do usuário se disponível, senão fallback para currentUser
+
+
   const userPhoto = getUserPhotoUrl(user?.photo || currentUser?.photo) || userIcon;
 
   return (

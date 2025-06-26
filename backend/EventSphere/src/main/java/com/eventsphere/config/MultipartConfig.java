@@ -9,35 +9,20 @@ import org.springframework.web.multipart.support.StandardServletMultipartResolve
 
 import jakarta.servlet.MultipartConfigElement;
 
-/**
- * Configuração para suporte a upload de arquivos multipart
- */
 @Configuration
 public class MultipartConfig {
 
-    /**
-     * Configura o MultipartResolver para lidar com requisições de upload de arquivos
-     *
-     * @return MultipartResolver configurado
-     */
     @Bean
     public MultipartResolver multipartResolver() {
         return new StandardServletMultipartResolver();
     }
     
-    /**
-     * Configura os limites e propriedades para uploads multipart
-     *
-     * @return MultipartConfigElement configurado
-     */
     @Bean
     public MultipartConfigElement multipartConfigElement() {
         MultipartConfigFactory factory = new MultipartConfigFactory();
         
-        // Configura o tamanho máximo do arquivo (10MB)
         factory.setMaxFileSize(DataSize.ofMegabytes(10));
         
-        // Configura o tamanho máximo da requisição (10MB)
         factory.setMaxRequestSize(DataSize.ofMegabytes(10));
         
         return factory.createMultipartConfig();

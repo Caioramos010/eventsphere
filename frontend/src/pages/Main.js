@@ -9,9 +9,7 @@ import AuthService from '../services/AuthService';
 import { useNavigate } from 'react-router-dom';
 import Calendar from '../components/Calendar';
 import EventCard from '../components/EventCard';
-
-import { FaCalendarAlt, FaCrown, FaUserFriends } from 'react-icons/fa';
-import { BsPersonFill } from 'react-icons/bs';
+import { FaCalendarAlt } from 'react-icons/fa';
 import { MdPublic, MdLock } from 'react-icons/md';
 import { IoGridOutline } from 'react-icons/io5';
 
@@ -37,16 +35,12 @@ function Main() {
   }, [navigate]);  const loadEvents = async () => {
     try {
       setLoading(true);
-      
-      
       const [myEventsResult, publicEventsResult] = await Promise.all([
         EventService.getMyEvents(),
         EventService.getPublicEvents()
       ]);
 
       if (myEventsResult.success) {
-        console.log('Meus eventos carregados:', myEventsResult.events);
-        
         const validMyEvents = myEventsResult.events.filter(event => {
           if (!event.id) {
             console.warn('Evento ainda sem ID após processamento:', event);
@@ -54,7 +48,6 @@ function Main() {
           }
           return true;
         });
-        
         
         try {
           localStorage.setItem('myEventsCache', JSON.stringify(validMyEvents));
@@ -68,8 +61,6 @@ function Main() {
       }
 
       if (publicEventsResult.success) {
-        console.log('Eventos públicos carregados:', publicEventsResult.events);
-        
         const validPublicEvents = publicEventsResult.events.filter(event => {
           if (!event.id) {
             console.warn('Evento público ainda sem ID após processamento:', event);
@@ -123,18 +114,6 @@ function Main() {
     }
   };
 
-  
-  const formatDate = (dateString) => {
-    if (!dateString) return 'Data não definida';
-    // Corrige bug de fuso horário para datas no formato YYYY-MM-DD
-    let date;
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-      date = new Date(dateString + 'T12:00:00');
-    } else {
-      date = new Date(dateString);
-    }
-    return date.toLocaleDateString('pt-BR');
-  };
   return (
     <>
       <Header />

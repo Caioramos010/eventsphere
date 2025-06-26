@@ -8,7 +8,6 @@ import API_CONFIG, { buildUrl } from './config/api';
                          window.location.pathname === '/';
 
     if (token && !isPublicPage) {
-      console.log('Verificando token na inicialização...');
       return fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH}`, {
         method: 'GET',
         headers: {
@@ -82,10 +81,10 @@ export function forceTokenValidation() {
 export async function fetchWithAuth(url, options = {}) {
   const token = localStorage.getItem('token');
   
-  // Verificar se o URL não é de login/registro
+
   const isAuthenticationEndpoint = url.includes('/login') || url.includes('/register');
   
-  // Se não for login/registro e tivermos um token, verificar token antes de fazer a requisição
+
   if (token && !isAuthenticationEndpoint) {
     try {
       const isValid = await forceTokenValidation();
@@ -93,7 +92,7 @@ export async function fetchWithAuth(url, options = {}) {
         throw new Error('Token inválido ou expirado');
       }
     } catch (error) {
-      // Token inválido, já tratado na função forceTokenValidation
+
       return Promise.reject(error);
     }
   }
@@ -115,7 +114,7 @@ export async function fetchWithAuth(url, options = {}) {
     
     if (!response.ok) {
       if (response.status === 401) {
-        // Não limpar token nas tentativas de login
+
         if (!isAuthenticationEndpoint) {
           localStorage.removeItem('token');
           localStorage.removeItem('user');
@@ -178,7 +177,7 @@ export async function fetchWithAuth(url, options = {}) {
   } catch (error) {
     console.error('Request failed:', error);
 
-    // Se for erro relacionado a JWT, tratar como sessão expirada
+
     if (error.message && (
         error.message.includes('JWT') || 
         error.message.includes('token') || 
@@ -196,7 +195,7 @@ export async function fetchWithAuth(url, options = {}) {
       return Promise.reject(new Error('Sessão expirada. Redirecionando...'));
     }
     
-    // Erros de rede
+
     if (
       (error.name === 'TypeError' && error.message.includes('Failed to fetch')) ||
       error.message.includes('Erro de conexão') ||
@@ -224,10 +223,8 @@ export async function get(endpoint, params = {}) {
   
   if (endpoint.startsWith('http://') || endpoint.startsWith('https://')) {
     url = endpoint;
-    console.log('GET: URL completa fornecida:', url);
   } else {
     url = buildUrl(endpoint, params);
-    console.log('GET: URL construída:', url, 'de endpoint:', endpoint, 'e params:', params);
   }
   
   return fetchWithAuth(url, { method: 'GET' });
@@ -235,8 +232,6 @@ export async function get(endpoint, params = {}) {
 
 export async function post(endpoint, data = {}) {
   const url = buildUrl(endpoint);
-  console.log('POST request to:', url);
-  console.log('POST data:', data);
   
   return fetchWithAuth(url, {
     method: 'POST',
@@ -266,7 +261,7 @@ export async function uploadFile(endpoint, formData) {
   const url = buildUrl(endpoint);
   
   try {
-    // Verificar token antes do upload
+
     if (token) {
       await forceTokenValidation();
     }
@@ -291,7 +286,7 @@ export async function uploadFile(endpoint, formData) {
   } catch (error) {
     console.error('Upload failed:', error);
     
-    // Se for erro de JWT, tratar como sessão expirada
+
     if (error.message && (
         error.message.includes('JWT') || 
         error.message.includes('token') || 

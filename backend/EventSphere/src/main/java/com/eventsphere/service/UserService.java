@@ -7,6 +7,8 @@ import com.eventsphere.entity.event.EventParticipant;
 import com.eventsphere.entity.event.ParticipantStatus;
 import com.eventsphere.entity.user.Role;
 import com.eventsphere.entity.user.User;
+import com.eventsphere.exception.AuthenticationException;
+import com.eventsphere.mapper.UserMapper;
 import com.eventsphere.repository.UserRepository;
 import com.eventsphere.repository.EventRepository;
 import com.eventsphere.repository.ParticipantRepository;
@@ -15,7 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.security.core.Authentication;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,9 +25,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.logging.Logger;
 
 @Service
 public class UserService {
+    
+    private static final Logger logger = Logger.getLogger(UserService.class.getName());
 
     @Autowired
     private UserRepository userRepository;
@@ -48,6 +53,9 @@ public class UserService {
     @Autowired
     private ParticipantRepository participantRepository;
 
+    @Autowired
+    private UserMapper userMapper;
+
     public UserService(PasswordEncoder passwordEncoder) {
         this.passwordEncoder = passwordEncoder;
     }
@@ -55,7 +63,8 @@ public class UserService {
     public User registerUser(UserDTO userDTO) {
         if (userDTO == null) {
             throw new IllegalArgumentException("Dados do usuário não informados");
-        }        if (userDTO.getUsername() == null || userDTO.getUsername().isBlank()) {
+        }
+        if (userDTO.getUsername() == null || userDTO.getUsername().isBlank()) {
             throw new IllegalArgumentException("Username é obrigatório");
         }
         if (userDTO.getUsername().length() < 3) {
@@ -81,21 +90,21 @@ public class UserService {
         }
         if (userRepository.findByEmail(userDTO.getEmail()) != null) {
             throw new IllegalArgumentException("Este email já está cadastrado");
-        }        if (!validatePassword(userDTO.getPassword())) {
+        }
+        if (!validatePassword(userDTO.getPassword())) {
             throw new IllegalArgumentException("Senha deve ter pelo menos 8 caracteres, incluindo: letra maiúscula, minúscula, número e caractere especial (@$!%*?&)");
         }
         userDTO.setRegisterDate(LocalDateTime.now());
         userDTO.setRoles(Set.of(Role.ROLE_USER.name()));
         String encodedPassword = passwordEncoder.encode(userDTO.getPassword());
-        User user;
-        if (userDTO.getPhoto() == null || userDTO.getPhoto().isEmpty()) {
-            user = new User(userDTO.getUsername(), userDTO.getName(), userDTO.getRoles(), userDTO.getEmail(), userDTO.getRegisterDate());
-        } else {
-            user = new User(userDTO.getUsername(), userDTO.getName(), userDTO.getRoles(), userDTO.getEmail(), userDTO.getRegisterDate(), userDTO.getPhoto());
-        }
+        
+        User user = userMapper.toEntity(userDTO);
         user.setPassword(encodedPassword);
+        
         return userRepository.save(user);
-    }    public User registerUserByInvite(UserDTO userDTO, String inviteToken, String inviteCode) {
+    }
+    
+    public User registerUserByInvite(UserDTO userDTO, String inviteToken, String inviteCode) {
         if (userDTO == null) {
             throw new IllegalArgumentException("Dados do usuário não informados");
         }
@@ -141,30 +150,11 @@ public class UserService {
     }
     public UserProfileDTO getUserDisplay(Long userID) {
         User user = userRepository.findById(userID).orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado!"));
-        UserDTO userDTO = new UserDTO(
-            user.getUsername(),
-            user.getName(),
-            user.getRoles(),
-            user.getEmail(),
-            user.getRegisterDate(),
-            null, // não expor senha
-            user.getPhoto()
-        );
-        // Usa o DTO para garantir consistência, mas retorna UserProfileDTO para o frontend
-        return new UserProfileDTO(
-            user.getId(),
-            userDTO.getUsername(),
-            userDTO.getName(),
-            userDTO.getEmail(),
-            userDTO.getPhoto()
-        );
+        return userMapper.toProfileDTO(user);
     }
-    public List<User> getAllUsers() {
+    public List<UserDTO> getAllUsers() {
         List<User> users = userRepository.findAll();
-        for (User user : users) {
-            user.setPassword(null); // Remove a senha da resposta
-        }
-        return users;
+        return userMapper.toDTOList(users);
     }
 
     public User updateName(Long userID, String newName) {
@@ -202,55 +192,30 @@ public class UserService {
     }
     public void deleteUser(Long userID) {
         userRepository.deleteById(userID);
-    }    public void deleteUserWithPasswordCheck(Long userId, String password) {
+    }
+    
+    public void deleteUserWithPasswordCheck(Long userId, String password) {
         User user = getUser(userId);
         if (user == null || !validatePassword(password, user.getPassword())){
             throw new IllegalArgumentException("Senha inválida");
         }
         
         try {
-            // Remove user from all event participations - optimized query
             List<EventParticipant> userParticipations = participantRepository.findByUserId(userId);
             if (!userParticipations.isEmpty()) {
                 participantRepository.deleteAll(userParticipations);
-                System.out.println("Removed " + userParticipations.size() + " participations for user " + userId);
+                logger.info("Removed " + userParticipations.size() + " participations for user " + userId);
             }
             
-            // Block the user instead of deleting
             user.setBlocked(true);
             userRepository.save(user);
             
-            System.out.println("User " + userId + " has been blocked successfully");
+            logger.info("User " + userId + " has been blocked successfully");
         } catch (Exception e) {
-            System.err.println("Error blocking user " + userId + ": " + e.getMessage());
-            e.printStackTrace();
+            logger.severe("Error blocking user " + userId + ": " + e.getMessage());
             throw new RuntimeException("Erro ao bloquear usuário: " + e.getMessage(), e);
         }
     }
-
-    public Map<String, Object> validateToken(Authentication authentication) {
-    if (authentication == null || !authentication.isAuthenticated()) {
-        throw new IllegalArgumentException("Token inválido ou expirado");
-    }
-    
-    String username = authentication.getName();
-    User user = userRepository.findByUsername(username);    
-    if (user == null) {
-        throw new IllegalArgumentException("Usuário não encontrado");
-    }
-    
-    if (user.isBlocked()) {
-        throw new IllegalArgumentException("Conta bloqueada");
-    }
-    
-    // Retorna informações básicas do usuário
-    Map<String, Object> userData = new HashMap<>();
-    userData.put("username", user.getUsername());
-    userData.put("name", user.getName());
-    userData.put("email", user.getEmail());
-    
-    return userData;
-}
 
     public boolean validatePassword(String rawPassword, String encodedPassword) {
         return passwordEncoder.matches(rawPassword, encodedPassword);
@@ -280,14 +245,14 @@ public class UserService {
 
     public Map<String, String> login(String username, String password) {
         if (username == null || username.isBlank() || password == null || password.isBlank()) {
-            throw new IllegalArgumentException("Usuário e senha são obrigatórios");
+            throw new AuthenticationException("Usuário e senha são obrigatórios");
         }
         User user = userRepository.findByUsername(username);
         if (user == null || !validatePassword(password, user.getPassword())) {
-            throw new IllegalArgumentException("Usuário ou senha inválidos");
+            throw new AuthenticationException("Usuário ou senha inválidos");
         }
         if (user.isBlocked()) {
-            throw new IllegalArgumentException("Usuário bloqueado. Entre em contato com o suporte.");
+            throw new AuthenticationException("Usuário bloqueado. Entre em contato com o suporte.");
         }
         authenticationManager.authenticate(
                 new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(username, password));
@@ -305,36 +270,28 @@ public class UserService {
         if (event.isEmpty() || !event.get().getInviteCode().equals(inviteCode)) {
             return false;
         }
-        // Verifica se o usuário está na lista de participantes do evento
         if (event.get().getParticipants() == null) return false;
         return event.get().getParticipants().stream().anyMatch(p -> p.getUser().getUsername().equals(username));
     }
 
     public Map<String, String> loginInvite(String username, String password, String inviteToken, String inviteCode) {
-        // Agora faz login normal, sem exigir inviteCode
         if (username == null || username.isBlank() || password == null || password.isBlank()) {
-            throw new IllegalArgumentException("Usuário e senha são obrigatórios");
+            throw new AuthenticationException("Usuário e senha são obrigatórios");
         }
         if (inviteToken == null || inviteToken.isBlank()) {
-            throw new IllegalArgumentException("Token do convite é obrigatório");
+            throw new AuthenticationException("Token do convite é obrigatório");
         }
         User user = userRepository.findByUsername(username);
         if (user == null || !validatePassword(password, user.getPassword())) {
-            throw new IllegalArgumentException("Usuário ou senha inválidos");
+            throw new AuthenticationException("Usuário ou senha inválidos");
         }
-        // Não precisa mais validar código do evento, login normal
         return login(username, password);
-    }    public Optional<User> getAuthenticatedUser(Long userID) {
+    }
+    
+    public Optional<User> getAuthenticatedUser(Long userID) {
         return userRepository.findById(userID);
     }
 
-    /**
-     * Atualiza a foto do usuário
-     * 
-     * @param userId ID do usuário
-     * @param photoBase64 Foto em Base64
-     * @return Usuário atualizado
-     */
     public User updateUserPhoto(Long userId, String photoBase64) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
@@ -343,14 +300,9 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    /**
-     * Upload de foto de usuário
-     */
     public Map<String, Object> uploadUserPhoto(Long userId, org.springframework.web.multipart.MultipartFile file) {
-        // Converter arquivo para Base64
         String base64Photo = imageService.convertToBase64(file);
         
-        // Atualizar usuário com a foto Base64
         User updatedUser = updateUserPhoto(userId, base64Photo);
         
         Map<String, Object> response = new HashMap<>();
@@ -359,9 +311,31 @@ public class UserService {
         
         return response;
     }
+
+    public Map<String, Object> validateToken(org.springframework.security.core.Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AuthenticationException("Token inválido ou expirado");
+        }
+        
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username);
+        
+        if (user == null) {
+            throw new AuthenticationException("Usuário não encontrado");
+        }
+        
+        if (user.isBlocked()) {
+            throw new AuthenticationException("Usuário bloqueado");
+        }
+        
+        Map<String, Object> userData = new HashMap<>();
+        userData.put("id", user.getId());
+        userData.put("username", user.getUsername());
+        userData.put("name", user.getName());
+        userData.put("email", user.getEmail());
+        userData.put("photo", user.getPhoto());
+        userData.put("roles", user.getRoles());
+        
+        return userData;
+    }
 }
-
-
-
-
-

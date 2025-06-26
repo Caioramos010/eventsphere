@@ -15,7 +15,6 @@ import {
   IoQrCodeOutline, 
   IoStopOutline,
   IoCalendarOutline,
-  IoArrowBack,
   IoLocationOutline,
   IoTimeOutline,
   IoInformationCircleOutline,
@@ -23,8 +22,6 @@ import {
 } from 'react-icons/io5';
 import './EventDetails.css';
 import userIcon from '../images/user.png';
-import eventImg from '../images/event.png';
-import getUserStatusIcon from '../utils/getUserStatusIcon';
 import EventService from '../services/EventService';
 import ParticipantService from '../services/ParticipantService';
 import EventPrintPage from '../components/EventPrintPage';
@@ -33,20 +30,20 @@ import EventAttendancePrintPage from '../components/EventAttendancePrintPage';
 
 const formatDate = (dateString) => {
   if (!dateString) return 'Data não definida';
-
+  
+  
   let date;
   if (typeof dateString === 'string') {
-    // Se for formato ISO só com data, adiciona horário para evitar UTC
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-      date = new Date(dateString + 'T12:00:00');
-    } else if (dateString.includes('T') || !isNaN(Date.parse(dateString))) {
+    
+    if (dateString.includes('T') || !isNaN(Date.parse(dateString))) {
       date = new Date(dateString);
     } else {
+      
       const parts = dateString.split('/');
       if (parts.length === 3) {
         date = new Date(parts[2], parts[1] - 1, parts[0]);
       } else {
-        return dateString;
+        return dateString; 
       }
     }
   } else if (dateString instanceof Date) {
@@ -54,13 +51,14 @@ const formatDate = (dateString) => {
   } else {
     return 'Data inválida';
   }
-
+  
   return date.toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'
   });
 };
+
 
 const formatTime = (timeString) => {
   if (!timeString) return 'Horário não definido';
@@ -107,28 +105,20 @@ const EventDetails = () => {
     const fetchEventDetails = async () => {
       setLoading(true);
       try {
-        console.log('EventDetails - ID do evento:', id);
-        
         if (!id) {
           setError('ID do evento não especificado');
           setLoading(false);
           return;
         }
         
-        
         let result = await EventService.getEventDetails(id);
-        
         
         if (!result.success && typeof id === 'string' && (id.startsWith('"') || id.startsWith("'"))) {
           const cleanId = id.replace(/['"]/g, '');
-          console.log('Tentando novamente com ID limpo:', cleanId);
           result = await EventService.getEventDetails(cleanId);
         }
         
         if (result.success) {
-          console.log('Evento carregado com sucesso:', result.event);
-          
-          
           if (!result.event.id) {
             result.event.id = id;
           }
@@ -238,7 +228,7 @@ const EventDetails = () => {
         alert('Sua presença foi confirmada com sucesso!');
         setUserConfirmed(true);
         
-        // Recarregar dados do evento
+
         const updatedEvent = await EventService.getEventDetails(id);
         if (updatedEvent.success) {
           setEvent(updatedEvent.event);
@@ -647,28 +637,10 @@ const EventDetails = () => {
                       </div>
                     )}
                   </>                )}
-                {!canEdit && event.userStatus === 'participant' && event.state !== 'FINISHED' && event.state !== 'CANCELED' && (
-                  <button
-                    className={`modern-btn event-action-btn confirm-btn${userConfirmed ? ' confirmed-disabled' : ''}`}
-                    onClick={handleConfirmAttendance}
-                    disabled={isConfirmingAttendance || userConfirmed}
-                    style={userConfirmed ? { opacity: 0.5, pointerEvents: 'none', cursor: 'default' } : {}}
-                  >
-                    <IoCheckmarkOutline />
-                    <span>
-                      {userConfirmed
-                        ? 'Presença Confirmada'
-                        : (isConfirmingAttendance ? 'Confirmando...' : 'Confirmar Presença')}
-                    </span>
-                  </button>
-                )}
                 {!canEdit && event.userStatus === 'participant' && event.state === 'ACTIVE' && (
-                  <button
-                    className="modern-btn event-action-btn qrcode-btn"
-                    onClick={generateQrCode}
-                  >
+                  <button className="modern-btn event-action-btn qr-btn" onClick={generateQrCode}>
                     <IoQrCodeOutline />
-                    <span>Gerar QR Code / Código Manual</span>
+                    <span>Meu QR Code</span>
                   </button>
                 )}
                 {canEdit && event.state === 'FINISHED' && (
@@ -676,11 +648,28 @@ const EventDetails = () => {
                     <IoCheckmarkCircleOutline />
                     <span>Relatório de Presença</span>
                   </button>
-                )}                
+                )}
+                  {!canEdit && event.userStatus === 'participant' && !userConfirmed && event.state !== 'FINISHED' && event.state !== 'CANCELED' && (
+                  <button 
+                    className="modern-btn event-action-btn confirm-btn" 
+                    onClick={handleConfirmAttendance}
+                    disabled={isConfirmingAttendance}
+                  >
+                    <IoCheckmarkOutline />
+                    <span>{isConfirmingAttendance ? 'Confirmando...' : 'Confirmar Presença'}</span>
+                  </button>
+                )}
+                
                 {event.userStatus === 'visitor' && event.state !== 'FINISHED' && event.state !== 'CANCELED' && (
                   <button className="modern-btn event-action-btn join-btn" onClick={handleJoinEvent}>
                     <IoPeopleOutline />
                     <span>Participar do Evento</span>
+                  </button>
+                )}
+                {!canEdit && userConfirmed && isEventActive && (
+                  <button className="modern-btn event-action-btn qrcode-btn" onClick={handleGenerateQRCode}>
+                    <IoQrCodeOutline />
+                    <span>Meu QR Code</span>
                   </button>
                 )}
               </div>

@@ -8,9 +8,6 @@ import ParticipantService from '../services/ParticipantService';
 
 const EventCard = ({ event, type, linkTo, onParticipate }) => {
   
-  console.log('EventCard recebeu evento:', event);
-  console.log('EventCard linkTo:', linkTo);
-
   const handleParticipateClick = async (e) => {
     e.preventDefault(); 
     e.stopPropagation();
@@ -107,7 +104,7 @@ const EventCard = ({ event, type, linkTo, onParticipate }) => {
     <Link to={linkTo} style={{ textDecoration: 'none' }}>
       <div className={`event-card ${type === 'primary' ? 'primary-card' : 'secondary-card'} ${event.state === 'ACTIVE' ? 'active-event' : ''}`}>
         
-        {/* Indicador de evento ativo */}
+        
         {event.state === 'ACTIVE' && (
           <div className="active-indicator">
             <div className="active-pulse"></div>
@@ -125,7 +122,7 @@ const EventCard = ({ event, type, linkTo, onParticipate }) => {
           </div>
           <div className="card-date">
             {formatDate(event.dateFixedStart || event.dateStart)}
-          </div>          {/* Botão de participar para eventos públicos onde o usuário é visitante */}
+          </div>
           {type === 'secondary' && event.userStatus === 'visitor' && onParticipate && 
            !event.isActive && event.state !== 'FINISHED' && event.state !== 'CANCELED' && (
             <button 
@@ -138,21 +135,21 @@ const EventCard = ({ event, type, linkTo, onParticipate }) => {
             </button>
           )}
           
-          {/* Mensagem quando evento está ativo */}
+
           {type === 'secondary' && event.userStatus === 'visitor' && event.isActive && (
             <div className="event-started-message">
               <span>Evento já iniciado</span>
             </div>
           )}
           
-          {/* Mensagem quando evento está encerrado */}
+
           {type === 'secondary' && event.userStatus === 'visitor' && event.state === 'FINISHED' && (
             <div className="event-finished-message">
               <span>Evento encerrado</span>
             </div>
           )}
           
-          {/* Mensagem quando evento está cancelado */}
+
           {type === 'secondary' && event.userStatus === 'visitor' && event.state === 'CANCELED' && (
             <div className="event-canceled-message">
               <span>Evento cancelado</span>

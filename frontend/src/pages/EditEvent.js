@@ -151,9 +151,8 @@ export default function EditEvent() {
             />
           </div>
           
-          <form className="modern-form" onSubmit={handleSubmit}>
-            {/* Photo Upload Section */}
-              <StandardCard variant="glass" padding="large">
+          <form className="modern-form" onSubmit={handleSubmit}>            
+            <StandardCard variant="glass" padding="large">
                 <label className="upload-area" htmlFor="photo-input">
                   {photoPreview ? (
                     <img src={photoPreview} alt="Preview" className="photo-preview" />
@@ -216,7 +215,7 @@ export default function EditEvent() {
                            </div>
                          </StandardCard>
            
-                         {/* Date and Time */}
+                         
                          <StandardCard variant="glass" padding="large">
                            <h3 className="card-title">Data e Horário</h3>
                            
@@ -271,7 +270,7 @@ export default function EditEvent() {
                            </div>
                          </StandardCard>
            
-                         {/* Settings */}
+                         
                          <StandardCard variant="glass" padding="large">
                            <h3 className="card-title">Configurações</h3>
                            

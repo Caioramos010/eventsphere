@@ -26,7 +26,6 @@ export const isTemporaryId = (id) => {
 export const cacheEvents = (cacheKey, events) => {
   try {
     localStorage.setItem(cacheKey, JSON.stringify(events));
-    console.log(`${events.length} eventos salvos no cache ${cacheKey}`);
   } catch (error) {
     console.error(`Erro ao salvar cache de eventos ${cacheKey}:`, error);
   }
@@ -57,7 +56,6 @@ export const findEventInCache = (eventId) => {
       const events = getEventsFromCache(cacheKey);
       const event = events.find(e => e.id === eventId);
       if (event) {
-        console.log(`Evento ${eventId} encontrado no cache ${cacheKey}`);
         return event;
       }
     }
@@ -80,7 +78,6 @@ export const updateEventId = (tempId, permanentId) => {
       const events = getEventsFromCache(cacheKey);
       const updated = events.map(e => {
         if (e.id === tempId) {
-          console.log(`Atualizando ID temporário ${tempId} para ID permanente ${permanentId}`);
           return { ...e, id: permanentId, isTemporaryId: false };
         }
         return e;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+  import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { IoEyeOutline, IoEyeOffOutline } from 'react-icons/io5';
 import '../styles/auth.css';
@@ -41,7 +41,7 @@ const Login = () => {
         const result = await AuthService.login(credentials);
       
       if (result.success) {
-        // Carregar perfil do usuário automaticamente após login
+
         await loadUserProfile();
         
         const inviteToken = searchParams.get('token');

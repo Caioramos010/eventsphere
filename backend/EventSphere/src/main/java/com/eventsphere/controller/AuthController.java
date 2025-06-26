@@ -3,6 +3,8 @@ package com.eventsphere.controller;
 import com.eventsphere.dto.ApiResponse;
 import com.eventsphere.dto.UserDTO;
 import com.eventsphere.entity.user.User;
+import com.eventsphere.exception.AuthenticationException;
+import com.eventsphere.mapper.ResponseMapper;
 import com.eventsphere.service.UserService;
 import com.eventsphere.utils.JwtUtil;
 import jakarta.validation.Valid;
@@ -24,17 +26,21 @@ public class AuthController {
 
     @Autowired
     private JwtUtil jwtUtil;
+    
     @Autowired
     private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private ResponseMapper responseMapper;
     @PostMapping("/register/accept")
     public ResponseEntity<ApiResponse<?>> registerControll(@Valid @RequestBody UserDTO userDTO) {
         try {
             userService.registerUser(userDTO);
-            return ResponseEntity.ok(ApiResponse.success("Registro realizado com sucesso", null));
+            return ResponseEntity.ok(responseMapper.success("Registro realizado com sucesso"));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+            return ResponseEntity.badRequest().body(responseMapper.badRequest(e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(ApiResponse.error("Erro interno do servidor. Tente novamente."));
+            return ResponseEntity.status(500).body(responseMapper.internalError("Erro interno do servidor. Tente novamente."));
         }
     }
 
@@ -44,11 +50,11 @@ public class AuthController {
             String username = loginRequest.get("username");
             String password = loginRequest.get("password");
             Map<String, String> response = userService.login(username, password);
-            return ResponseEntity.ok(ApiResponse.success(response));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(401).body(ApiResponse.error(e.getMessage()));
+            return ResponseEntity.ok(responseMapper.success(response));
+        } catch (AuthenticationException e) {
+            return ResponseEntity.status(401).body(responseMapper.error(e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(ApiResponse.error("Erro interno do servidor. Tente novamente."));
+            return ResponseEntity.status(500).body(responseMapper.internalError("Erro interno do servidor. Tente novamente."));
         }
     }
 
@@ -57,7 +63,7 @@ public class AuthController {
         try {
             Map<String, Object> userData = userService.validateToken(authentication);
             return ResponseEntity.ok(ApiResponse.success("Token válido", userData));
-        } catch (IllegalArgumentException e) {
+        } catch (AuthenticationException e) {
             return ResponseEntity.status(401).body(ApiResponse.error(e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(ApiResponse.error("Erro interno do servidor. Tente novamente."));

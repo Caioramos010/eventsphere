@@ -2,10 +2,9 @@ import React, { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import '../styles/home-fixed.css';
 import CalendarAnimation from '../components/Animation';
-import { IoCalendarOutline, IoCreateOutline, IoStatsChartOutline, IoPersonAddOutline } from 'react-icons/io5';
+import { IoCalendarOutline, IoStatsChartOutline, IoPersonAddOutline } from 'react-icons/io5';
 import logo from '../images/logo.png';
 import logoFooter from '../images/logo-footer.png';
-import { Link } from '../components/Link';
 
 function Home() {
   const location = useLocation();
@@ -42,7 +41,6 @@ function Home() {
   };
   return (
     <div className="home-container">
-      {/* Header */}
       <header className="home-header" ref={headerRef}>
         <div className="header-content">
           <img src={logo} alt="EventSphere" className="header-logo" />
@@ -61,9 +59,11 @@ function Home() {
             </button>
           </div>
         </div>
-      </header>     
+      </header>
+      
       <section className="hero-section">
-        <div className="hero-overlay"></div>        <div className="hero-content">
+        <div className="hero-overlay"></div>
+        <div className="hero-content">
           <h1 className="hero-title">Transforme Seus Eventos em Experiências Memoráveis</h1>
           <p className="hero-subtitle">
             Organize, gerencie e conecte pessoas com facilidade. 

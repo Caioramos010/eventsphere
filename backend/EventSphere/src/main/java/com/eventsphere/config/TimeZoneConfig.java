@@ -10,7 +10,7 @@ public class TimeZoneConfig {
 
     @PostConstruct
     public void init() {
-        // Define o timezone padrão da aplicação como São Paulo (UTC-3)
+
         TimeZone.setDefault(TimeZone.getTimeZone("America/Sao_Paulo"));
     }
 }

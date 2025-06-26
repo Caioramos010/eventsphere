@@ -27,7 +27,7 @@ const AuthService = {
     } catch (error) {
       console.error('Login error:', error);
       
-      // Verificar mensagens de erro específicas
+
       if (error.message.includes('404')) {
         return { success: false, message: 'Serviço de autenticação não encontrado' };
       } else if (error.message.includes('401')) {

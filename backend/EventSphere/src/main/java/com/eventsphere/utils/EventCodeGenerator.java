@@ -15,7 +15,6 @@ public class EventCodeGenerator {
         String code;
         int attempts = 0;
         int maxAttempts = 100; 
-        
         do {
             code = generateRandomCode();
             attempts++;
@@ -24,7 +23,6 @@ public class EventCodeGenerator {
                 throw new RuntimeException("Não foi possível gerar um código único após " + maxAttempts + " tentativas");
             }
         } while (existingCodes.contains(code));
-        
         return code;
     }
     

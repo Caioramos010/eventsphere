@@ -13,9 +13,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
-/**
- * Controlador para gerenciar uploads de arquivos no sistema
- */
 @RestController
 @RequestMapping("/api/upload")
 public class FileUploadController {
@@ -37,12 +34,8 @@ public class FileUploadController {
         User user = securityUtils.getAuthenticatedUser();
         Map<String, Object> response = eventService.uploadEventImage(eventId, file, user.getId());
         return ResponseEntity.ok(ApiResponse.success("Imagem do evento carregada com sucesso", response));
-    }    /**
-     * Endpoint para fazer upload de foto de perfil do usuário (Base64)
-     *
-     * @param file Arquivo de imagem
-     * @return ResponseEntity com a resposta da API
-     */      
+    }   
+          
     @PostMapping(value = "/user-photo")
     public ResponseEntity<ApiResponse<?>> uploadUserPhoto(@RequestParam("photo") MultipartFile file) {
         User user = securityUtils.getAuthenticatedUser();

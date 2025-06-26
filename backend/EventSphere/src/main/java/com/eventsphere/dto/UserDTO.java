@@ -23,7 +23,7 @@ public class UserDTO {
     @Size(min = 8, message = "A senha deve ter pelo menos 8 caracteres")
     private String password;    private String photo;
 
-    // Construtor padrão necessário para deserialização JSON
+
     public UserDTO() {}
 
     public UserDTO(String username, String name, Set<String> roles, String email, LocalDateTime registerDate, String password, String photo) {

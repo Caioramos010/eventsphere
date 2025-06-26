@@ -4,52 +4,33 @@ const API_CONFIG = {
   ENDPOINTS: {
     LOGIN: '/login/accept',
     REGISTER: '/register/accept',
-    AUTH: '/api/auth/validate',
-
     USER_UPDATE_EMAIL: '/api/user/update-email',
     USER_UPDATE_USERNAME: '/api/user/update-username',
     USER_UPDATE_PASSWORD: '/api/user/update-passowrd',
     USER_DELETE: '/api/user/delete',
     USER_PROFILE: '/api/user/get',
-    USERS: '/api/user',
-    USER_PHOTO: '/api/upload/user-photo',
-
+    
     EVENT_CREATE: '/api/event/register',
     EVENT_EDIT: '/api/event/edit',
     EVENT_GET: '/api/event/get',
     EVENT_DELETE: '/api/event/delete',
     EVENT_IMAGE: '/api/upload/event-image',
     MY_EVENTS: '/api/event/get-myevents',
-    PUBLIC_EVENTS: '/api/event/get-public',
-    EVENT_START: '/api/event/start',
-    EVENT_FINISH: '/api/event/finish',
-    EVENT_CANCEL: '/api/event/cancel',
-    EVENTS: '/api/event',
-    NEXT_EVENTS: '/api/event/next-events',
-    NEXT_PUBLIC_EVENTS: '/api/event/next-public-events',
-    PARTICIPATING_EVENTS: '/api/event/participating',
+    PUBLIC_EVENTS: '/api/event/get-public',    EVENT_START: '/api/event/start',
+    EVENT_FINISH: '/api/event/finish',      
+    EVENT_CANCEL: '/api/event/cancel',      INVITE_GENERATE: '/api/event/invite/generate',
+    INVITE_VALIDATE: '/api/event/invite/validate',
     EVENT_CODE_VALIDATE: '/api/event/validate-code',
     EVENT_CODE_ENSURE: '/api/event/{id}/ensure-code',
-    INVITE_GENERATE: '/api/event/invite/generate',
-    INVITE_VALIDATE: '/api/event/invite/validate',
+    USER_PHOTO: '/api/upload/user-photo',
     FILE_DOWNLOAD: '/api/files',
-
-    PARTICIPANT_ADD: '/api/participant/add',
+      PARTICIPANT_ADD: '/api/participant/add',
     PARTICIPANT_REMOVE: '/api/participant/remove',
     PARTICIPANT_CONFIRM: '/api/participant/confirm',
-    PARTICIPANT_INVITE: '/api/participant/invite',
-    PARTICIPANT_STATUS: '/api/participant/status',
-    PARTICIPANT_JOIN_EVENT: '/api/participant/join-event',
-    PARTICIPANT_JOIN_WITH_INVITE: '/api/participant/join-with-invite',
-    PARTICIPANT_JOIN_WITH_CODE: '/api/participant/join-with-code',
-    PARTICIPANT_REMOVE_BY_ID: '/api/participant/remove',
-    PARTICIPANT_CONFIRM_BY_ID: '/api/participant/confirm',
-    PARTICIPANT_PROMOTE: '/api/participant/promote',
-    PARTICIPANT_DEMOTE: '/api/participant/demote',
-    PARTICIPANT_QR_CODE: '/api/participant/qr-code',
-    PARTICIPANT_ATTENDANCE_REPORT: '/api/participant/attendance-report',
-
+    
     ADMIN: '/admin',
+    NEXT_EVENTS: '/api/event/next-events',
+    NEXT_PUBLIC_EVENTS: '/api/event/next-public-events'
   },
   
   DEFAULT_HEADERS: {
@@ -64,7 +45,6 @@ export default API_CONFIG;
 
 export const buildUrl = (endpoint, params = {}) => {
   if (endpoint.startsWith('http')) {
-    console.log('URL já completa detectada:', endpoint);
     if (Object.keys(params).length > 0) {
       const url = new URL(endpoint);
       Object.keys(params).forEach(key => {
@@ -72,7 +52,6 @@ export const buildUrl = (endpoint, params = {}) => {
           url.searchParams.append(key, params[key]);
         }
       });
-      console.log('URL com parâmetros:', url.toString());
       return url.toString();
     }
     
@@ -80,9 +59,7 @@ export const buildUrl = (endpoint, params = {}) => {
   }
   
   let url = `${API_CONFIG.BASE_URL}${endpoint}`;
-  console.log('Building URL from:', API_CONFIG.BASE_URL, endpoint);
-  
-  // Adicionar parâmetros de query se fornecidos
+
   const queryParams = new URLSearchParams();
   Object.keys(params).forEach(key => {
     if (params[key] !== undefined && params[key] !== null) {
@@ -94,7 +71,6 @@ export const buildUrl = (endpoint, params = {}) => {
     url += `?${queryParams.toString()}`;
   }
   
-  console.log('Final URL:', url);
   return url;
 };
 

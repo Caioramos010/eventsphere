@@ -126,7 +126,7 @@ const AllEvents = () => {
             >
               Criar Evento
             </StandardButton>
-          </div>          {/* Filtros e busca */}
+          </div>
           <StandardCard variant="glass" padding="medium" className="events-controls">
             <div className="search-container">
               <IoSearch className="search-icon" />
@@ -178,7 +178,7 @@ const AllEvents = () => {
             </div>
           </StandardCard>
 
-          {/* Lista de eventos */}
+
           <div className="events-content">
             {loading ? (
               <div className="loading-container">

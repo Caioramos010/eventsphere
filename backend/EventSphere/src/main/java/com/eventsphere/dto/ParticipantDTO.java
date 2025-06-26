@@ -69,6 +69,10 @@ public class ParticipantDTO {
     public void setIsCollaborator(boolean isCollaborator) {
         this.isCollaborator = isCollaborator;
     }
+    
+    public void setCollaborator(boolean collaborator) {
+        this.isCollaborator = collaborator;
+    }
 
     public String getStatus() {
         return status;

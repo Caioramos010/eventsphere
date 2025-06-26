@@ -141,10 +141,10 @@ const UserService = {
   async deleteAccount(password) {
     try {
       const url = `${API_CONFIG.ENDPOINTS.USER_DELETE}?password=${encodeURIComponent(password)}`;
-      // Use fetchWithAuth to ensure Authorization header is included
+
       const response = await fetchWithAuth(url, {
         method: 'DELETE',
-        // No need to set credentials or headers, fetchWithAuth handles it
+
       });
       let data = null;
       const contentType = response.headers.get('content-type');
@@ -173,7 +173,7 @@ const UserService = {
     try {
       const response = await get(API_CONFIG.ENDPOINTS.USER_PROFILE);
       const data = await response.json();
-      const userData = data.data || data; // pega o objeto do usuário dentro de ApiResponse
+      const userData = data.data || data;
       if (userData && (data.success === undefined || data.success === true)) {
         AuthService.updateCurrentUser({
           username: userData.username,

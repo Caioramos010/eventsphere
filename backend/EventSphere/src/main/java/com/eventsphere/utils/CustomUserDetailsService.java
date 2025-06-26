@@ -25,11 +25,9 @@ public class CustomUserDetailsService implements UserDetailsService {
         if (user == null) {
             throw new UsernameNotFoundException("Usuário não encontrado: " + username);
         }
-
         Set<GrantedAuthority> authorities = user.getRoles().stream()
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toSet());
-
         return new User(user.getUsername(), user.getPassword(), authorities);
     }
 }

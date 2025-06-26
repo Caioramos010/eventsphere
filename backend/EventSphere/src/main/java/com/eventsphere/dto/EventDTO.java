@@ -29,9 +29,11 @@ public class EventDTO {
     private Long ownerId;
     private List<Long> collaboratorIds;
     private List<Long> participantIds;
-    private String userStatus; // Pode ser: "owner", "collaborator", "participant" ou "visitor"
-    private boolean userConfirmed; // Se o usuário atual confirmou presença
+    private String userStatus;
+    private boolean userConfirmed;
     private List<ParticipantDTO> participants;
+    private String inviteToken;
+    private String inviteCode;
 
 
     public EventDTO() {
@@ -259,5 +261,21 @@ public class EventDTO {
 
     public void setParticipants(List<ParticipantDTO> participants) {
         this.participants = participants;
+    }
+
+    public String getInviteToken() {
+        return inviteToken;
+    }
+
+    public void setInviteToken(String inviteToken) {
+        this.inviteToken = inviteToken;
+    }
+
+    public String getInviteCode() {
+        return inviteCode;
+    }
+
+    public void setInviteCode(String inviteCode) {
+        this.inviteCode = inviteCode;
     }
 }

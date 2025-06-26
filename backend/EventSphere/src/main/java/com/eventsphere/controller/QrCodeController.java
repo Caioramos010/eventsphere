@@ -18,7 +18,9 @@ public class QrCodeController {
     private QrCodeService qrCodeService;
     
     @Autowired
-    private SecurityUtils securityUtils;    /**
+    private SecurityUtils securityUtils;
+
+    /**
      * Endpoint para escanear e processar um QR Code
      *
      * @param codeOrQr Código QR ou código de texto
