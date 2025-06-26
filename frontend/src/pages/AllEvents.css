@@ -294,6 +294,10 @@
 
 
 @media (max-width: 768px) {
+  .page-header{
+    display: flex;
+    flex-direction: column;
+  }
   .events-controls {
     flex-direction: column;
     align-items: stretch;

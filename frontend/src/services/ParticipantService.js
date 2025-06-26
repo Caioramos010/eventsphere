@@ -118,9 +118,8 @@ const ParticipantService = {
   
   async markPresenceByQR(qrCode) {
     try {
-      const response = await post(`${API_CONFIG.ENDPOINTS.EVENTS}/qr-presence`, { qrCode });
+      const response = await post(API_CONFIG.ENDPOINTS.PARTICIPANT_CONFIRM, { code: qrCode });
       const data = await response.json();
-      
       if (data.success || response.ok) {
         return { success: true, message: 'Presença marcada com sucesso', event: data.event };
       } else {
@@ -128,6 +127,21 @@ const ParticipantService = {
       }
     } catch (error) {
       console.error('Error marking presence by QR:', error);
+      return { success: false, message: error.message || 'Erro de conexão' };
+    }
+  },
+
+  async markPresenceByCode(eventId, code) {
+    try {
+      const response = await post(API_CONFIG.ENDPOINTS.PARTICIPANT_CONFIRM, { code });      
+      const data = await response.json();
+      if (data.success || response.ok) {
+        return { success: true, message: 'Presença marcada com sucesso', event: data.event };
+      } else {
+        return { success: false, message: data.message || 'Código inválido' };
+      }
+    } catch (error) {
+      console.error('Error marking presence by code:', error);
       return { success: false, message: error.message || 'Erro de conexão' };
     }
   },

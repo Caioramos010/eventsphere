@@ -52,7 +52,7 @@ public class AuthController {
         }
     }
 
-    @GetMapping("/auth/validate")
+    @GetMapping("/api/auth/validate")
     public ResponseEntity<ApiResponse<?>> validateToken(Authentication authentication) {
         try {
             Map<String, Object> userData = userService.validateToken(authentication);

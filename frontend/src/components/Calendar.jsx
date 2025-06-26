@@ -37,7 +37,15 @@ export default function Calendar({ events = [], onMonthChange }) {
   let day = 1;
   for (let i = 0; i < firstDay; i++) week[i] = null;
   for (let i = firstDay; day <= daysInMonth; i++) {
-    week[i] = day;
+    const isPastDay =
+      selected.year < today.getFullYear() ||
+      (selected.year === today.getFullYear() && selected.month < today.getMonth()) ||
+      (selected.year === today.getFullYear() && selected.month === today.getMonth() && day < today.getDate());
+    if (isPastDay) {
+      week[i] = null;
+    } else {
+      week[i] = day;
+    }
     day++;
     if (i === 6 || day > daysInMonth) {
       weeks.push(week);
@@ -101,8 +109,13 @@ export default function Calendar({ events = [], onMonthChange }) {
   
   const formatDate = (dateString) => {
     if (!dateString) return 'Data não definida';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR');
+    let d;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      d = new Date(dateString + 'T12:00:00');
+    } else {
+      d = new Date(dateString);
+    }
+    return d.toLocaleDateString('pt-BR');
   };
 
   

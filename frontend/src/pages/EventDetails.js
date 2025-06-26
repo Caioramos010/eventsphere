@@ -33,20 +33,20 @@ import EventAttendancePrintPage from '../components/EventAttendancePrintPage';
 
 const formatDate = (dateString) => {
   if (!dateString) return 'Data não definida';
-  
-  
+
   let date;
   if (typeof dateString === 'string') {
-    
-    if (dateString.includes('T') || !isNaN(Date.parse(dateString))) {
+    // Se for formato ISO só com data, adiciona horário para evitar UTC
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      date = new Date(dateString + 'T12:00:00');
+    } else if (dateString.includes('T') || !isNaN(Date.parse(dateString))) {
       date = new Date(dateString);
     } else {
-      
       const parts = dateString.split('/');
       if (parts.length === 3) {
         date = new Date(parts[2], parts[1] - 1, parts[0]);
       } else {
-        return dateString; 
+        return dateString;
       }
     }
   } else if (dateString instanceof Date) {
@@ -54,14 +54,13 @@ const formatDate = (dateString) => {
   } else {
     return 'Data inválida';
   }
-  
+
   return date.toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'
   });
 };
-
 
 const formatTime = (timeString) => {
   if (!timeString) return 'Horário não definido';
@@ -663,6 +662,15 @@ const EventDetails = () => {
                     </span>
                   </button>
                 )}
+                {!canEdit && event.userStatus === 'participant' && event.state === 'ACTIVE' && (
+                  <button
+                    className="modern-btn event-action-btn qrcode-btn"
+                    onClick={generateQrCode}
+                  >
+                    <IoQrCodeOutline />
+                    <span>Gerar QR Code / Código Manual</span>
+                  </button>
+                )}
                 {canEdit && event.state === 'FINISHED' && (
                   <button className="modern-btn event-action-btn report-btn" onClick={loadAttendanceReport}>
                     <IoCheckmarkCircleOutline />
@@ -673,12 +681,6 @@ const EventDetails = () => {
                   <button className="modern-btn event-action-btn join-btn" onClick={handleJoinEvent}>
                     <IoPeopleOutline />
                     <span>Participar do Evento</span>
-                  </button>
-                )}
-                {!canEdit && userConfirmed && isEventActive && (
-                  <button className="modern-btn event-action-btn qrcode-btn" onClick={handleGenerateQRCode}>
-                    <IoQrCodeOutline />
-                    <span>Meu QR Code</span>
                   </button>
                 )}
               </div>

@@ -15,7 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
+import org.springframework.security.core.Authentication;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -234,13 +234,12 @@ public class UserService {
     }
     
     String username = authentication.getName();
-    User user = findUserByUsername(username);
-    
+    User user = userRepository.findByUsername(username);    
     if (user == null) {
         throw new IllegalArgumentException("Usuário não encontrado");
     }
     
-    if (user.getIsBlocked()) {
+    if (user.isBlocked()) {
         throw new IllegalArgumentException("Conta bloqueada");
     }
     

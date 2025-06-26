@@ -14,7 +14,6 @@ import AllEvents from './pages/AllEvents';
 import ProtectedRoute from './components/ProtectedRoute';
 import InviteRedirect from './components/InviteRedirect';
 import CameraDebugger from './components/CameraDebugger';
-import MyQRCodePage from './pages/MyQRCodePage';
 
 import { Forbidden, ServerOff, NotFound } from './pages/ErrorPages';
 
@@ -53,11 +52,6 @@ function AppRouter() {
         <Route path='/profile' element={
           <ProtectedRoute>
             <UserProfile />
-          </ProtectedRoute>
-        } />
-        <Route path='/event/:eventId/my-qrcode' element={
-          <ProtectedRoute>
-            <MyQRCodePage />
           </ProtectedRoute>
         } />
         <Route path='/event/:id' element={

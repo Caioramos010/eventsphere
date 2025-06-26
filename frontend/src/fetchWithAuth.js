@@ -1,18 +1,15 @@
 import API_CONFIG, { buildUrl } from './config/api';
 
-// Verifica token na inicialização e força limpeza e redirecionamento se inválido
 (function checkTokenOnLoad() {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('token');
-    // Não fazer nada se estiver na página de login/register
     const isPublicPage = window.location.pathname === '/login' || 
                          window.location.pathname === '/register' ||
                          window.location.pathname === '/';
 
     if (token && !isPublicPage) {
-      // Verificar token diretamente com o backend
       console.log('Verificando token na inicialização...');
-      fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.VALIDATE_TOKEN || '/auth/validate'}`, {
+      return fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -28,7 +25,6 @@ import API_CONFIG, { buildUrl } from './config/api';
         }
       })
       .catch(error => {
-        // Qualquer erro na validação é tratado como token inválido
         console.error('Erro ao validar token:', error);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
@@ -38,7 +34,6 @@ import API_CONFIG, { buildUrl } from './config/api';
   }
 })();
 
-// Função para forçar verificação de token a qualquer momento
 export function forceTokenValidation() {
   const token = localStorage.getItem('token');
   if (!token) {
@@ -50,7 +45,7 @@ export function forceTokenValidation() {
     return Promise.resolve(false);
   }
   
-  return fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.VALIDATE_TOKEN || '/api/auth/validate'}`, {
+  return fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH}`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -84,7 +79,6 @@ export function forceTokenValidation() {
     return false;
   });
 }
-
 export async function fetchWithAuth(url, options = {}) {
   const token = localStorage.getItem('token');
   

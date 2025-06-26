@@ -49,20 +49,18 @@ const EventCard = ({ event, type, linkTo, onParticipate }) => {
   
   const formatDate = (dateString) => {
     if (!dateString) return 'Data não definida';
-    
-    
     let date;
     if (typeof dateString === 'string') {
-      
-      if (dateString.includes('T') || !isNaN(Date.parse(dateString))) {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        date = new Date(dateString + 'T12:00:00');
+      } else if (dateString.includes('T') || !isNaN(Date.parse(dateString))) {
         date = new Date(dateString);
       } else {
-        
         const parts = dateString.split('/');
         if (parts.length === 3) {
           date = new Date(parts[2], parts[1] - 1, parts[0]);
         } else {
-          return dateString; 
+          return dateString;
         }
       }
     } else if (dateString instanceof Date) {
@@ -70,7 +68,6 @@ const EventCard = ({ event, type, linkTo, onParticipate }) => {
     } else {
       return 'Data inválida';
     }
-    
     return date.toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: '2-digit',

@@ -126,9 +126,16 @@ function Main() {
   
   const formatDate = (dateString) => {
     if (!dateString) return 'Data não definida';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR');  };  
-    return (
+    // Corrige bug de fuso horário para datas no formato YYYY-MM-DD
+    let date;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      date = new Date(dateString + 'T12:00:00');
+    } else {
+      date = new Date(dateString);
+    }
+    return date.toLocaleDateString('pt-BR');
+  };
+  return (
     <>
       <Header />
       <div className="main-container">

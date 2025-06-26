@@ -4,6 +4,7 @@ const API_CONFIG = {
   ENDPOINTS: {
     LOGIN: '/login/accept',
     REGISTER: '/register/accept',
+    AUTH: '/api/auth/validate',
 
     USER_UPDATE_EMAIL: '/api/user/update-email',
     USER_UPDATE_USERNAME: '/api/user/update-username',
