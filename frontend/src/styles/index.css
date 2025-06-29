@@ -1,6 +1,6 @@
-@import './styles/variables.css';
+@import './variables.css';
 
-@import './styles/input-standardization.css';
+@import './input-standardization.css';
 
 body {
   margin: 0;

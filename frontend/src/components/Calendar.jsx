@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import './calendar.css';
+import '../styles/calendar.css';
 import { useNavigate } from 'react-router-dom';
 
 const monthNames = [

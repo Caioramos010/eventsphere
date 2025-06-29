@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Link } from '../components/Link';
 import { Header, Footer, PageTitle, StandardButton, StandardCard, BackButton } from '../components';
 import { IoArrowBack, IoLocationOutline, IoCalendarOutline, IoTimeOutline, IoLinkOutline, IoCopyOutline, IoCheckmarkOutline, IoQrCodeOutline, IoShareOutline, IoKeyOutline } from 'react-icons/io5';
-import './EventInvite.css';
+import '../styles/EventInvite.css';
 import EventService from '../services/EventService';
 
 const EventInvite = () => {

@@ -1,5 +1,5 @@
 import React from 'react';
-import './PageTitle.css';
+import '../styles/PageTitle.css';
 
 const PageTitle = ({ 
   icon: Icon, 

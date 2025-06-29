@@ -1,5 +1,5 @@
 import React from 'react';
-import './StandardCard.css';
+import '../styles/StandardCard.css';
 
 const StandardCard = ({
   children,

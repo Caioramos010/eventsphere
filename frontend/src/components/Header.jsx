@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './Header.css';
+import '../styles/Header.css';
 import logo from '../images/logo.png';
 import userIcon from '../images/user.png';
 import { Link } from './Link';

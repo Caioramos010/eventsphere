@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import './EventPrintPage.css';
+import '../styles/EventPrintPage.css';
 
 function EventPrintPage({ event, participants }) {
   useEffect(() => {

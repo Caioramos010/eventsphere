@@ -20,7 +20,7 @@ import {
   IoInformationCircleOutline,
   IoCheckmarkOutline
 } from 'react-icons/io5';
-import './EventDetails.css';
+import '../styles/EventDetails.css';
 import userIcon from '../images/user.png';
 import EventService from '../services/EventService';
 import ParticipantService from '../services/ParticipantService';
@@ -92,6 +92,7 @@ const EventDetails = () => {
   const [confirmationList, setConfirmationList] = useState([]);
   const [isEventActive, setIsEventActive] = useState(false);  const [userConfirmed, setUserConfirmed] = useState(false);
   const [isConfirmingAttendance, setIsConfirmingAttendance] = useState(false);
+  const [isLeavingEvent, setIsLeavingEvent] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
   const [showParticipantModal, setShowParticipantModal] = useState(false);
   const [selectedParticipant, setSelectedParticipant] = useState(null);
@@ -125,6 +126,8 @@ const EventDetails = () => {
           
           const eventData = result.event;
           
+          console.log('EventDetails: Event data loaded:', eventData);
+          console.log('EventDetails: Participants:', eventData.participants);
           
           setUserConfirmed(eventData.userConfirmed);          
           setIsEventActive(eventData.state === 'ACTIVE');
@@ -243,6 +246,44 @@ const EventDetails = () => {
       setIsConfirmingAttendance(false);
     }
   };
+
+  const handleLeaveEvent = async () => {
+    // Verificar se o evento já foi iniciado
+    if (event.state === 'ACTIVE') {
+      alert('Não é possível sair do evento pois ele já foi iniciado.');
+      return;
+    }
+
+    if (!window.confirm('Tem certeza que deseja sair deste evento? Esta ação não poderá ser desfeita.')) {
+      return;
+    }
+
+    setIsLeavingEvent(true);
+    try {
+      const result = await ParticipantService.leaveEvent(id);
+      if (result.success) {
+        alert('Você saiu do evento com sucesso!');
+        
+        // Atualizar os dados do evento
+        const updatedEvent = await EventService.getEventDetails(id);
+        if (updatedEvent.success) {
+          setEvent(updatedEvent.event);
+          setUserConfirmed(false);
+        }
+        
+        // Navegar de volta para a página principal
+        navigate('/main');
+      } else {
+        alert(result.message || 'Erro ao sair do evento');
+      }
+    } catch (error) {
+      console.error('Error leaving event:', error);
+      alert('Erro de conexão ao sair do evento');
+    } finally {
+      setIsLeavingEvent(false);
+    }
+  };
+  
   const handleGenerateQRCode = () => {
     
     navigate(`/event/${id}/my-qrcode`);
@@ -342,10 +383,32 @@ const EventDetails = () => {
     try {
       const result = await ParticipantService.promoteToCollaborator(id, participantId);
       if (result.success) {
-        
+        // Atualiza a lista local primeiro
         setConfirmationList(prev => 
           prev.map(p => p.userId === participantId ? { ...p, isCollaborator: true } : p)
         );
+        
+        // Recarrega os dados completos do evento para garantir sincronização
+        const eventResult = await EventService.getEventDetails(id);
+        if (eventResult.success) {
+          console.log('Reloaded event after promotion:', eventResult.event);
+          setEvent(eventResult.event);
+          setConfirmationList(eventResult.event.participants || []);
+          
+          // Atualiza lista de colaboradores
+          const collaboratorsList = eventResult.event.participants ? 
+            eventResult.event.participants
+              .filter(participant => participant.isCollaborator)
+              .map(collaborator => ({
+                id: collaborator.userId,
+                name: collaborator.userName || collaborator.userUsername,
+                email: collaborator.userEmail,
+                imageUrl: collaborator.userPhoto
+              }))
+            : [];
+          setCollaborators(collaboratorsList);
+        }
+        
         closeParticipantModal();
         alert('Participante promovido a colaborador com sucesso!');
       } else {
@@ -361,10 +424,32 @@ const EventDetails = () => {
     try {
       const result = await ParticipantService.demoteCollaborator(id, participantId);
       if (result.success) {
-        
+        // Atualiza a lista local primeiro
         setConfirmationList(prev => 
           prev.map(p => p.userId === participantId ? { ...p, isCollaborator: false } : p)
         );
+        
+        // Recarrega os dados completos do evento para garantir sincronização
+        const eventResult = await EventService.getEventDetails(id);
+        if (eventResult.success) {
+          console.log('Reloaded event after demotion:', eventResult.event);
+          setEvent(eventResult.event);
+          setConfirmationList(eventResult.event.participants || []);
+          
+          // Atualiza lista de colaboradores
+          const collaboratorsList = eventResult.event.participants ? 
+            eventResult.event.participants
+              .filter(participant => participant.isCollaborator)
+              .map(collaborator => ({
+                id: collaborator.userId,
+                name: collaborator.userName || collaborator.userUsername,
+                email: collaborator.userEmail,
+                imageUrl: collaborator.userPhoto
+              }))
+            : [];
+          setCollaborators(collaboratorsList);
+        }
+        
         closeParticipantModal();
         alert('Colaborador removido com sucesso!');
       } else {
@@ -630,12 +715,7 @@ const EventDetails = () => {
                           <span>Encerrar Evento</span>
                         </button>
                       </>
-                    ) : (
-                     
-                      <div className="event-completed-message">
-                        {event.state === 'FINISHED' ? 'Evento encerrado' : 'Evento cancelado'}
-                      </div>
-                    )}
+                    ) : null}
                   </>                )}
                 {!canEdit && event.userStatus === 'participant' && event.state === 'ACTIVE' && (
                   <button className="modern-btn event-action-btn qr-btn" onClick={generateQrCode}>
@@ -657,6 +737,17 @@ const EventDetails = () => {
                   >
                     <IoCheckmarkOutline />
                     <span>{isConfirmingAttendance ? 'Confirmando...' : 'Confirmar Presença'}</span>
+                  </button>
+                )}
+
+                {!canEdit && event.userStatus === 'participant' && event.state !== 'FINISHED' && event.state !== 'CANCELED' && (
+                  <button 
+                    className="modern-btn event-action-btn leave-btn" 
+                    onClick={handleLeaveEvent}
+                    disabled={isLeavingEvent}
+                  >
+                    <IoRemoveCircleOutline />
+                    <span>{isLeavingEvent ? 'Saindo...' : 'Sair do Evento'}</span>
                   </button>
                 )}
                 
@@ -732,7 +823,10 @@ const EventDetails = () => {
                     <div className="participant-info">
                       <div className="participant-name">
                         {participant.userName || participant.userUsername || 'Participante'}
-                        {participant.isCollaborator && (
+                        {event.ownerId === participant.userId && (
+                          <span className="owner-badge">Dono</span>
+                        )}
+                        {participant.isCollaborator && event.ownerId !== participant.userId && (
                           <span className="collaborator-badge">Colaborador</span>
                         )}
                       </div>
@@ -779,7 +873,15 @@ const EventDetails = () => {
         <div className="participant-modal-overlay" onClick={closeParticipantModal}>
           <div className="participant-modal-container" onClick={(e) => e.stopPropagation()}>
             <div className="participant-modal-header">
-              <h3>Participante: {selectedParticipant.userName || selectedParticipant.userEmail}</h3>
+              <h3>
+                Participante: {selectedParticipant.userName || selectedParticipant.userEmail}
+                {event.ownerId === selectedParticipant.userId && (
+                  <span className="owner-badge">Dono</span>
+                )}
+                {selectedParticipant.isCollaborator && event.ownerId !== selectedParticipant.userId && (
+                  <span className="collaborator-badge">Colaborador</span>
+                )}
+              </h3>
               <button className="participant-modal-close" onClick={closeParticipantModal}>
                 <IoCloseOutline />
               </button>
@@ -826,24 +928,26 @@ const EventDetails = () => {
                     </button>
                   )}
                   
-                  {!selectedParticipant.isCollaborator && (
+                  {!selectedParticipant.isCollaborator && event.ownerId !== selectedParticipant.userId && (
                     <button className="modern-btn" onClick={() => handlePromoteToCollaborator(selectedParticipant.userId)}>
                       <IoPeopleOutline />
                       <span>Promover a Colaborador</span>
                     </button>
                   )}
                   
-                  {selectedParticipant.isCollaborator && (
+                  {selectedParticipant.isCollaborator && event.ownerId !== selectedParticipant.userId && (
                     <button className="modern-btn" onClick={() => handleDemoteCollaborator(selectedParticipant.userId)}>
                       <IoRemoveCircleOutline />
                       <span>Remover como Colaborador</span>
                     </button>
                   )}
                   
-                  <button className="modern-btn remove-btn" onClick={() => handleRemoveParticipant(selectedParticipant.userId)}>
-                    <IoRemoveCircleOutline />
-                    <span>Remover Participante</span>
-                  </button>
+                  {event.ownerId !== selectedParticipant.userId && (
+                    <button className="modern-btn remove-btn" onClick={() => handleRemoveParticipant(selectedParticipant.userId)}>
+                      <IoRemoveCircleOutline />
+                      <span>Remover Participante</span>
+                    </button>
+                  )}
                 </>
               )}
             </div>
@@ -932,7 +1036,10 @@ const EventDetails = () => {
                       <div className="participant-info">
                         <div className="participant-name">
                           {participant.userName}
-                          {participant.isCollaborator && (
+                          {event.ownerId === participant.userId && (
+                            <span className="owner-badge">Dono</span>
+                          )}
+                          {participant.isCollaborator && event.ownerId !== participant.userId && (
                             <span className="collaborator-badge">Colaborador</span>
                           )}
                         </div>
@@ -959,7 +1066,10 @@ const EventDetails = () => {
                       <div className="participant-info">
                         <div className="participant-name">
                           {participant.userName}
-                          {participant.isCollaborator && (
+                          {event.ownerId === participant.userId && (
+                            <span className="owner-badge">Dono</span>
+                          )}
+                          {participant.isCollaborator && event.ownerId !== participant.userId && (
                             <span className="collaborator-badge">Colaborador</span>
                           )}
                         </div>

@@ -1,48 +1,63 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { IoPersonOutline, IoArrowBack, IoCamera, IoTrash, IoSave, IoMailOutline, IoLockClosedOutline, IoPersonCircleOutline } from 'react-icons/io5';
+import { IoPersonOutline, IoArrowBack, IoCamera, IoTrash, IoSave, IoMailOutline, IoLockClosedOutline, IoPersonCircleOutline, IoSettingsOutline } from 'react-icons/io5';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import UserService from '../services/UserService';
 import AuthService from '../services/AuthService';
 import getUserPhotoUrl from '../utils/getUserPhotoUrl';
 import { useUser } from '../contexts/UserContext';
-import './UserProfile.css';
+import { useFormState } from '../hooks/useFormState';
+import '../styles/UserProfile.css';
+import { validateRequired, validateEmail, validatePassword } from '../utils/validators';
+import { Button, Message, FormField } from '../components';
+import '../styles/UserProfile.css';
 
 export default function UserProfile() {
   const { user: contextUser, updateUser } = useUser();
   const [user, setUser] = useState(null);
-  const [form, setForm] = useState({
-    name: '',
-    email: '',
-    username: '',
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
-  });
   const [activeTab, setActiveTab] = useState('photo');
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState('');
-  const [error, setError] = useState('');
+  const [message, setMessage] = useState({ text: '', type: '' });
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState('');
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
+  // Form state for user info
+  const { values: userForm, errors: userErrors, handleChange: handleUserChange, validate: validateUserForm } = useFormState({
+    name: '',
+    email: '',
+    username: ''
+  }, {
+    name: [validateRequired('Nome é obrigatório')],
+    email: [validateRequired('E-mail é obrigatório'), validateEmail()],
+    username: [validateRequired('Login é obrigatório')]
+  });
+
+  // Form state for password change
+  const { values: passwordForm, errors: passwordErrors, handleChange: handlePasswordChange, validate: validatePasswordForm, reset: resetPasswordForm } = useFormState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  }, {
+    currentPassword: [validateRequired('Senha atual é obrigatória')],
+    newPassword: [validateRequired('Nova senha é obrigatória'), validatePassword()],
+    confirmPassword: [validateRequired('Confirmação de senha é obrigatória')]
+  });
+
 
   useEffect(() => {
     if (contextUser) {
       setUser(contextUser);
-      setForm({
-        name: contextUser.name || '',
-        email: contextUser.email || '',
-        username: contextUser.username || '',
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: '',
+      // Update form values using the new form state
+      Object.keys(userForm).forEach(key => {
+        if (contextUser[key]) {
+          handleUserChange({ target: { name: key, value: contextUser[key] } });
+        }
       });
     }
-  }, [contextUser]);
+  }, [contextUser, userForm, handleUserChange]);
 
   useEffect(() => {
     if (!AuthService.isAuthenticated()) {
@@ -55,58 +70,38 @@ export default function UserProfile() {
       const result = await UserService.fetchCurrentUserProfileAndSync();
       if (result.success && result.user) {
         setUser(result.user);
-        setForm((prevForm) => ({
-          ...prevForm,
-          name: result.user.name || '',
-          email: result.user.email || '',
-          username: result.user.username || '',
-        }));
+        // Update form values
+        Object.keys(userForm).forEach(key => {
+          if (result.user[key]) {
+            handleUserChange({ target: { name: key, value: result.user[key] } });
+          }
+        });
         setPhotoPreview(getUserPhotoUrl(result.user.photo));
       } else {
-
         const userData = AuthService.getCurrentUser();
         if (userData) {
           setUser(userData);
-          setForm((prevForm) => ({
-            ...prevForm,
-            name: userData.name || '',
-            email: userData.email || '',
-            username: userData.username || '',
-          }));
+          Object.keys(userForm).forEach(key => {
+            if (userData[key]) {
+              handleUserChange({ target: { name: key, value: userData[key] } });
+            }
+          });
           setPhotoPreview(getUserPhotoUrl(userData.photo));
         }
       }
     }
     syncUser();
-  }, [navigate]);
-
-  useEffect(() => {
-
-    if (user) {
-      setForm((prevForm) => ({
-        ...prevForm,
-        email: user.email || '',
-        username: user.username || '',
-      }));
-    }
-  }, [user]);
-
-  function handleChange(e) {
-    const { name, value } = e.target;
-    setForm((f) => ({ ...f, [name]: value }));
-    setError('');
-    setSuccess('');
-  }
+  }, [navigate, handleUserChange]);
 
   function handlePhotoChange(e) {
     const file = e.target.files[0];
     if (file) {
       if (!file.type.startsWith('image/')) {
-        setError('Por favor, selecione apenas arquivos de imagem');
+        setMessage({ text: 'Por favor, selecione apenas arquivos de imagem', type: 'error' });
         return;
       }
       if (file.size > 5 * 1024 * 1024) {
-        setError('A imagem deve ter no máximo 5MB');
+        setMessage({ text: 'A imagem deve ter no máximo 5MB', type: 'error' });
         return;
       }
       setPhotoFile(file);
@@ -115,7 +110,7 @@ export default function UserProfile() {
         setPhotoPreview(e.target.result);
       };
       reader.readAsDataURL(file);
-      setError('');
+      setMessage({ text: '', type: '' });
     }
   }
 
@@ -123,35 +118,39 @@ export default function UserProfile() {
     setPhotoFile(null);
     setPhotoPreview(user?.photo || '');
     if (fileInputRef.current) fileInputRef.current.value = '';
-    setError('');
-    setSuccess('');
+    setMessage({ text: '', type: '' });
   }
 
   async function handleUploadPhoto() {
     if (!photoFile) {
-      setError('Selecione uma foto para fazer o upload');
+      setMessage({ text: 'Selecione uma foto para fazer o upload', type: 'error' });
       return;
     }
     setLoading(true);
-    setError('');
-    setSuccess('');
+    setMessage({ text: '', type: '' });
+    
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
       const result = await UserService.uploadUserPhoto(photoFile, { signal: controller.signal });
-      clearTimeout(timeoutId);      if (result.success) {
-        setSuccess('Foto atualizada com sucesso!');
+      clearTimeout(timeoutId);
+      
+      if (result.success) {
+        setMessage({ text: 'Foto atualizada com sucesso!', type: 'success' });
         const updatedUser = { ...user, photo: result.photoUrl };
         setUser(updatedUser);
         updateUser(updatedUser);
         setPhotoFile(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
       } else {
-        setError(result.message || 'Erro ao fazer upload da foto');
+        setMessage({ text: result.message || 'Erro ao fazer upload da foto', type: 'error' });
       }
     } catch (err) {
       console.error('Photo upload error:', err);
-      setError(err.name === 'AbortError' ? 'Tempo de requisição esgotado' : 'Erro ao conectar com o servidor');
+      setMessage({ 
+        text: err.name === 'AbortError' ? 'Tempo de requisição esgotado' : 'Erro ao conectar com o servidor', 
+        type: 'error' 
+      });
     } finally {
       setLoading(false);
     }
@@ -159,30 +158,34 @@ export default function UserProfile() {
 
   async function handleUpdateEmail(e) {
     e.preventDefault();
+    
+    if (!validateUserForm()) {
+      setMessage({ text: 'Por favor, corrija os erros no formulário', type: 'error' });
+      return;
+    }
+    
     setLoading(true);
-    setError('');
-    setSuccess('');
+    setMessage({ text: '', type: '' });
+    
     try {
-      if (!form.email || form.email === user.email) {
-        setError('Digite um novo email válido');
+      if (!userForm.email || userForm.email === user.email) {
+        setMessage({ text: 'Digite um novo email válido', type: 'error' });
         return;
       }
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(form.email)) {
-        setError('Formato de email inválido');
-        return;
-      }
-      const result = await UserService.updateEmail(form.email);      if (result.success) {
-        setSuccess(result.message || 'Email atualizado com sucesso!');
-        const updatedUser = { ...user, email: form.email };
+      
+      const result = await UserService.updateEmail(userForm.email);
+      
+      if (result.success) {
+        setMessage({ text: result.message || 'Email atualizado com sucesso!', type: 'success' });
+        const updatedUser = { ...user, email: userForm.email };
         setUser(updatedUser);
         updateUser(updatedUser);
       } else {
-        setError(result.message || 'Erro ao atualizar email');
+        setMessage({ text: result.message || 'Erro ao atualizar email', type: 'error' });
       }
     } catch (err) {
       console.error('Update email error:', err);
-      setError('Erro ao conectar com o servidor');
+      setMessage({ text: 'Erro ao conectar com o servidor', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -191,24 +194,25 @@ export default function UserProfile() {
   async function handleUpdateUsername(e) {
     e.preventDefault();
     setLoading(true);
-    setError('');
-    setSuccess('');
+    setMessage({ text: '', type: '' });
+    
     try {
-      if (!form.username || form.username === user.username) {
-        setError('Digite um novo login válido');
+      if (!userForm.username || userForm.username === user.username) {
+        setMessage({ text: 'Digite um novo login válido', type: 'error' });
         return;
       }
-      const result = await UserService.updateUsername(form.username);      if (result.success) {
-        setSuccess(result.message || 'Login atualizado com sucesso!');
-        const updatedUser = { ...user, username: form.username };
+      const result = await UserService.updateUsername(userForm.username);
+      if (result.success) {
+        setMessage({ text: result.message || 'Login atualizado com sucesso!', type: 'success' });
+        const updatedUser = { ...user, username: userForm.username };
         setUser(updatedUser);
         updateUser(updatedUser);
       } else {
-        setError(result.message || 'Erro ao atualizar login');
+        setMessage({ text: result.message || 'Erro ao atualizar login', type: 'error' });
       }
     } catch (err) {
       console.error('Update username error:', err);
-      setError('Erro ao conectar com o servidor');
+      setMessage({ text: 'Erro ao conectar com o servidor', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -217,41 +221,36 @@ export default function UserProfile() {
   async function handleUpdatePassword(e) {
     e.preventDefault();
     setLoading(true);
-    setError('');
-    setSuccess('');
+    setMessage({ text: '', type: '' });
+    setMessage({ text: '', type: '' });
     try {
-      if (!form.currentPassword || !form.newPassword || !form.confirmPassword) {
-        setError('Preencha todos os campos de senha');
+      if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+        setMessage({ text: 'Preencha todos os campos de senha', type: 'error' });
         return;
       }
-      if (form.newPassword !== form.confirmPassword) {
-        setError('A nova senha e confirmação não coincidem');
+      if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+        setMessage({ text: 'A nova senha e confirmação não coincidem', type: 'error' });
         return;
       }
-      if (form.newPassword.length < 8) {
-        setError('A nova senha deve ter pelo menos 8 caracteres');
+      if (passwordForm.newPassword.length < 8) {
+        setMessage({ text: 'A nova senha deve ter pelo menos 8 caracteres', type: 'error' });
         return;
       }
       const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/;
-      if (!passwordRegex.test(form.newPassword)) {
-        setError('A nova senha deve conter: maiúscula, minúscula, número e caractere especial');
+      if (!passwordRegex.test(passwordForm.newPassword)) {
+        setMessage({ text: 'A nova senha deve conter: maiúscula, minúscula, número e caractere especial', type: 'error' });
         return;
       }
-      const result = await UserService.updatePassword(form.currentPassword, form.newPassword);
+      const result = await UserService.updatePassword(passwordForm.currentPassword, passwordForm.newPassword);
       if (result.success) {
-        setSuccess(result.message || 'Senha atualizada com sucesso!');
-        setForm((prevForm) => ({
-          ...prevForm,
-          currentPassword: '',
-          newPassword: '',
-          confirmPassword: '',
-        }));
+        setMessage({ text: result.message || 'Senha atualizada com sucesso!', type: 'success' });
+        resetPasswordForm();
       } else {
-        setError(result.message || 'Erro ao atualizar senha');
+        setMessage({ text: result.message || 'Erro ao atualizar senha', type: 'error' });
       }
     } catch (err) {
       console.error('Update password error:', err);
-      setError('Erro ao conectar com o servidor');
+      setMessage({ text: 'Erro ao conectar com o servidor', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -321,6 +320,13 @@ export default function UserProfile() {
               >
                 <IoLockClosedOutline />
                 Senha
+              </button>
+              <button
+                className={`profile-tab ${activeTab === 'account' ? 'active' : ''}`}
+                onClick={() => setActiveTab('account')}
+              >
+                <IoSettingsOutline />
+                Conta
               </button>
             </div>
             {activeTab === 'photo' && (
@@ -410,8 +416,8 @@ export default function UserProfile() {
                     <input
                       type="email"
                       name="email"
-                      value={form.email}
-                      onChange={handleChange}
+                      value={userForm.email}
+                      onChange={handleUserChange}
                       className="modern-input"
                       placeholder="Digite o novo email"
                       required
@@ -443,8 +449,8 @@ export default function UserProfile() {
                     <input
                       type="text"
                       name="username"
-                      value={form.username}
-                      onChange={handleChange}
+                      value={userForm.username}
+                      onChange={handleUserChange}
                       className="modern-input"
                       placeholder="Digite o novo login"
                       required
@@ -466,8 +472,8 @@ export default function UserProfile() {
                     <input
                       type="password"
                       name="currentPassword"
-                      value={form.currentPassword}
-                      onChange={handleChange}
+                      value={passwordForm.currentPassword}
+                      onChange={handlePasswordChange}
                       className="modern-input"
                       placeholder="Digite sua senha atual"
                       required
@@ -478,8 +484,8 @@ export default function UserProfile() {
                     <input
                       type="password"
                       name="newPassword"
-                      value={form.newPassword}
-                      onChange={handleChange}
+                      value={passwordForm.newPassword}
+                      onChange={handlePasswordChange}
                       className="modern-input"
                       placeholder="Digite a nova senha"
                       required
@@ -490,8 +496,8 @@ export default function UserProfile() {
                     <input
                       type="password"
                       name="confirmPassword"
-                      value={form.confirmPassword}
-                      onChange={handleChange}
+                      value={passwordForm.confirmPassword}
+                      onChange={handlePasswordChange}
                       className="modern-input"
                       placeholder="Confirme a nova senha"
                       required
@@ -514,35 +520,54 @@ export default function UserProfile() {
                 </form>
               </div>
             )}
-            <div style={{ marginTop: 32, textAlign: 'center' }}>
-              <button
-                className="modern-btn danger-btn"
-                style={{ background: 'var(--color-danger)', color: '#fff', marginTop: 16, border: '2px solid #b00020', boxShadow: '0 2px 8px #b0002022' }}
-                onClick={async () => {
-                  const password = window.prompt('Digite sua senha para confirmar a exclusão da conta:');
-                  if (!password) return;
-                  if (window.confirm('Tem certeza que deseja deletar sua conta? Esta ação é irreversível.')) {
-                    setLoading(true);
-                    setError('');
-                    setSuccess('');
-                    const result = await UserService.deleteAccount(password);
-                    setLoading(false);
-                    if (result.success) {
-                      alert('Conta deletada com sucesso!');
-                      AuthService.logout();
-                      navigate('/login');
-                    } else {
-                      setError(result.message || 'Erro ao deletar conta');
-                    }
-                  }
-                }}
-                disabled={loading}
-              >
-                Deletar Conta
-              </button>
-            </div>
-            {error && <div className="status-message status-error">{error}</div>}
-            {success && <div className="status-message status-success">{success}</div>}
+            {activeTab === 'account' && (
+              <div className="profile-section">
+                <h3 className="profile-section-title">Configurações da Conta</h3>
+                <div className="account-section">
+                  <div className="account-warning">
+                    <h4 style={{ color: 'var(--color-danger)', marginBottom: '12px' }}>
+                      ⚠️ Zona de Perigo
+                    </h4>
+                    <p style={{ color: 'var(--color-gray-light)', marginBottom: '20px', fontSize: '14px' }}>
+                      As ações abaixo são irreversíveis e resultarão na perda permanente de todos os seus dados.
+                    </p>
+                    <button
+                      className="modern-btn danger-btn"
+                      style={{ 
+                        background: 'var(--color-danger)', 
+                        color: '#fff', 
+                        border: '2px solid #b00020', 
+                        boxShadow: '0 2px 8px #b0002022',
+                        padding: '12px 24px',
+                        fontWeight: 'bold'
+                      }}
+                      onClick={async () => {
+                        const password = window.prompt('Digite sua senha para confirmar a exclusão da conta:');
+                        if (!password) return;
+                        if (window.confirm('Tem certeza que deseja deletar sua conta? Esta ação é irreversível.')) {
+                          setLoading(true);
+                          setMessage({ text: '', type: '' });
+                          const result = await UserService.deleteAccount(password);
+                          setLoading(false);
+                          if (result.success) {
+                            alert('Conta deletada com sucesso!');
+                            AuthService.logout();
+                            navigate('/login');
+                          } else {
+                            setMessage({ text: result.message || 'Erro ao deletar conta', type: 'error' });
+                          }
+                        }
+                      }}
+                      disabled={loading}
+                    >
+                      🗑️ Deletar Conta Permanentemente
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+            {message.text && message.type === 'error' && <div className="status-message status-error">{message.text}</div>}
+            {message.text && message.type === 'success' && <div className="status-message status-success">{message.text}</div>}
           </div>
         </div>
       </div>

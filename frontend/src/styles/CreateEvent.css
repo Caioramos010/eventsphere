@@ -1,7 +1,7 @@
 
 
-@import url('../styles/common.css');
-@import url('../styles/variables.css');
+@import url('./common.css');
+@import url('./variables.css');
 
 
 .content-wrapper {

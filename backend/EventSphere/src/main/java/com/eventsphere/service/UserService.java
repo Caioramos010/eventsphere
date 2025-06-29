@@ -1,7 +1,6 @@
 package com.eventsphere.service;
 
 import com.eventsphere.dto.UserDTO;
-import com.eventsphere.dto.UserProfileDTO;
 import com.eventsphere.entity.event.Event;
 import com.eventsphere.entity.event.EventParticipant;
 import com.eventsphere.entity.event.ParticipantStatus;
@@ -148,7 +147,7 @@ public class UserService {
     public User getUser(Long userID){
         return userRepository.findById(userID).orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado!"));
     }
-    public UserProfileDTO getUserDisplay(Long userID) {
+    public UserDTO getUserDisplay(Long userID) {
         User user = userRepository.findById(userID).orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado!"));
         return userMapper.toProfileDTO(user);
     }

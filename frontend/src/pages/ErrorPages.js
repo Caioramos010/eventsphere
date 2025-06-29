@@ -1,5 +1,5 @@
 import React from 'react';
-import './ErrorPage.css';
+import '../styles/ErrorPage.css';
 import logo from '../images/logo.png';
 import { IoBan, IoServer, IoSearch } from 'react-icons/io5';
 

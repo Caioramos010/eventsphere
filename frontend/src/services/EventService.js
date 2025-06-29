@@ -1,5 +1,6 @@
 import { get, post, put, del, uploadFile } from '../fetchWithAuth';
 import API_CONFIG, { buildUrl } from '../config/api';
+import { handleServiceError } from '../utils/errorHandler';
 
 const EventService = {
   
@@ -17,12 +18,10 @@ const EventService = {
       
       return { success: true, events };
     } catch (error) {
-      console.error('Error fetching public events:', error);
-      return { success: false, message: error.message, events: [] };
+      return handleServiceError(error, 'EventService.getPublicEvents');
     }
   },
 
-  
   async getMyEvents() {
     try {
       const response = await get(API_CONFIG.ENDPOINTS.MY_EVENTS);
@@ -37,466 +36,282 @@ const EventService = {
       
       return { success: true, events };
     } catch (error) {
-      console.error('Error fetching my events:', error);
-      return { success: false, message: error.message, events: [] };
+      return handleServiceError(error, 'EventService.getMyEvents');
     }
   },
 
-  
-  async getEventDetails(eventId) {
+  async getAllMyEvents() {
     try {
-      
-      if (!eventId) {
-        console.error('ID do evento não fornecido');
-        return { 
-          success: false, 
-          message: 'ID do evento não fornecido ou inválido' 
-        };
-      }
-      
-      if (eventId.startsWith('temp_')) {
-        
-        try {
-          const myEventsCache = localStorage.getItem('myEventsCache');
-          const publicEventsCache = localStorage.getItem('publicEventsCache');
-          
-          let events = [];
-          if (myEventsCache) {
-            events = events.concat(JSON.parse(myEventsCache));
-          }
-          if (publicEventsCache) {
-            events = events.concat(JSON.parse(publicEventsCache));
-          }
-          
-          const event = events.find(e => e.id === eventId);
-          
-          if (event) {
-            return { success: true, event };
-          } else {
-            console.warn('Evento com ID temporário não encontrado no cache');
-          }
-        } catch (cacheError) {
-          console.error('Erro ao buscar evento do cache:', cacheError);
-        }
-      }
-      
-      const endpoint = API_CONFIG.ENDPOINTS.EVENT_GET;
-      let url = `${API_CONFIG.BASE_URL}${endpoint}?eventID=${eventId}`;
-      
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      
+      const response = await get(API_CONFIG.ENDPOINTS.ALL_MY_EVENTS);
       const data = await response.json();
       
-      if (data.success || response.ok) {
-        const eventData = data.data || data.event || data;
-        if (!eventData.id && eventId) {
-          eventData.id = eventId;
-        }
-        return { success: true, event: eventData };
-      } else {
-        return { success: false, message: data.message || 'Erro ao buscar evento' };
-      }
-    } catch (error) {
-      console.error('Error fetching event details:', error);
-      return { success: false, message: error.message || 'Erro de conexão' };
-    }
-  },
-  
-  
-  async createEvent(eventData) {
-    try {
-      const response = await post(API_CONFIG.ENDPOINTS.EVENT_CREATE, eventData);
-      const data = await response.json();
-      
-      if (data.success || response.ok) {
-        return { success: true, event: data.data || data.event || data, message: data.message || 'Evento criado com sucesso' };
-      } else {
-        return { success: false, message: data.message || 'Erro ao criar evento' };
-      }
-    } catch (error) {
-      console.error('Error creating event:', error);
-      return { success: false, message: error.message || 'Erro de conexão' };
-    }
-  },
-
-  
-  async updateEvent(eventId, eventData) {
-    try {
-      const url = buildUrl(API_CONFIG.ENDPOINTS.EVENT_EDIT, { eventID: eventId });
-      const response = await put(url, eventData);
-      const data = await response.json();
-      
-      if (data.success || response.ok) {
-        return { success: true, event: data.data || data.event || data, message: data.message || 'Evento atualizado com sucesso' };
-      } else {
-        return { success: false, message: data.message || 'Erro ao atualizar evento' };
-      }
-    } catch (error) {
-      console.error('Error updating event:', error);
-      return { success: false, message: error.message || 'Erro de conexão' };
-    }
-  },
-
-  
-  async deleteEvent(eventId) {
-    try {
-      const url = buildUrl(API_CONFIG.ENDPOINTS.EVENT_DELETE, { eventID: eventId });
-      const response = await del(url);
-      
-      if (response.ok) {
-        const data = await response.json();
-        return { success: true, message: data.message || 'Evento deletado com sucesso' };
-      } else {
-        const data = await response.json();
-        return { success: false, message: data.message || 'Erro ao deletar evento' };
-      }
-    } catch (error) {
-      console.error('Error deleting event:', error);
-      return { success: false, message: error.message || 'Erro de conexão' };
-    }
-  },
-
-  
-  async generateInviteLink(eventId) {
-    try {
-      const url = buildUrl(API_CONFIG.ENDPOINTS.INVITE_GENERATE, { eventID: eventId });
-      const response = await get(url);
-      const data = await response.json();
-      
-      if (data.success || response.ok) {
-        return { 
-          success: true, 
-          inviteToken: data.data.inviteToken,
-          inviteUrl: data.data.inviteUrl,
-          message: data.message || 'Link de convite gerado com sucesso' 
-        };
-      } else {
-        return { success: false, message: data.message || 'Erro ao gerar link de convite' };
-      }
-    } catch (error) {
-      console.error('Error generating invite link:', error);
-      return { success: false, message: error.message || 'Erro de conexão' };
-    }
-  },
-
-  
-  async validateInviteToken(token) {
-    try {
-      const url = buildUrl(API_CONFIG.ENDPOINTS.INVITE_VALIDATE, { token });
-      const response = await get(url);
-      const data = await response.json();
-      
-      if (data.success || response.ok) {
-        return { success: true, data: data.data, message: data.message || 'Token válido' };
-      } else {
-        return { success: false, message: data.message || 'Token inválido' };
-      }
-    } catch (error) {
-      console.error('Error validating token:', error);
-      return { success: false, message: error.message || 'Erro de conexão' };
-    }
-  },
-
-  
-  async joinEventByInvite(inviteToken, inviteCode) {
-    try {
-      const response = await post(API_CONFIG.ENDPOINTS.PARTICIPANT_ADD, {
-        inviteToken,
-        inviteCode
-      });
-      const data = await response.json();
-      
-      if (data.success || response.ok) {
-        return { success: true, message: data.message || 'Participação confirmada com sucesso' };
-      } else {
-        return { success: false, message: data.message || 'Erro ao participar do evento' };
-      }
-    } catch (error) {
-      console.error('Error joining event:', error);
-      return { success: false, message: error.message || 'Erro de conexão' };
-    }
-  },
-
-  
-  async uploadEventImage(eventId, imageFile) {
-    try {
-      const formData = new FormData();
-      formData.append('image', imageFile);
-      formData.append('eventID', eventId);
-      
-      const url = buildUrl(API_CONFIG.ENDPOINTS.EVENT_IMAGE);
-      const response = await uploadFile(url, formData);
-      const data = await response.json();
-      
-      if (data.success || response.ok) {
-        return { 
-          success: true, 
-          imageUrl: data.data?.imageUrl || data.imageUrl || data.image || data.url,
-          message: 'Imagem carregada com sucesso'
-        };
-      } else {
-        return { success: false, message: data.message || 'Erro ao fazer upload da imagem' };
-      }
-    } catch (error) {
-      console.error('Error uploading event image:', error);
-      return { success: false, message: error.message || 'Erro de conexão' };
-    }
-  },
-
-  
-  async uploadEventPhoto(eventId, photoFile) {
-    try {
-      if (!photoFile) {
-        throw new Error('Arquivo de foto não fornecido');
-      }
-
-      const formData = new FormData();
-      formData.append('image', photoFile); 
-      formData.append('eventID', eventId);  
-
-      const response = await uploadFile(API_CONFIG.ENDPOINTS.EVENT_IMAGE, formData);
-      const data = await response.json();
-      
-      if (data.success || response.ok) {
-        return { success: true, fileName: data.fileName, imageUrl: data.data?.imageUrl, message: data.message || 'Foto do evento enviada com sucesso' };
-      } else {
-        return { success: false, message: data.message || 'Erro ao enviar foto do evento' };
-      }
-    } catch (error) {
-      console.error('Error uploading event photo:', error);
-      return { success: false, message: error.message || 'Erro de conexão' };
-    }
-  },
-
-  
-  async searchEvents(filters = {}) {
-    try {
-      const url = buildUrl(API_CONFIG.ENDPOINTS.EVENT_GET, filters);
-      const response = await get(url);
-      const data = await response.json();
-      return { success: true, events: data.data || data };
-    } catch (error) {
-      console.error('Error searching events:', error);
-      return { success: false, message: error.message, events: [] };
-    }
-  },
-
-  
-  async startEvent(eventId) {
-    try {
-      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.EVENT_START}?eventID=${eventId}`;
-      const response = await fetch(url, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      const data = await response.json();
-      
-      if (data.success || response.ok) {
-        return { 
-          success: true, 
-          message: data.message || 'Evento iniciado com sucesso' 
-        };
-      } else {
-        return { success: false, message: data.message || 'Erro ao iniciar o evento' };
-      }
-    } catch (error) {
-      console.error('Error starting event:', error);
-      return { success: false, message: error.message || 'Erro de conexão' };
-    }
-  },
-
-  
-  async finishEvent(eventId) {
-    try {
-      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.EVENT_FINISH}?eventID=${eventId}`;
-      const response = await fetch(url, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      const data = await response.json();
-      
-      if (data.success || response.ok) {
-        return { 
-          success: true, 
-          message: data.message || 'Evento finalizado com sucesso' 
-        };
-      } else {
-        return { success: false, message: data.message || 'Erro ao finalizar o evento' };
-      }
-    } catch (error) {
-      console.error('Error finishing event:', error);
-      return { success: false, message: error.message || 'Erro de conexão' };
-    }
-  },
-
-  
-  async cancelEvent(eventId) {
-    try {
-      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.EVENT_CANCEL}?eventID=${eventId}`;
-      const response = await fetch(url, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      const data = await response.json();
-      
-      if (data.success || response.ok) {
-        return { 
-          success: true, 
-          message: data.message || 'Evento cancelado com sucesso' 
-        };
-      } else {
-        return { success: false, message: data.message || 'Erro ao cancelar o evento' };
-      }
-    } catch (error) {
-      console.error('Error cancelling event:', error);
-      return { success: false, message: error.message || 'Erro de conexão' };
-    }
-  },
-
-  
-  async removeCollaborator(eventId, userId) {
-    try {
-      const url = buildUrl(`${API_CONFIG.ENDPOINTS.EVENTS}/${eventId}/collaborator/${userId}`);
-      const response = await del(url);
-      const data = await response.json();
-      
-      if (data.success || response.ok) {
-        return { success: true, message: 'Colaborador removido com sucesso' };
-      } else {
-        return { success: false, message: data.message || 'Erro ao remover colaborador' };
-      }
-    } catch (error) {
-      console.error('Error removing collaborator:', error);
-      return { success: false, message: error.message || 'Erro de conexão' };
-    }
-  },
-
-  
-  async getParticipatingEvents() {
-    try {
-      const url = `${API_CONFIG.BASE_URL}/api/event/participating`;
-      const response = await get(url);
-      const data = await response.json();
-      
-      if (data.success || response.ok) {
-        return { 
-          success: true, 
-          events: data.data || data.events || [], 
-          message: data.message || 'Eventos carregados com sucesso' 
-        };
-      } else {
-        return { success: false, message: data.message || 'Erro ao carregar eventos', events: [] };
-      }
-    } catch (error) {
-      console.error('Error loading participating events:', error);
-      return { success: false, message: error.message || 'Erro de conexão', events: [] };
-    }
-  },
-
-  
-  async validateEventCode(eventCode) {
-    try {
-      
-      const url = buildUrl(API_CONFIG.ENDPOINTS.EVENT_CODE_VALIDATE, { eventCode });
-      const response = await get(url);
-      const data = await response.json();
-      
-      if (data.success || response.ok) {
-        return { success: true, data: data.data, message: data.message || 'Código válido' };
-      } else {
-        return { success: false, message: data.message || 'Código inválido' };
-      }
-    } catch (error) {
-      console.error('Error validating event code:', error);
-      return { success: false, message: error.message || 'Erro de conexão' };
-    }
-  },
-
-  async generateEventCode(eventId) {
-    try {
-
-      const ensureUrl = `${API_CONFIG.BASE_URL}/api/event/${eventId}/ensure-code`;
-      const ensureResponse = await post(ensureUrl);
-      const ensureData = await ensureResponse.json();
-      
-      if (ensureData.success || ensureResponse.ok) {
-        return { 
-          success: true, 
-          eventCode: ensureData.data?.inviteCode || ensureData.inviteCode,
-          message: ensureData.message || 'Código obtido com sucesso' 
-        };
-      } else {
-
-        const response = await post(API_CONFIG.ENDPOINTS.INVITE_GENERATE, { eventId });
-        const data = await response.json();
-        
-        if (data.success || response.ok) {
-          return { 
-            success: true, 
-            eventCode: data.data?.inviteCode || data.inviteCode,
-            message: data.message || 'Código obtido com sucesso' 
-          };
-        } else {
-          return { success: false, message: data.message || 'Erro ao obter código' };
-        }
-      }
-    } catch (error) {
-      console.error('Error getting event code:', error);
-      return { success: false, message: error.message || 'Erro de conexão' };
-    }
-  },
-
-  
-  async getNextEvents() {
-    try {
-      const response = await get(API_CONFIG.ENDPOINTS.NEXT_EVENTS);
-      const data = await response.json();
       const events = (data.data || data || []).map(event => {
         if (!event.id) {
           console.warn('Evento sem ID encontrado:', event);
         }
         return event;
       });
+      
       return { success: true, events };
     } catch (error) {
-      console.error('Error fetching next events:', error);
-      return { success: false, message: error.message, events: [] };
+      return handleServiceError(error, 'EventService.getAllMyEvents');
     }
   },
 
-  
-  async getNextPublicEvents() {
+  async getEventDetails(eventId) {
     try {
-      const response = await get(API_CONFIG.ENDPOINTS.NEXT_PUBLIC_EVENTS);
+      if (!eventId) {
+        return { 
+          success: false, 
+          message: 'ID do evento não fornecido ou inválido' 
+        };
+      }
+
+      const url = buildUrl(API_CONFIG.ENDPOINTS.EVENT_GET, { id: eventId });
+      const response = await get(url);
       const data = await response.json();
+      
+      if (data.success) {
+        return { 
+          success: true, 
+          event: data.data,
+          message: data.message 
+        };
+      } else {
+        return { 
+          success: false, 
+          message: data.message || 'Erro ao carregar evento' 
+        };
+      }
+    } catch (error) {
+      return handleServiceError(error, 'EventService.getEventDetails');
+    }
+  },
+
+  async createEvent(eventData) {
+    try {
+      const response = await post(API_CONFIG.ENDPOINTS.EVENT_CREATE, eventData);
+      const data = await response.json();
+      
+      return { 
+        success: data.success || response.ok, 
+        event: data.data || data.event,
+        message: data.message || 'Evento criado com sucesso' 
+      };
+    } catch (error) {
+      return handleServiceError(error, 'EventService.createEvent');
+    }
+  },
+
+  async updateEvent(eventId, eventData) {
+    try {
+      const url = buildUrl(API_CONFIG.ENDPOINTS.EVENT_UPDATE, { id: eventId });
+      const response = await put(url, eventData);
+      const data = await response.json();
+      
+      return { 
+        success: data.success || response.ok, 
+        message: data.message || 'Evento atualizado com sucesso' 
+      };
+    } catch (error) {
+      return handleServiceError(error, 'EventService.updateEvent');
+    }
+  },
+
+  async deleteEvent(eventId) {
+    try {
+      const url = buildUrl(API_CONFIG.ENDPOINTS.EVENT_DELETE, { id: eventId });
+      const response = await del(url);
+      const data = await response.json();
+      
+      return { 
+        success: data.success || response.ok, 
+        message: data.message || 'Evento deletado com sucesso' 
+      };
+    } catch (error) {
+      return handleServiceError(error, 'EventService.deleteEvent');
+    }
+  },
+
+  async generateInviteLink(eventId) {
+    try {
+      const url = buildUrl(API_CONFIG.ENDPOINTS.INVITE_GENERATE, { id: eventId });
+      const response = await get(url);
+      const data = await response.json();
+      
+      return {
+        success: data.success || response.ok,
+        inviteUrl: data.data?.inviteUrl || data.inviteUrl,
+        inviteToken: data.data?.inviteToken || data.inviteToken,
+        message: data.message || 'Link de convite gerado com sucesso'
+      };
+    } catch (error) {
+      return handleServiceError(error, 'EventService.generateInviteLink');
+    }
+  },
+
+  async generateEventCode(eventId) {
+    try {
+      const url = buildUrl(API_CONFIG.ENDPOINTS.EVENT_CODE_GENERATE, { id: eventId });
+      const response = await get(url);
+      const data = await response.json();
+      
+      return {
+        success: data.success || response.ok,
+        eventCode: data.data?.eventCode || data.eventCode,
+        message: data.message || 'Código do evento gerado com sucesso'
+      };
+    } catch (error) {
+      return handleServiceError(error, 'EventService.generateEventCode');
+    }
+  },
+
+  async validateInviteToken(token) {
+    try {
+      const url = buildUrl(API_CONFIG.ENDPOINTS.INVITE_GET, { token });
+      const response = await get(url);
+      const data = await response.json();
+      
+      return {
+        success: data.success || response.ok,
+        event: data.data || data.event,
+        message: data.message || 'Token válido'
+      };
+    } catch (error) {
+      return handleServiceError(error, 'EventService.validateInviteToken');
+    }
+  },
+
+  async joinEventByInvite(inviteToken, inviteCode = null) {
+    try {
+      const url = buildUrl(API_CONFIG.ENDPOINTS.INVITE_JOIN, { token: inviteToken });
+      const body = inviteCode ? { inviteCode } : {};
+      const response = await post(url, body);
+      const data = await response.json();
+      
+      return {
+        success: data.success || response.ok,
+        message: data.message || 'Participação confirmada com sucesso'
+      };
+    } catch (error) {
+      return handleServiceError(error, 'EventService.joinEventByInvite');
+    }
+  },
+
+  async validateEventCode(eventCode) {
+    try {
+      const response = await get(API_CONFIG.ENDPOINTS.EVENT_CODE_VALIDATE, { eventCode });
+      const data = await response.json();
+      
+      return {
+        success: data.success || response.ok,
+        event: data.data || data.event,
+        message: data.message || 'Código válido'
+      };
+    } catch (error) {
+      return handleServiceError(error, 'EventService.validateEventCode');
+    }
+  },
+
+  async getParticipatingEvents() {
+    try {
+      const response = await get(API_CONFIG.ENDPOINTS.PARTICIPATING_EVENTS);
+      const data = await response.json();
+      
       const events = (data.data || data || []).map(event => {
         if (!event.id) {
-          console.warn('Evento público sem ID encontrado:', event);
+          console.warn('Evento sem ID encontrado:', event);
         }
         return event;
       });
+      
       return { success: true, events };
     } catch (error) {
-      console.error('Error fetching next public events:', error);
-      return { success: false, message: error.message, events: [] };
+      return handleServiceError(error, 'EventService.getParticipatingEvents');
     }
   },
+
+  async getNextEvents() {
+    try {
+      const response = await get(API_CONFIG.ENDPOINTS.NEXT_EVENTS);
+      const data = await response.json();
+      
+      const events = (data.data || data || []).map(event => {
+        if (!event.id) {
+          console.warn('Evento sem ID encontrado:', event);
+        }
+        return event;
+      });
+      
+      return { success: true, events };
+    } catch (error) {
+      return handleServiceError(error, 'EventService.getNextEvents');
+    }
+  },
+
+  async uploadEventImage(eventId, imageFile) {
+    try {
+      const formData = new FormData();
+      formData.append('file', imageFile);
+      formData.append('eventId', eventId);
+      
+      const response = await uploadFile(API_CONFIG.ENDPOINTS.EVENT_IMAGE, formData);
+      const data = await response.json();
+      
+      return {
+        success: data.success || response.ok,
+        imageUrl: data.data?.imageUrl || data.imageUrl,
+        message: data.message || 'Imagem enviada com sucesso'
+      };
+    } catch (error) {
+      return handleServiceError(error, 'EventService.uploadEventImage');
+    }
+  },
+
+  async startEvent(eventId) {
+    try {
+      const url = buildUrl(API_CONFIG.ENDPOINTS.EVENT_START, { id: eventId });
+      const response = await put(url);
+      const data = await response.json();
+      
+      return {
+        success: data.success || response.ok,
+        message: data.message || 'Evento iniciado com sucesso'
+      };
+    } catch (error) {
+      return handleServiceError(error, 'EventService.startEvent');
+    }
+  },
+
+  async finishEvent(eventId) {
+    try {
+      const url = buildUrl(API_CONFIG.ENDPOINTS.EVENT_FINISH, { id: eventId });
+      const response = await put(url);
+      const data = await response.json();
+      
+      return {
+        success: data.success || response.ok,
+        message: data.message || 'Evento finalizado com sucesso'
+      };
+    } catch (error) {
+      return handleServiceError(error, 'EventService.finishEvent');
+    }
+  },
+
+  async cancelEvent(eventId) {
+    try {
+      const url = buildUrl(API_CONFIG.ENDPOINTS.EVENT_CANCEL, { id: eventId });
+      const response = await put(url);
+      const data = await response.json();
+      
+      return {
+        success: data.success || response.ok,
+        message: data.message || 'Evento cancelado com sucesso'
+      };
+    } catch (error) {
+      return handleServiceError(error, 'EventService.cancelEvent');
+    }
+  }
 };
 
 export default EventService;
-

@@ -14,6 +14,7 @@ import com.eventsphere.repository.ParticipantRepository;
 import com.eventsphere.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -191,6 +192,7 @@ public class ParticipantService {
         participant.setCurrentStatus(ParticipantStatus.CONFIRMED);
         participantRepository.save(participant);
     }   
+    @Transactional
     public void promoteToCollaborator(Long eventId, Long userId, Long authUserId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new IllegalArgumentException("Evento não encontrado"));
@@ -204,9 +206,23 @@ public class ParticipantService {
                 .filter(p -> p.getUser().getId().equals(userId))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Participante não encontrado no evento"));
+        
+        // Atualiza o status do participante
         participant.setIsCollaborator(true);
         participantRepository.save(participant);
+        
+        // Adiciona o usuário à lista de colaboradores do evento se não estiver lá
+        if (event.getCollaborators() == null) {
+            event.setCollaborators(new java.util.ArrayList<>());
+        }
+        boolean alreadyInCollaboratorsList = event.getCollaborators().stream()
+                .anyMatch(u -> u.getId().equals(userId));
+        if (!alreadyInCollaboratorsList) {
+            event.getCollaborators().add(participant.getUser());
+            eventRepository.save(event);
+        }
     }
+    @Transactional
     public void demoteCollaborator(Long eventId, Long userId, Long authUserId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new IllegalArgumentException("Evento não encontrado"));
@@ -219,8 +235,15 @@ public class ParticipantService {
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Participante não encontrado no evento"));
         
+        // Remove o status de colaborador do participante
         participant.setIsCollaborator(false);
         participantRepository.save(participant);
+        
+        // Remove o usuário da lista de colaboradores do evento
+        if (event.getCollaborators() != null) {
+            event.getCollaborators().removeIf(u -> u.getId().equals(userId));
+            eventRepository.save(event);
+        }
     }   
 
     private void authorizeEventManagement(Event event, Long authUserId) {
@@ -461,5 +484,30 @@ public class ParticipantService {
         return result;
     }
 
+    public Event leaveEvent(Long eventID, Long userID) {
+        Event event = eventRepository.findById(eventID)
+                .orElseThrow(() -> new IllegalArgumentException("Evento não encontrado!"));
+
+        // Verificar se o usuário não é o dono do evento
+        if (event.getOwner().getId().equals(userID)) {
+            throw new IllegalArgumentException("O dono do evento não pode sair do próprio evento.");
+        }
+
+        // Validar se o evento pode ser modificado
+        validateEventForModification(event);
+
+        User user = userRepository.findById(userID)
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado!"));
+
+        boolean alreadyParticipating = event.getParticipants().stream()
+                .anyMatch(p -> p.getUser().equals(user));
+
+        if (alreadyParticipating) {
+            event.getParticipants().removeIf(p -> p.getUser().equals(user));
+            return eventRepository.save(event);
+        }
+
+        throw new IllegalArgumentException("Você não está participando deste evento.");
+    }
 
 }

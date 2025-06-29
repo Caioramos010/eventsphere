@@ -1,5 +1,4 @@
-
-@import url('../styles/common.css');
+@import url('./common.css');
 
 
 .event-status-container {
@@ -315,6 +314,16 @@
   background: var(--color-error-light);
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(231, 76, 60, 0.25);
+}
+
+.leave-btn {
+  background: var(--color-warning);
+}
+
+.leave-btn:hover {
+  background: var(--color-warning-light);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(243, 156, 18, 0.25);
 }
 
 @keyframes shake {
@@ -1039,380 +1048,21 @@
   box-shadow: 0 2px 8px rgba(243, 156, 18, 0.3);
 }
 
-.modification-warning {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: rgba(243, 156, 18, 0.1);
-  border: 1px solid rgba(243, 156, 18, 0.3);
+.owner-badge {
+  background: linear-gradient(135deg, #8b5a3c 0%, #6b4226 100%);
+  color: white;
+  padding: 4px 8px;
   border-radius: 12px;
-  padding: 15px;
-  margin-bottom: 15px;
-  color: var(--color-text-white);
-}
-
-.modification-warning .warning-icon {
-  color: #f39c12;
-  font-size: 20px;
-  flex-shrink: 0;
-}
-
-.modification-warning span {
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.event-completed-message {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 15px 20px;
-  background: rgba(108, 117, 125, 0.1);
-  border: 1px solid rgba(108, 117, 125, 0.3);
-  border-radius: 12px;
-  color: var(--color-text-light);
-  font-size: 14px;
-  font-weight: 500;
-  text-align: center;
-}
-
-
-.qr-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(10px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1001;
-  padding: 20px;
-}
-
-.qr-modal-container {
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  border: var(--glass-border);
-  border-radius: 20px;
-  box-shadow: var(--glass-shadow);
-  max-width: 400px;
-  width: 100%;
-  animation: modalSlideIn 0.3s ease-out;
-}
-
-.qr-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 25px 30px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.qr-modal-header h3 {
-  color: var(--color-text-white);
-  font-family: 'Lexend Deca', sans-serif;
-  font-size: 20px;
+  font-size: 10px;
   font-weight: 600;
-  margin: 0;
-}
-
-.qr-modal-close {
-  background: none;
-  border: none;
-  color: var(--color-text-light);
-  cursor: pointer;
-  font-size: 24px;
-  padding: 5px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-}
-
-.qr-modal-close:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: var(--color-text-white);
-}
-
-.qr-modal-content {
-  padding: 30px;
-}
-
-.qr-code-display {
-  text-align: center;
-}
-
-.qr-code-image {
-  margin-bottom: 20px;
-}
-
-.qr-image {
-  max-width: 250px;
-  max-height: 250px;
-  border-radius: 12px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-  border: 3px solid var(--color-primary);
-  background: white;
-  padding: 10px;
-}
-
-.qr-code-text {
-  background: var(--color-text-white);
-  color: var(--color-background);
-  padding: 20px;
-  border-radius: 12px;
-  font-family: 'Courier New', monospace;
-  font-size: 18px;
-  font-weight: bold;
-  letter-spacing: 2px;
-  margin-bottom: 20px;
-  border: 3px solid var(--color-primary);
-}
-
-.qr-code-text-info {
-  margin-top: 15px;
-  padding: 10px;
-  background: rgba(124, 58, 237, 0.1);
-  border-radius: 8px;
-  border: 1px solid rgba(124, 58, 237, 0.3);
-}
-
-.qr-code-text-info small {
-  color: var(--color-text-light);
-  font-family: 'Courier New', monospace;
-  font-size: 12px;
-}
-
-.qr-code-display p {
-  color: var(--color-text-light);
-  margin-bottom: 15px;
-  font-size: 14px;
-}
-
-.qr-event-info {
-  color: var(--color-text-white);
-  font-size: 16px;
-  background: rgba(124, 58, 237, 0.1);
-  padding: 15px;
-  border-radius: 10px;
-  border: 1px solid rgba(124, 58, 237, 0.3);
-}
-
-
-.attendance-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(10px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1001;
-  padding: 20px;
-}
-
-.attendance-modal-container {
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  border: var(--glass-border);
-  border-radius: 20px;
-  box-shadow: var(--glass-shadow);
-  max-width: 800px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-  animation: modalSlideIn 0.3s ease-out;
-}
-
-.attendance-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 25px 30px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.attendance-modal-header h3 {
-  color: var(--color-text-white);
-  font-family: 'Lexend Deca', sans-serif;
-  font-size: 24px;
-  font-weight: 600;
-  margin: 0;
-}
-
-.attendance-modal-close {
-  background: none;
-  border: none;
-  color: var(--color-text-light);
-  cursor: pointer;
-  font-size: 24px;
-  padding: 5px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-}
-
-.attendance-modal-close:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: var(--color-text-white);
-}
-
-.attendance-modal-content {
-  padding: 30px;
-}
-
-.attendance-summary {
-  display: flex;
-  justify-content: center;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  text-align: center;
-  margin-bottom: 30px;
-}
-.attendance-summary button{
-  width: 25%;
-}
-
-.attendance-summary h4 {
-  color: var(--color-text-white);
-  font-size: 20px;
-  margin-bottom: 20px;
-}
-
-.attendance-stats {
-  display: flex;
-  justify-content: center;
-  gap: 30px;
-  flex-wrap: wrap;
-}
-
-.stat-item {
-  text-align: center;
-  padding: 20px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  min-width: 120px;
-}
-
-.stat-item.present {
-  background: rgba(39, 174, 96, 0.1);
-  border-color: rgba(39, 174, 96, 0.3);
-}
-
-.stat-item.absent {
-  background: rgba(231, 76, 60, 0.1);
-  border-color: rgba(231, 76, 60, 0.3);
-}
-
-.stat-number {
-  display: block;
-  font-size: 32px;
-  font-weight: bold;
-  color: var(--color-text-white);
-  margin-bottom: 5px;
-}
-
-.stat-label {
-  color: var(--color-text-light);
-  font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  margin-left: 8px;
+  box-shadow: 0 2px 8px rgba(139, 90, 60, 0.3);
+  position: relative;
 }
 
-.attendance-lists {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 30px;
-}
-
-.attendance-list h5 {
-  color: var(--color-text-white);
-  font-size: 18px;
-  margin-bottom: 15px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.attendance-participant {
-  display: flex;
-  align-items: center;
-  padding: 15px;
-  border-radius: 10px;
-  margin-bottom: 10px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.attendance-participant.present {
-  border-left: 4px solid var(--color-success);
-}
-
-.attendance-participant.absent {
-  border-left: 4px solid var(--color-danger);
-}
-
-.attendance-participant .participant-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  overflow: hidden;
-  margin-right: 15px;
-  flex-shrink: 0;
-}
-
-.attendance-participant .participant-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.attendance-participant .participant-info {
-  flex: 1;
-}
-
-.attendance-participant .participant-name {
-  color: var(--color-text-white);
-  font-weight: 600;
-  margin-bottom: 4px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.attendance-participant .participant-email {
-  color: var(--color-text-light);
-  font-size: 12px;
-}
-
-.presence-status {
-  font-size: 20px;
-  margin-left: 10px;
-}
-
-.presence-status.present {
-  color: var(--color-success);
-}
-
-.presence-status.absent {
-  color: var(--color-danger);
-}
-
-@media (max-width: 768px) {
-  .attendance-lists {
-    grid-template-columns: 1fr;
-  }
-  
-  .attendance-stats {
-    gap: 15px;
-  }
-  
-  .stat-item {
-    min-width: 100px;
-    padding: 15px;
-  }
+.owner-badge::before {
+  content: "👑";
+  margin-right: 4px;
 }

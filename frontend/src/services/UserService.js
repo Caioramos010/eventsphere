@@ -1,6 +1,7 @@
 import { get, put, uploadFile, fetchWithAuth } from '../fetchWithAuth';
-import API_CONFIG from '../config/api';
+import API_CONFIG, { buildUrl } from '../config/api';
 import AuthService from './AuthService';
+import { handleServiceError } from '../utils/errorHandler';
 
 
 const buildUrlWithId = (baseUrl, id) => {
@@ -10,46 +11,40 @@ const buildUrlWithId = (baseUrl, id) => {
 const UserService = {  
   async updateEmail(newEmail) {
     try {
-      const response = await put(`${API_CONFIG.ENDPOINTS.USER_UPDATE_EMAIL}?newEmail=${encodeURIComponent(newEmail)}`);
+      const response = await put(buildUrl(API_CONFIG.ENDPOINTS.USER_UPDATE_EMAIL, { newEmail }));
       const data = await response.json();
       
       if (data.success || response.ok) {
-        
         AuthService.updateCurrentUser({ email: newEmail });
-        
         return { success: true, message: data.message || 'Email atualizado com sucesso' };
       } else {
         return { success: false, message: data.message || 'Erro ao atualizar email' };
       }
     } catch (error) {
-      console.error('Error updating email:', error);
-      return { success: false, message: error.message || 'Erro de conexão' };
+      return handleServiceError(error, 'UserService.updateEmail');
     }
   },
   
   async updateUsername(newUsername) {
     try {
-      const response = await put(`${API_CONFIG.ENDPOINTS.USER_UPDATE_USERNAME}?newUsername=${encodeURIComponent(newUsername)}`);
+      const response = await put(buildUrl(API_CONFIG.ENDPOINTS.USER_UPDATE_USERNAME, { newUsername }));
       const data = await response.json();
       
       if (data.success || response.ok) {
-        
         AuthService.updateCurrentUser({ username: newUsername });
-        
         return { success: true, message: data.message || 'Login atualizado com sucesso' };
       } else {
         return { success: false, message: data.message || 'Erro ao atualizar login' };
       }
     } catch (error) {
-      console.error('Error updating username:', error);
-      return { success: false, message: error.message || 'Erro de conexão' };
+      return handleServiceError(error, 'UserService.updateUsername');
     }
   },
 
   
   async updatePassword(currentPassword, newPassword) {
     try {
-      const response = await put(`${API_CONFIG.ENDPOINTS.USER_UPDATE_PASSWORD}?currentPassword=${encodeURIComponent(currentPassword)}&newPassword=${encodeURIComponent(newPassword)}`);
+      const response = await put(buildUrl(API_CONFIG.ENDPOINTS.USER_UPDATE_PASSWORD, { currentPassword, newPassword }));
       const data = await response.json();
       
       if (data.success || response.ok) {
@@ -58,22 +53,18 @@ const UserService = {
         return { success: false, message: data.message || 'Erro ao atualizar senha' };
       }
     } catch (error) {
-      console.error('Error updating password:', error);
-      return { success: false, message: error.message || 'Erro de conexão' };
+      return handleServiceError(error, 'UserService.updatePassword');
     }
   },  
   async uploadUserPhoto(imageFile) {
     try {
       const formData = new FormData();
       formData.append('photo', imageFile);
-      const response = await uploadFile(API_CONFIG.ENDPOINTS.USER_PHOTO, formData);
+      const response = await uploadFile(buildUrl(API_CONFIG.ENDPOINTS.USER_PHOTO), formData);
       const data = await response.json();
       
       if (data.success || response.ok) {
-        
         const photoBase64 = data.data?.photoBase64 || data.photoBase64;
-        
-        
         AuthService.updateCurrentUser({ photo: photoBase64 });
         
         return { 
@@ -85,15 +76,14 @@ const UserService = {
         return { success: false, message: data.message || 'Erro ao fazer upload da foto' };
       }
     } catch (error) {
-      console.error('Error uploading user photo:', error);
-      return { success: false, message: error.message || 'Erro de conexão' };
+      return handleServiceError(error, 'UserService.uploadUserPhoto');
     }
   },
 
   
   async getUserById(userId) {
     try {
-      const url = buildUrlWithId(API_CONFIG.ENDPOINTS.USERS, userId);
+      const url = buildUrl(API_CONFIG.ENDPOINTS.USERS, { userId });
       const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -103,27 +93,25 @@ const UserService = {
       const data = await response.json();
       return { success: true, user: data };
     } catch (error) {
-      console.error('Error fetching user by ID:', error);
-      return { success: false, message: error.message };
+      return handleServiceError(error, 'UserService.getUserById');
     }
   },
 
   
   async searchUsers(query) {
     try {
-      const response = await get(API_CONFIG.ENDPOINTS.USERS, { search: query });
+      const response = await get(buildUrl(API_CONFIG.ENDPOINTS.USERS, { search: query }));
       const data = await response.json();
       return { success: true, users: data };
     } catch (error) {
-      console.error('Error searching users:', error);
-      return { success: false, message: error.message, users: [] };
+      return handleServiceError(error, 'UserService.searchUsers', { users: [] });
     }
   },
 
   
   async changePassword(passwordData) {
     try {
-      const response = await put(`${API_CONFIG.ENDPOINTS.USER_PROFILE}/password`, passwordData);
+      const response = await put(buildUrl(`${API_CONFIG.ENDPOINTS.USER_PROFILE}/password`), passwordData);
       const data = await response.json();
       
       if (data.success || response.ok) {
@@ -132,19 +120,17 @@ const UserService = {
         return { success: false, message: data.message || 'Erro ao alterar senha' };
       }
     } catch (error) {
-      console.error('Error changing password:', error);
-      return { success: false, message: error.message || 'Erro de conexão' };
+      return handleServiceError(error, 'UserService.changePassword');
     }
   },
 
   
   async deleteAccount(password) {
     try {
-      const url = `${API_CONFIG.ENDPOINTS.USER_DELETE}?password=${encodeURIComponent(password)}`;
+      const url = buildUrl(API_CONFIG.ENDPOINTS.USER_DELETE, { password });
 
       const response = await fetchWithAuth(url, {
         method: 'DELETE',
-
       });
       let data = null;
       const contentType = response.headers.get('content-type');
@@ -160,8 +146,7 @@ const UserService = {
         return { success: false, message: (data && data.message) || 'Erro ao deletar conta' };
       }
     } catch (error) {
-      console.error('Error deleting account:', error);
-      return { success: false, message: error.message || 'Erro de conexão' };
+      return handleServiceError(error, 'UserService.deleteAccount');
     }
   },
 
@@ -171,7 +156,7 @@ const UserService = {
    */
   async fetchCurrentUserProfileAndSync() {
     try {
-      const response = await get(API_CONFIG.ENDPOINTS.USER_PROFILE);
+      const response = await get(buildUrl(API_CONFIG.ENDPOINTS.USER_PROFILE));
       const data = await response.json();
       const userData = data.data || data;
       if (userData && (data.success === undefined || data.success === true)) {
@@ -187,8 +172,7 @@ const UserService = {
         return { success: false, message: data.message || 'Erro ao buscar perfil do usuário' };
       }
     } catch (error) {
-      console.error('Erro ao buscar perfil do usuário:', error);
-      return { success: false, message: error.message || 'Erro de conexão' };
+      return handleServiceError(error, 'UserService.fetchCurrentUserProfileAndSync');
     }
   },
 
@@ -197,7 +181,7 @@ const UserService = {
    */
   async getUserProfile() {
     try {
-      const response = await get(API_CONFIG.ENDPOINTS.USER_PROFILE);
+      const response = await get(buildUrl(API_CONFIG.ENDPOINTS.USER_PROFILE));
       const data = await response.json();
       const userData = data.data || data;
       

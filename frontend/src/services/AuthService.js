@@ -1,6 +1,6 @@
 
 import { post } from '../fetchWithAuth';
-import API_CONFIG from '../config/api';
+import API_CONFIG, { buildUrl } from '../config/api';
 
 const AuthService = {
   
@@ -11,7 +11,7 @@ const AuthService = {
         return { success: false, message: 'Username e senha são obrigatórios' };
       }
 
-      const response = await post(API_CONFIG.ENDPOINTS.LOGIN, credentials);
+      const response = await post(buildUrl(API_CONFIG.ENDPOINTS.LOGIN), credentials);
       const data = await response.json();
       
       if (data.success && data.data && data.data.token) {
@@ -58,7 +58,7 @@ const AuthService = {
         return { success: false, message: validation.message };
       }
 
-      const response = await post(API_CONFIG.ENDPOINTS.REGISTER, userData);
+      const response = await post(buildUrl(API_CONFIG.ENDPOINTS.REGISTER), userData);
       const data = await response.json();
       
       if (data.success) {

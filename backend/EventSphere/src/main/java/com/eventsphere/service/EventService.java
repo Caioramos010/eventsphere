@@ -96,8 +96,8 @@ public class EventService {
         return eventRepository.save(event);
     }
     
-    public void checkPermission(Long eventID, Long userId) {
-        Event event = eventRepository.findById(eventID)
+    public void validateUserPermission(Long eventId, Long userId) {
+        Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new IllegalArgumentException("Evento não encontrado!"));
         
         boolean isOwner = event.getOwner().getId().equals(userId);
@@ -116,7 +116,7 @@ public class EventService {
     }
 
     public Event updateEvent(Long eventID, EventDTO eventDTO, Long userId) {
-        checkPermission(eventID, userId);
+        validateUserPermission(eventID, userId);
         
         LocalDate startDate = eventDTO.getDateFixedStart();
         LocalDate endDate = eventDTO.getDateFixedEnd() != null ? eventDTO.getDateFixedEnd() : eventDTO.getDateFixedStart();
@@ -214,7 +214,7 @@ public class EventService {
 
 
     public Event startEvent(Long eventID, Long userId) {
-        checkPermission(eventID, userId);
+        validateUserPermission(eventID, userId);
         Event event = getEvent(eventID);
         if (!event.getState().equals(State.CREATED)) {
             throw new IllegalStateException("Evento não está no estado criado");
@@ -226,7 +226,7 @@ public class EventService {
     }
 
     public Event finishEvent(Long eventID, Long userId) {
-        checkPermission(eventID, userId);
+        validateUserPermission(eventID, userId);
         Event event = getEvent(eventID);
         if (!event.getState().equals(State.ACTIVE)) {
             throw new IllegalStateException("Evento não está no estado ativo");
@@ -236,33 +236,13 @@ public class EventService {
         event.setTimeEnd(LocalTime.now());
         return eventRepository.save(event);
     }    public Event cancelEvent(Long eventID, Long userId) {
-        checkPermission(eventID, userId);
+        validateUserPermission(eventID, userId);
         Event event = getEvent(eventID);
         if (!(event.getState().equals(State.ACTIVE) || event.getState().equals(State.CREATED))) {
             throw new IllegalStateException("Evento só pode ser cancelado se estiver nos estados CREATED ou ACTIVE");
         }
         event.setState(State.CANCELED);
         return eventRepository.save(event);
-    }
-      public void authorizeEditEvent(Long eventID, Long userId) {
-        Event event = eventRepository.findById(eventID)
-                .orElseThrow(() -> new IllegalArgumentException("Evento não encontrado!"));
-        
-        
-        boolean isOwner = event.getOwner().getId().equals(userId);
-        if (isOwner) {
-            return; 
-        }
-        
-        
-        boolean isCollaborator = false;
-        if (event.getCollaborators() != null) {
-            isCollaborator = event.getCollaborators().stream().anyMatch(u -> u.getId().equals(userId));
-        }
-        
-        if (!isCollaborator) {
-            throw new SecurityException("Apenas o dono ou colaborador pode editar o evento ou criar convites.");
-        }
     }
     
     private String generateInviteToken() {
@@ -293,13 +273,7 @@ public class EventService {
     }
     
     private String generateSecureInviteCode() {
-        
-        Set<String> existingCodes = eventRepository.findAll()
-                .stream()
-                .map(Event::getInviteCode)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
-        
+        Set<String> existingCodes = eventRepository.findAllInviteCodes();
         return EventCodeGenerator.generateEventCode(existingCodes);
     }
 
@@ -329,7 +303,7 @@ public class EventService {
 
     
     public Event addCollaborator(Long eventID, Long userID, Long requesterId) {
-        checkPermission(eventID, requesterId);
+        validateUserPermission(eventID, requesterId);
         Event event = eventRepository.findById(eventID)
                 .orElseThrow(() -> new IllegalArgumentException("Evento não encontrado!"));
         User user = userRepository.findById(userID)
@@ -359,25 +333,6 @@ public class EventService {
         return userRepository.findByUsername(username);
     }   
 
-    @Deprecated
-    public List<EventDTO> getMyEvents(Long userId) {
-        List<Event> ownedEvents = eventRepository.findByOwnerId(userId);
-        List<Event> participantEvents = eventRepository.findAllMyEvents(userId);
-        
-        
-        Set<Event> allEvents = new HashSet<>();
-        allEvents.addAll(ownedEvents);
-        allEvents.addAll(participantEvents);
-        
-        return eventMapper.toDTOList(new ArrayList<>(allEvents));
-    }
-
-    @Deprecated
-    public List<EventDTO> getPublicEvents() {
-        List<Event> events = eventRepository.findAllpublicEvents();
-        return eventMapper.toDTOList(events);
-    }   
-
     public EventDTO getEventWithUserInfo(Long eventID, Long userId) {
         Event event = getEvent(eventID);
         return eventMapper.toDTOWithUserContext(event, userId);
@@ -390,16 +345,70 @@ public class EventService {
         allEvents.addAll(ownedEvents);
         allEvents.addAll(participantEvents);
         
-        return eventMapper.toDTOListWithUserContext(new ArrayList<>(allEvents), userId);
+        // Filtrar apenas eventos ativos (não finalizados nem cancelados) para a tela principal
+        List<Event> activeEvents = allEvents.stream()
+                .filter(event -> event.getState() == State.ACTIVE || event.getState() == State.CREATED)
+                .sorted((a, b) -> {
+                    LocalDateTime dateA = LocalDateTime.of(a.getDateFixedStart(), a.getTimeFixedStart());
+                    LocalDateTime dateB = LocalDateTime.of(b.getDateFixedStart(), b.getTimeFixedStart());
+                    return dateA.compareTo(dateB);
+                })
+                .collect(Collectors.toList());
+        
+        return eventMapper.toDTOListWithUserContext(activeEvents, userId);
+    }
+    
+    public List<EventDTO> getAllMyEventsWithUserInfo(Long userId) {
+        List<Event> ownedEvents = eventRepository.findByOwnerId(userId);
+        List<Event> participantEvents = eventRepository.findEventsByParticipantUserId(userId);
+        Set<Event> allEvents = new HashSet<>();
+        allEvents.addAll(ownedEvents);
+        allEvents.addAll(participantEvents);
+        
+        // Retornar TODOS os eventos (incluindo finalizados/cancelados) ordenados por data
+        List<Event> sortedEvents = allEvents.stream()
+                .sorted((a, b) -> {
+                    LocalDateTime dateA = LocalDateTime.of(a.getDateFixedStart(), a.getTimeFixedStart());
+                    LocalDateTime dateB = LocalDateTime.of(b.getDateFixedStart(), b.getTimeFixedStart());
+                    return dateA.compareTo(dateB);
+                })
+                .collect(Collectors.toList());
+        
+        return eventMapper.toDTOListWithUserContext(sortedEvents, userId);
     }
     
     public List<EventDTO> getPublicEventsWithUserInfo(Long userId) {
-        List<Event> events = eventRepository.findByAcess(Acess.PUBLIC);
-        if (events.isEmpty()) {
+        // Buscar todos os eventos públicos ativos
+        List<Event> publicEvents = eventRepository.findByAcess(Acess.PUBLIC);
+        if (publicEvents.isEmpty()) {
             return new ArrayList<>();
         }
         
-        return eventMapper.toDTOListWithUserContext(events, userId);
+        // Filtrar apenas eventos ativos (não finalizados nem cancelados)
+        publicEvents = publicEvents.stream()
+                .filter(event -> event.getState() == State.ACTIVE || event.getState() == State.CREATED)
+                .collect(Collectors.toList());
+        
+        // Buscar eventos onde o usuário já está envolvido (dono ou participante)
+        List<Event> ownedEvents = eventRepository.findByOwnerId(userId);
+        List<Event> participantEvents = eventRepository.findEventsByParticipantUserId(userId);
+        
+        // Criar conjunto com IDs dos eventos onde o usuário já está envolvido
+        Set<Long> userEventIds = new HashSet<>();
+        ownedEvents.forEach(event -> userEventIds.add(event.getId()));
+        participantEvents.forEach(event -> userEventIds.add(event.getId()));
+        
+        // Filtrar eventos públicos para excluir aqueles onde o usuário já está envolvido
+        List<Event> filteredEvents = publicEvents.stream()
+                .filter(event -> !userEventIds.contains(event.getId()))
+                .sorted((a, b) -> {
+                    LocalDateTime dateA = LocalDateTime.of(a.getDateFixedStart(), a.getTimeFixedStart());
+                    LocalDateTime dateB = LocalDateTime.of(b.getDateFixedStart(), b.getTimeFixedStart());
+                    return dateA.compareTo(dateB);
+                })
+                .collect(Collectors.toList());
+        
+        return eventMapper.toDTOListWithUserContext(filteredEvents, userId);
     }
 
     public Event updateEventPhoto(Long eventId, String base64Image) {
@@ -410,11 +419,21 @@ public class EventService {
     
     public List<EventDTO> getParticipatingEventsForUser(Long userId) {
         List<Event> events = eventRepository.findEventsByParticipantUserId(userId);
+        
+        // Ordenar por data crescente (incluindo todos os estados)
+        events = events.stream()
+                .sorted((a, b) -> {
+                    LocalDateTime dateA = LocalDateTime.of(a.getDateFixedStart(), a.getTimeFixedStart());
+                    LocalDateTime dateB = LocalDateTime.of(b.getDateFixedStart(), b.getTimeFixedStart());
+                    return dateA.compareTo(dateB);
+                })
+                .collect(Collectors.toList());
+        
         return eventMapper.toDTOListWithUserContext(events, userId);
     }
 
     public Map<String, Object> uploadEventImage(Long eventId, org.springframework.web.multipart.MultipartFile file, Long userId) {
-        authorizeEditEvent(eventId, userId);
+        validateUserPermission(eventId, userId);
         String base64Image = imageService.convertToBase64(file);
         Event updatedEvent = updateEventPhoto(eventId, base64Image);
         Map<String, Object> response = new HashMap<>();
@@ -466,22 +485,59 @@ public class EventService {
     }
     
     public List<EventDTO> getNextEventsWithUserInfo(Long userId) {
-        List<State> excludedStates = Arrays.asList(State.FINISHED, State.CANCELED);
-        List<Event> ownedEvents = eventRepository.findByOwnerIdAndStateNotIn(userId, excludedStates);
-        List<Event> participantEvents = eventRepository.findByParticipantsUserIdAndStateNot(userId, State.FINISHED);
-        participantEvents = participantEvents.stream()
-            .filter(e -> !excludedStates.contains(e.getState()))
-            .collect(Collectors.toList());
+        List<Event> ownedEvents = eventRepository.findByOwnerId(userId);
+        List<Event> participantEvents = eventRepository.findEventsByParticipantUserId(userId);
+        
+        // Use Set para evitar duplicatas
         Set<Event> allEvents = new HashSet<>();
         allEvents.addAll(ownedEvents);
         allEvents.addAll(participantEvents);
-        return eventMapper.toDTOListWithUserContext(new ArrayList<>(allEvents), userId);
+        
+        // Filtrar apenas eventos ativos e ordenar por data
+        List<Event> activeEvents = allEvents.stream()
+                .filter(event -> event.getState() == State.ACTIVE || event.getState() == State.CREATED)
+                .sorted((a, b) -> {
+                    LocalDateTime dateA = LocalDateTime.of(a.getDateFixedStart(), a.getTimeFixedStart());
+                    LocalDateTime dateB = LocalDateTime.of(b.getDateFixedStart(), b.getTimeFixedStart());
+                    return dateA.compareTo(dateB);
+                })
+                .collect(Collectors.toList());
+        
+        return eventMapper.toDTOListWithUserContext(activeEvents, userId);
     }
     
     public List<EventDTO> getNextPublicEventsWithUserInfo(Long userId) {
-        List<State> excludedStates = Arrays.asList(State.FINISHED, State.CANCELED);
-        List<Event> publicEvents = eventRepository.findByAcessAndStateNotIn(com.eventsphere.entity.event.Acess.PUBLIC, excludedStates);  
-        return eventMapper.toDTOListWithUserContext(publicEvents, userId);
+        // Buscar todos os eventos públicos ativos
+        List<Event> publicEvents = eventRepository.findByAcess(Acess.PUBLIC);
+        if (publicEvents.isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        // Filtrar apenas eventos ativos (não finalizados nem cancelados)
+        publicEvents = publicEvents.stream()
+                .filter(event -> event.getState() == State.ACTIVE || event.getState() == State.CREATED)
+                .collect(Collectors.toList());
+        
+        // Buscar eventos onde o usuário já está envolvido (dono ou participante)
+        List<Event> ownedEvents = eventRepository.findByOwnerId(userId);
+        List<Event> participantEvents = eventRepository.findEventsByParticipantUserId(userId);
+        
+        // Criar conjunto com IDs dos eventos onde o usuário já está envolvido
+        Set<Long> userEventIds = new HashSet<>();
+        ownedEvents.forEach(event -> userEventIds.add(event.getId()));
+        participantEvents.forEach(event -> userEventIds.add(event.getId()));
+        
+        // Filtrar eventos públicos para excluir aqueles onde o usuário já está envolvido
+        List<Event> filteredEvents = publicEvents.stream()
+                .filter(event -> !userEventIds.contains(event.getId()))
+                .sorted((a, b) -> {
+                    LocalDateTime dateA = LocalDateTime.of(a.getDateFixedStart(), a.getTimeFixedStart());
+                    LocalDateTime dateB = LocalDateTime.of(b.getDateFixedStart(), b.getTimeFixedStart());
+                    return dateA.compareTo(dateB);
+                })
+                .collect(Collectors.toList());
+        
+        return eventMapper.toDTOListWithUserContext(filteredEvents, userId);
     }
     
     public void authorizeInviteCreation(Long eventID, Long userId) {

@@ -57,6 +57,14 @@ public class EventMapper {
         dto.setPhoto(event.getPhoto());
         dto.setState(event.getState());
         dto.setOwnerId(event.getOwner() != null ? event.getOwner().getId() : null);
+        
+        // Informações do owner
+        if (event.getOwner() != null) {
+            dto.setOwnerName(event.getOwner().getName());
+            dto.setOwnerEmail(event.getOwner().getEmail());
+            dto.setOwnerPhoto(event.getOwner().getPhoto());
+        }
+        
         dto.setInviteToken(event.getInviteToken());
         dto.setInviteCode(event.getInviteCode());
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import './StandardButton.css';
+import '../styles/StandardButton.css';
 
 const StandardButton = ({
   children,

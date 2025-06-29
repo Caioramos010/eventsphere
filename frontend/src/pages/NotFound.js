@@ -1,5 +1,5 @@
 import React from 'react';
-import './ErrorPage.css';
+import '../styles/ErrorPage.css';
 
 const NotFound = () => (
   <div className="error-page not-found">

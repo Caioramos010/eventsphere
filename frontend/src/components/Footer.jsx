@@ -1,6 +1,6 @@
 import React from 'react';
 import { IoLogoInstagram, IoLogoLinkedin } from 'react-icons/io5';
-import './Footer.css';
+import '../styles/Footer.css';
 import logoFooter from '../images/logo-footer.png';
 
 const Footer = () => (

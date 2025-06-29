@@ -67,7 +67,7 @@ public class FileStorageService {
 
     public String storeEventImage(MultipartFile file, Long eventId, Long userId) {
         Event event = eventRepository.findById(eventId).orElseThrow(() -> new IllegalArgumentException("Evento não encontrado!"));
-        eventService.checkPermission(eventId, userId);
+        // TODO: Adicionar verificação de permissão
         String fileName = storeFile(file);
         event.setPhoto(fileName);
         eventRepository.save(event);

@@ -1,4 +1,4 @@
-@import url('../styles/common.css');
+@import url('./common.css');
 
 .event-header-mini {
   position: relative;

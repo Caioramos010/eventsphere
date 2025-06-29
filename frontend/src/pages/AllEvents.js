@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header, Footer, EventCard, PageTitle, StandardButton, StandardCard } from '../components';
 import { IoCalendarOutline, IoSearch, IoGridOutline, IoListOutline, IoAddCircleOutline } from 'react-icons/io5';
-import './AllEvents.css';
+import '../styles/AllEvents.css';
 import EventService from '../services/EventService';
 
 const AllEvents = () => {
@@ -50,38 +50,28 @@ const AllEvents = () => {
     try {
       setLoading(true);
       
+      // Usar o novo endpoint que retorna todos os eventos (incluindo finalizados/cancelados)
+      // já ordenados por data crescente
+      const allMyEventsResult = await EventService.getAllMyEvents();
       
-      const myEventsResult = await EventService.getMyEvents();
-      const myEvents = myEventsResult.success ? myEventsResult.events.map(event => ({
-        ...event,
-        userStatus: 'owner',
-        source: 'created'
-      })) : [];
-
-      
-      const participatingEventsResult = await EventService.getParticipatingEvents();
-      const participatingEvents = participatingEventsResult.success ? participatingEventsResult.events.map(event => ({
-        ...event,
-        userStatus: event.userStatus || 'participant',
-        source: 'participating'
-      })) : [];
-
-      
-      const allEvents = [...myEvents];
-      participatingEvents.forEach(event => {
-        if (!allEvents.find(e => e.id === event.id)) {
-          allEvents.push(event);
-        }
-      });
-
-      
-      allEvents.sort((a, b) => new Date(b.dateCreated || b.createdAt || 0) - new Date(a.dateCreated || a.createdAt || 0));
-
-      setEvents(allEvents);
+      if (allMyEventsResult.success) {
+        const events = allMyEventsResult.events.map(event => ({
+          ...event,
+          // Manter a lógica de identificar o tipo de relação do usuário com o evento
+          userStatus: event.isOwner ? 'owner' : 'participant',
+          source: event.isOwner ? 'created' : 'participating'
+        }));
+        
+        setEvents(events);
+      } else {
+        console.error('Error loading all my events:', allMyEventsResult.message);
+        setError(allMyEventsResult.message || 'Erro ao carregar eventos');
+      }
     } catch (error) {
       console.error('Error loading events:', error);
       setError('Erro ao carregar eventos');
-    } finally {      setLoading(false);
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -1,20 +1,30 @@
-  import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { IoEyeOutline, IoEyeOffOutline } from 'react-icons/io5';
 import '../styles/auth.css';
 import logo from '../images/logo-login.png';
 import AuthService from '../services/AuthService';
 import { useUser } from '../contexts/UserContext';
+import { useFormState } from '../hooks/useFormState';
+import { 
+  validateRequired } from '../utils/validators';
+import { Button, Message, FormField } from '../components';
 
 const Login = () => {
-  const [login, setLogin] = useState('');
-  const [senha, setSenha] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState({ text: '', type: '' });
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { loadUserProfile } = useUser();
+
+  const { values, errors, handleChange, validate, isValid } = useFormState({
+    login: '',
+    senha: ''
+  }, {
+    login: [validateRequired('Login é obrigatório')],
+    senha: [validateRequired('Senha é obrigatória')]
+  });
 
   
   useEffect(() => {
@@ -30,18 +40,24 @@ const Login = () => {
   }, [navigate, searchParams]);
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    
+    if (!validate()) {
+      setMessage({ text: 'Por favor, corrija os erros no formulário', type: 'error' });
+      return;
+    }
+    
+    setMessage({ text: '', type: '' });
     setLoading(true);
     
     try {
       const credentials = {
-        username: login,
-        password: senha
+        username: values.login,
+        password: values.senha
       };
-        const result = await AuthService.login(credentials);
+      
+      const result = await AuthService.login(credentials);
       
       if (result.success) {
-
         await loadUserProfile();
         
         const inviteToken = searchParams.get('token');
@@ -51,11 +67,11 @@ const Login = () => {
           navigate('/main');
         }
       } else {
-        setError(result.message || 'Login ou senha inválidos');
+        setMessage({ text: result.message || 'Login ou senha inválidos', type: 'error' });
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError('Erro ao conectar com o servidor');
+      setMessage({ text: 'Erro ao conectar com o servidor', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -69,26 +85,26 @@ const Login = () => {
         </div>
         
         <form className="auth-form" onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label className="auth-label">LOGIN</label>
-            <input
-              className="auth-input"
-              type="text"
-              value={login}
-              onChange={e => setLogin(e.target.value)}
-              required
-              placeholder="Digite seu login"
-            />
-          </div>
+          <FormField
+            label="LOGIN"
+            type="text"
+            name="login"
+            value={values.login}
+            onChange={handleChange}
+            error={errors.login}
+            placeholder="Digite seu login"
+            required
+          />
           
           <div className="form-group">
             <label className="auth-label">SENHA</label>
             <div className="auth-password-wrapper">
               <input
-                className="auth-input"
+                className={`auth-input ${errors.senha ? 'auth-input-error' : ''}`}
                 type={showPassword ? 'text' : 'password'}
-                value={senha}
-                onChange={e => setSenha(e.target.value)}
+                name="senha"
+                value={values.senha}
+                onChange={handleChange}
                 required
                 placeholder="Digite sua senha"
               />
@@ -102,18 +118,26 @@ const Login = () => {
                 {showPassword ? <IoEyeOffOutline /> : <IoEyeOutline />}
               </button>
             </div>
+            {errors.senha && <div className="auth-field-error">{errors.senha}</div>}
           </div>
           
-          {error && <div className="auth-error">{error}</div>}
+          {message.text && (
+            <Message 
+              message={message.text} 
+              type={message.type} 
+              onClose={() => setMessage({ text: '', type: '' })}
+            />
+          )}
           
-          <button className="auth-btn" type="submit" disabled={loading}>
-            {loading ? (
-              <>
-                <div className="auth-spinner"></div>
-                ENTRANDO...
-              </>
-            ) : 'LOGIN'}
-          </button>
+          <Button 
+            type="submit" 
+            variant="primary" 
+            fullWidth 
+            loading={loading}
+            disabled={loading || !isValid}
+          >
+            LOGIN
+          </Button>
         </form>
           <div className="auth-switch">
           Não possui login? <span className="auth-link" onClick={() => {

@@ -1,6 +1,7 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Link } from '../components/Link';
-import './EventCard.css';
+import '../styles/EventCard.css';
 import { FaCalendarAlt, FaCrown, FaUserFriends, FaUserPlus } from 'react-icons/fa';
 import { BsPersonFill } from 'react-icons/bs';
 import API_CONFIG from '../config/api';
@@ -163,6 +164,40 @@ const EventCard = ({ event, type, linkTo, onParticipate }) => {
       </div>
     </Link>
   );
+};
+
+// PropTypes for better component documentation and validation
+EventCard.propTypes = {
+  event: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    name: PropTypes.string.isRequired,
+    dateFixedStart: PropTypes.string.isRequired,
+    timeFixedStart: PropTypes.string.isRequired,
+    timeFixedEnd: PropTypes.string,
+    localization: PropTypes.string.isRequired,
+    description: PropTypes.string,
+    maxParticipants: PropTypes.number,
+    photo: PropTypes.string,
+    userStatus: PropTypes.string,
+    access: PropTypes.oneOf(['PUBLIC', 'PRIVATE']),
+    status: PropTypes.string,
+    organizer: PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      name: PropTypes.string,
+      login: PropTypes.string
+    }),
+    participantCount: PropTypes.number,
+    isOrganizer: PropTypes.bool
+  }).isRequired,
+  type: PropTypes.oneOf(['public', 'my', 'participating']),
+  linkTo: PropTypes.string,
+  onParticipate: PropTypes.func
+};
+
+EventCard.defaultProps = {
+  type: 'public',
+  linkTo: null,
+  onParticipate: null
 };
 
 export default EventCard;

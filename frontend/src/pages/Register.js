@@ -4,25 +4,33 @@ import { IoEyeOutline, IoEyeOffOutline, IoCamera, IoTrash } from 'react-icons/io
 import '../styles/auth.css';
 import logo from '../images/logo-login.png';
 import AuthService from '../services/AuthService';
+import { useFormState } from '../hooks/useFormState';
+import { validateRequired, validateEmail, validatePassword } from '../utils/validators';
+import { Button, Message, FormField } from '../components';
 
 const Register = () => {
-  const [nome, setNome] = useState('');
-  const [email, setEmail] = useState('');
-  const [login, setLogin] = useState('');
-  const [senha, setSenha] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [foto, setFoto] = useState('');
   const [fotoPreview, setFotoPreview] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState({ text: '', type: '' });
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   
+  const { values, errors, handleChange, validate, isValid } = useFormState({
+    nome: '',
+    email: '',
+    login: '',
+    senha: ''
+  }, {
+    nome: [validateRequired('Nome é obrigatório')],
+    email: [validateRequired('E-mail é obrigatório'), validateEmail()],
+    login: [validateRequired('Login é obrigatório')],
+    senha: [validateRequired('Senha é obrigatória'), validatePassword(8, 'Senha deve ter pelo menos 8 caracteres')]
+  });
   
   useEffect(() => {
     if (AuthService.isAuthenticated()) {
-      
       const inviteToken = searchParams.get('token');
       if (inviteToken) {
         navigate(`/join-event/${inviteToken}`);
@@ -32,19 +40,16 @@ const Register = () => {
     }
   }, [navigate, searchParams]);
 
-  
   const handleFotoChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      
       if (!file.type.startsWith('image/')) {
-        setError('Por favor, selecione apenas arquivos de imagem');
+        setMessage({ text: 'Por favor, selecione apenas arquivos de imagem', type: 'error' });
         return;
       }
       
-      
       if (file.size > 5 * 1024 * 1024) {
-        setError('A imagem deve ter no máximo 5MB');
+        setMessage({ text: 'A imagem deve ter no máximo 5MB', type: 'error' });
         return;
       }
       
@@ -53,48 +58,55 @@ const Register = () => {
         const base64 = e.target.result;
         setFoto(base64);
         setFotoPreview(base64);
-        setError(''); 
+        setMessage({ text: '', type: '' });
       };
       reader.readAsDataURL(file);
     }
   };
 
-  
   const handleRemoveFoto = () => {
     setFoto('');
     setFotoPreview('');
-    
     const fileInput = document.getElementById('foto-input');
     if (fileInput) fileInput.value = '';
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
+    
+    if (!validate()) {
+      setMessage({ text: 'Por favor, corrija os erros no formulário', type: 'error' });
+      return;
+    }
+    
+    setMessage({ text: '', type: '' });
     setLoading(true);
     
     try {
       const userData = {
-        name: nome,
-        email: email,
-        username: login,
-        password: senha,
+        name: values.nome,
+        email: values.email,
+        username: values.login,
+        password: values.senha,
         photo: foto
       };
       
+      console.log('Form values:', values);
+      console.log('User data being sent:', userData);
+      console.log('Password field specifically:', { senha: values.senha, password: userData.password });
+      
       const result = await AuthService.register(userData);
-        if (result.success) {
-        setSuccess(result.message || 'Registro realizado com sucesso!');
+      
+      if (result.success) {
+        setMessage({ text: result.message || 'Registro realizado com sucesso!', type: 'success' });
         
         const inviteToken = searchParams.get('token');
         if (inviteToken) {
-          
           setTimeout(async () => {
             try {
               const loginResult = await AuthService.login({
-                username: login,
-                password: senha
+                username: values.login,
+                password: values.senha
               });
               
               if (loginResult.success) {
@@ -111,11 +123,11 @@ const Register = () => {
           setTimeout(() => navigate('/login'), 1200);
         }
       } else {
-        setError(result.message || 'Erro ao registrar usuário');
+        setMessage({ text: result.message || 'Erro ao registrar usuário', type: 'error' });
       }
     } catch (err) {
       console.error('Register error:', err);
-      setError('Erro ao conectar com o servidor');
+      setMessage({ text: 'Erro ao conectar com o servidor', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -156,50 +168,48 @@ const Register = () => {
             />
           </div>
           
-          <div className="form-group">
-            <label className="auth-label">NOME</label>
-            <input
-              className="auth-input"
-              type="text"
-              value={nome}
-              onChange={e => setNome(e.target.value)}
-              required
-              placeholder="Digite seu nome completo"
-            />
-          </div>
+          <FormField
+            label="NOME"
+            type="text"
+            name="nome"
+            value={values.nome}
+            onChange={handleChange}
+            error={errors.nome}
+            placeholder="Digite seu nome completo"
+            required
+          />
           
-          <div className="form-group">
-            <label className="auth-label">E-MAIL</label>
-            <input
-              className="auth-input"
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-              placeholder="Digite seu e-mail"
-            />
-          </div>
+          <FormField
+            label="E-MAIL"
+            type="email"
+            name="email"
+            value={values.email}
+            onChange={handleChange}
+            error={errors.email}
+            placeholder="Digite seu e-mail"
+            required
+          />
           
-          <div className="form-group">
-            <label className="auth-label">LOGIN</label>
-            <input
-              className="auth-input"
-              type="text"
-              value={login}
-              onChange={e => setLogin(e.target.value)}
-              required
-              placeholder="Escolha um login"
-            />
-          </div>
+          <FormField
+            label="LOGIN"
+            type="text"
+            name="login"
+            value={values.login}
+            onChange={handleChange}
+            error={errors.login}
+            placeholder="Escolha um login"
+            required
+          />
           
           <div className="form-group">
             <label className="auth-label">SENHA</label>
             <div className="auth-password-wrapper">
               <input
-                className="auth-input"
+                className={`auth-input ${errors.senha ? 'auth-input-error' : ''}`}
                 type={showPassword ? 'text' : 'password'}
-                value={senha}
-                onChange={e => setSenha(e.target.value)}
+                name="senha"
+                value={values.senha}
+                onChange={handleChange}
                 required
                 placeholder="Crie uma senha"
               />
@@ -213,22 +223,29 @@ const Register = () => {
                 {showPassword ? <IoEyeOffOutline /> : <IoEyeOutline />}
               </button>
             </div>
+            {errors.senha && <div className="auth-field-error">{errors.senha}</div>}
             <div className="auth-password-requirements">
-              Senha deve ter: 8+ caracteres, maiúscula, minúscula, número e caractere especial (@$!%*?&)
+              Senha deve ter pelo menos 8 caracteres
             </div>
           </div>
           
-          {error && <div className="auth-error">{error}</div>}
-          {success && <div className="auth-success">{success}</div>}
+          {message.text && (
+            <Message 
+              message={message.text} 
+              type={message.type} 
+              onClose={() => setMessage({ text: '', type: '' })}
+            />
+          )}
           
-          <button className="auth-btn" type="submit" disabled={loading}>
-            {loading ? (
-              <>
-                <div className="auth-spinner"></div>
-                REGISTRANDO...
-              </>
-            ) : 'REGISTRO'}
-          </button>
+          <Button 
+            type="submit" 
+            variant="primary" 
+            fullWidth 
+            loading={loading}
+            disabled={loading || !isValid}
+          >
+            REGISTRO
+          </Button>
         </form>
           <div className="auth-switch">
           Já possui login? <span className="auth-link" onClick={() => {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { IoArrowBack } from 'react-icons/io5';
-import './BackButton.css';
+import '../styles/BackButton.css';
 
 const BackButton = ({ 
   onClick, 

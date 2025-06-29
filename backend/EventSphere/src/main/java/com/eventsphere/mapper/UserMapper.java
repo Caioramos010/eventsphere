@@ -1,8 +1,6 @@
 package com.eventsphere.mapper;
 
 import com.eventsphere.dto.UserDTO;
-import com.eventsphere.dto.UserDisplayDTO;
-import com.eventsphere.dto.UserProfileDTO;
 import com.eventsphere.entity.user.User;
 import org.springframework.stereotype.Component;
 
@@ -48,35 +46,21 @@ public class UserMapper {
         return user;
     }
 
-    public UserDisplayDTO toDisplayDTO(User user) {
+    public UserDTO toDisplayDTO(User user) {
         if (user == null) {
             return null;
         }
 
-        UserDisplayDTO dto = new UserDisplayDTO();
-        dto.setId(user.getId());
-        dto.setUsername(user.getUsername());
-        dto.setName(user.getName());
-        dto.setPhoto(user.getPhoto());
-        
-        return dto;
+        return UserDTO.forDisplay(user.getId(), user.getUsername(), user.getName(), user.getPhoto());
     }
 
-    public UserProfileDTO toProfileDTO(User user) {
+    public UserDTO toProfileDTO(User user) {
         if (user == null) {
             return null;
         }
 
-        UserProfileDTO dto = new UserProfileDTO();
-        dto.setId(user.getId());
-        dto.setUsername(user.getUsername());
-        dto.setName(user.getName());
-        dto.setEmail(user.getEmail());
-        dto.setPhoto(user.getPhoto());
-        dto.setRegisterDate(user.getRegisterDate());
-        dto.setBlocked(user.isBlocked());
-        
-        return dto;
+        return UserDTO.forProfile(user.getId(), user.getUsername(), user.getName(), 
+                                 user.getEmail(), user.getPhoto(), user.getRegisterDate(), user.isBlocked());
     }
 
     public List<UserDTO> toDTOList(List<User> users) {
@@ -91,12 +75,12 @@ public class UserMapper {
         return dtos;
     }
 
-    public List<UserDisplayDTO> toDisplayDTOList(List<User> users) {
+    public List<UserDTO> toDisplayDTOList(List<User> users) {
         if (users == null) {
             return null;
         }
 
-        List<UserDisplayDTO> dtos = new ArrayList<>();
+        List<UserDTO> dtos = new ArrayList<>();
         for (User user : users) {
             dtos.add(toDisplayDTO(user));
         }

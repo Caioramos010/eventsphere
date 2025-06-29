@@ -34,39 +34,21 @@ public class AuthController {
     private ResponseMapper responseMapper;
     @PostMapping("/register/accept")
     public ResponseEntity<ApiResponse<?>> registerControll(@Valid @RequestBody UserDTO userDTO) {
-        try {
-            userService.registerUser(userDTO);
-            return ResponseEntity.ok(responseMapper.success("Registro realizado com sucesso"));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(responseMapper.badRequest(e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(responseMapper.internalError("Erro interno do servidor. Tente novamente."));
-        }
+        userService.registerUser(userDTO);
+        return ResponseEntity.ok(responseMapper.success("Registro realizado com sucesso"));
     }
 
     @PostMapping("/login/accept")
     public ResponseEntity<ApiResponse<?>> loginControll(@RequestBody Map<String, String> loginRequest) {
-        try {
-            String username = loginRequest.get("username");
-            String password = loginRequest.get("password");
-            Map<String, String> response = userService.login(username, password);
-            return ResponseEntity.ok(responseMapper.success(response));
-        } catch (AuthenticationException e) {
-            return ResponseEntity.status(401).body(responseMapper.error(e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(responseMapper.internalError("Erro interno do servidor. Tente novamente."));
-        }
+        String username = loginRequest.get("username");
+        String password = loginRequest.get("password");
+        Map<String, String> response = userService.login(username, password);
+        return ResponseEntity.ok(responseMapper.success(response));
     }
 
     @GetMapping("/api/auth/validate")
     public ResponseEntity<ApiResponse<?>> validateToken(Authentication authentication) {
-        try {
-            Map<String, Object> userData = userService.validateToken(authentication);
-            return ResponseEntity.ok(ApiResponse.success("Token válido", userData));
-        } catch (AuthenticationException e) {
-            return ResponseEntity.status(401).body(ApiResponse.error(e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(ApiResponse.error("Erro interno do servidor. Tente novamente."));
-        }
+        Map<String, Object> userData = userService.validateToken(authentication);
+        return ResponseEntity.ok(ApiResponse.success("Token válido", userData));
     }
 }

@@ -2,11 +2,15 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { BackButton } from '../components';
+import { BackButton, LoadingSpinner, Message } from '../components';
 import { IoQrCodeOutline, IoCheckmarkCircleOutline, IoCloseCircleOutline, IoFlashOutline, IoFlashOffOutline, IoCameraReverseOutline } from 'react-icons/io5';
 import { BrowserQRCodeReader } from '@zxing/library';
 import { buildUrl } from '../config/api';
-import './QRScanner.css';
+import API_CONFIG from '../config/api';
+import EventService from '../services/EventService';
+import ParticipantService from '../services/ParticipantService';
+import { useApiCall } from '../hooks/useApiCall';
+import '../styles/QRScanner.css';
 
 const QRScanner = () => {
   const { id } = useParams();
@@ -49,7 +53,7 @@ const QRScanner = () => {
   const loadEventData = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(buildUrl(`/api/event/${id}`), {
+      const response = await fetch(buildUrl(API_CONFIG.ENDPOINTS.EVENT_GET, { id }), {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -73,7 +77,7 @@ const QRScanner = () => {
   const loadScannedParticipants = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(buildUrl(`/api/participant/event/${id}/present`), {
+      const response = await fetch(buildUrl(API_CONFIG.ENDPOINTS.PARTICIPANT_EVENT_PRESENT, { eventId: id }), {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -404,7 +408,7 @@ const QRScanner = () => {
   const markPresence = async (participantId) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(buildUrl(`/api/participant/${participantId}/presence`), {
+      const response = await fetch(buildUrl(API_CONFIG.ENDPOINTS.PARTICIPANT_PRESENCE, { participantId }), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

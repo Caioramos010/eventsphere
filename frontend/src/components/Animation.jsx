@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, MapPin, User, Check, AlertCircle } from 'lucide-react';
-import './calendar.css';
+import '../styles/calendar.css';
 
 const CalendarAnimation = () => {
   const [step, setStep] = useState(0);

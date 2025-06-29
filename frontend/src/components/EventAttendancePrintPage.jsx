@@ -1,5 +1,5 @@
 import React from 'react';
-import './EventPrintPage.css';
+import '../styles/EventPrintPage.css';
 
 function EventAttendancePrintPage({ event, attendanceReport }) {
   if (!event || !attendanceReport) return <div>Carregando...</div>;

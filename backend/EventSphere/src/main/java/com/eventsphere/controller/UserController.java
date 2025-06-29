@@ -61,16 +61,8 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success("Foto atualizada com sucesso", null));
     }    @DeleteMapping("/delete")
     public ResponseEntity<ApiResponse<?>> deleteUser(@RequestParam String password) {
-        try {
-            User user = securityUtils.getAuthenticatedUser();
-            userService.deleteUserWithPasswordCheck(user.getId(), password);
-            return ResponseEntity.ok(ApiResponse.success("Conta bloqueada com sucesso. Todas as participações foram removidas.", null));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(500).body(ApiResponse.error("Erro interno do servidor: " + e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(ApiResponse.error("Erro inesperado ao bloquear usuário"));
-        }
+        User user = securityUtils.getAuthenticatedUser();
+        userService.deleteUserWithPasswordCheck(user.getId(), password);
+        return ResponseEntity.ok(ApiResponse.success("Conta bloqueada com sucesso. Todas as participações foram removidas.", null));
     }
 }
