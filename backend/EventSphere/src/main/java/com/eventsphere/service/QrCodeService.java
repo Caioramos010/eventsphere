@@ -31,13 +31,13 @@ public class QrCodeService {
     private ParticipantRepository participantRepository;
     
     @Autowired
-    private ParticipantHistoryRepository historyRepository;
-    
-    @Autowired
     private EventService eventService;
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ParticipantHistoryRepository historyRepository;
 
     public String createQrCode(Long participantId) {
         try {
@@ -99,7 +99,7 @@ public class QrCodeService {
         if (user == null) {
             throw new SecurityException("Usuário não autenticado");
         }
-        // TODO: Adicionar verificação de permissão de edição
+        
         processQrCodeInternal(codeOrQr);
     }
     private void processQrCodeInternal(String codeOrQr) {
@@ -148,7 +148,19 @@ public class QrCodeService {
 
     public java.util.Map<String, String> createQrCodeComplete(Long participantId) {
         try {
+            EventParticipant participant = participantRepository.findById(participantId)
+                .orElseThrow(() -> new IllegalArgumentException("Participante não encontrado"));
+            // Log do estado do evento para debug
+            logger.info("Estado do evento ao gerar QR Code: " + participant.getEvent().getState());
+            // Só permite gerar QR code se o evento estiver ACTIVE
+            if (participant.getEvent().getState() != com.eventsphere.entity.event.State.ACTIVE) {
+                throw new IllegalArgumentException("QR Code só pode ser gerado para eventos ativos");
+            }
+            // Sempre gera um novo token e sobrescreve o campo qrCode
             String qrCodeText = generateQrCodeText(participantId);
+            participant.setQrCode(qrCodeText);
+            participantRepository.save(participant);
+
             int width = 300;
             int height = 300;
             QRCodeWriter qrCodeWriter = new QRCodeWriter();
@@ -157,10 +169,7 @@ public class QrCodeService {
             MatrixToImageWriter.writeToStream(bitMatrix, "PNG", outputStream);
             byte[] imageBytes = outputStream.toByteArray();
             String base64Image = Base64.getEncoder().encodeToString(imageBytes);
-            EventParticipant participant = participantRepository.findById(participantId)
-                .orElseThrow(() -> new IllegalArgumentException("Participante não encontrado"));
-            participant.setQrCode(qrCodeText);
-            participantRepository.save(participant);
+
             java.util.Map<String, String> result = new java.util.HashMap<>();
             result.put("qrCodeText", qrCodeText);
             result.put("qrCodeImage", base64Image);
